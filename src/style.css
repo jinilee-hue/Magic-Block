@@ -213,6 +213,22 @@ svg { display: block; }
 @keyframes startIn { from { opacity: 0; transform: translateY(calc(6 * var(--u))) scale(.6); } }
 @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.05; } }
 .app[data-screen="title"] .fox { height: calc(32 * var(--u)); right: 8vw; bottom: calc(5 * var(--u)); }
+/* title corner: sound (speaker + vertical volume slider, top = loud) and exit — ui/corner.ts */
+.sysbar { position: absolute; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); right: calc(2.4 * var(--u)); display: flex; gap: calc(1.6 * var(--u)); align-items: flex-start; }
+.app[data-screen="title"] .sysbar { pointer-events: auto; }
+.vol { position: relative; }
+#btnSound .ic-off, #btnSound.muted .ic-on { display: none; }
+#btnSound.muted .ic-off { display: block; }
+.vol-panel { position: absolute; top: calc(100% + 1.8 * var(--u)); left: 50%; translate: -50% 0; width: calc(7.4 * var(--u)); height: calc(28 * var(--u));
+  border-radius: 999px; background: linear-gradient(rgba(255, 255, 255, .82), rgba(255, 255, 255, .55)); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow: 0 calc(.8 * var(--u)) calc(2 * var(--u)) rgba(70, 40, 120, .22), inset 0 1px 0 rgba(255, 255, 255, .9); touch-action: none; cursor: pointer; outline: none; }
+.vol-panel[hidden] { display: none; }
+.vol-panel:focus-visible { box-shadow: 0 0 0 calc(.5 * var(--u)) rgba(255, 255, 255, .95), 0 calc(.8 * var(--u)) calc(2 * var(--u)) rgba(70, 40, 120, .22); }
+.vol-track { position: absolute; left: 50%; top: calc(3.2 * var(--u)); bottom: calc(3.2 * var(--u)); width: calc(1.5 * var(--u)); translate: -50% 0; border-radius: 999px; background: rgba(80, 60, 130, .16); }
+.vol-fill { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--v, 1) * 100%); border-radius: inherit; background: linear-gradient(#cda6ff, var(--purple)); }
+.vol-thumb { position: absolute; left: 50%; bottom: calc(var(--v, 1) * 100%); width: calc(4 * var(--u)); height: calc(4 * var(--u)); translate: -50% 50%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0 16%, #dcc6ff 42%, var(--purple) 100%);
+  box-shadow: 0 calc(.4 * var(--u)) calc(.9 * var(--u)) rgba(60, 30, 120, .35), inset 0 calc(-.3 * var(--u)) 0 rgba(0, 0, 0, .12); }
 @media (max-aspect-ratio: 1/1) {
   .logo { width: min(72vw, 42vh); }
   .start-btn { --sb-w: min(34vw, 20vh); }

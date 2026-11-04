@@ -12,6 +12,7 @@ import { Fox } from './ui/fox';
 import { Hud } from './ui/hud';
 import { Title } from './ui/title';
 import { twinkle } from './ui/twinkle';
+import { cornerControls } from './ui/corner';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const params = new URLSearchParams(location.search);
@@ -58,6 +59,7 @@ async function boot() {
   const stage = new Stage($('#stage'));
   stage.bg = $('.sky'); stage.resize();
   twinkle($('.sky'));
+  cornerControls();
   const tower = new Tower(stage);
   const fox = new Fox($('#fox'));
   const confetti = new Confetti($<HTMLCanvasElement>('#fx'));
@@ -107,6 +109,7 @@ async function boot() {
     window.removeEventListener('keydown', firstTouch, true);
     unlock();
     if ((e.target as Element | null)?.closest?.('#btnStart')) { greeted = true; return; }
+    if ((e.target as Element | null)?.closest?.('#btnExit')) return;     // leaving: no hello
     hello();
   };
   window.addEventListener('pointerdown', firstTouch, true);

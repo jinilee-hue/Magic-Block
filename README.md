@@ -16,11 +16,18 @@
 
 ## 화면
 - 배경: `jenga_bg`(사용자 그림, 분홍 테이블)를 필터 없이 `src/assets/bg.webp`로 씀. 탑은 그림 속 둥근 테이블 위에 서도록 카메라를 맞춤(`stage.ts`의 `BG` 좌표 — 그림을 바꾸면 테이블 중심·반지름을 다시 재야 함).
-- 로고: `jenga_logo` → `src/assets/logo.webp`. 첫 화면 위쪽 가운데.
-- START 버튼: `jenga_btn_start` → `src/assets/btn_start.webp`(투명 여백을 잘라 폭 900px). 탑 아래 테이블 앞쪽에 놓임.
-- 첫 화면 탑: 10층, 앞면 긴 블럭마다 m단어. 몇 초마다 m블럭 하나가 반짝이며 반쯤 빠졌다 들어감. 여우는 오른쪽에서 손을 흔듦.
+  - 그림 속 햇살의 금빛 먼지 불빛 82개가 각자 박자로 계속 반짝임(`src/ui/twinkle.ts`; 위치는 `tools/find_sparkles.py` → `src/data/sparkles.json`, 그림을 바꾸면 다시 돌림).
+  - 탑 그림자는 탑 가까이에만 짧고 부드럽게(멀어질수록 옅어져 테이블 끝에서 잘리지 않음).
+- 첫 화면: 게임과 같은 탑(12층) 위 가운데에 로고(`jenga_logo` → `src/assets/logo.webp`)와 START(`jenga_btn_start` → `src/assets/btn_start.webp`).
+  - 탑 앞면 긴 블럭마다 m단어. 몇 초마다 m블럭 하나가 반짝이며 반쯤 빠졌다 들어감. 테이블 위에 블럭 4개가 떨어져 있음. 여우는 오른쪽에서 손을 흔듦.
+  - 오른쪽 위: 소리 버튼(누르면 세로 볼륨 막대, 위 = 크게, 맨 아래 = 소리 끔) · 나가기 버튼(게임을 연 이전 페이지로).
 - 인트로 영상: 아직 없음. `public/intro.mp4`를 넣으면 첫 화면 앞에서 자동 재생(건너뛰기 버튼 포함), 없으면 바로 첫 화면.
-- 블럭: 파스텔로 칠한 나무(나뭇결), 실제 젠가 비율(두께 0.6). `?bh=0.75`처럼 두께를 바꿔 볼 수 있음.
+- 블럭: 파스텔로 칠한 나무(나뭇결), 실제 젠가 비율(두께 0.6). `?bh=0.75`(두께), `?layers=10`(층수)로 바꿔 볼 수 있음.
+
+## 소리
+- 배경음악: `tools/make_bgm.py`로 직접 만든 신나는 루프(C장조 128 BPM, 30초: 마림바 멜로디 · 통통 튀는 베이스 · 우쿨렐레 반주 · 킥/박수/하이햇). 첫 화면부터 게임 끝까지 이어지고, 아이가 읽는 동안은 꺼짐.
+- 브라우저는 화면을 한 번 누르기 전에는 소리를 못 냄 → 첫 화면에서 처음 누르면 음악과 여우 인사("Hi, friends! Welcome to Magic Jenga!" · "Press start to play!")가 시작. 처음 누른 곳이 START면 바로 게임 안내로.
+- 첫 판 시작 때 게임 안내: "Let's play Magic Jenga!" → "Take turns with your friend." → "Find a block that starts with m!" /m/ /m/ → "Pull it out and read the word. Then the block is yours!" → "Get the most blocks to win!" → 탑 돌리기 안내. 다음 판부터는 짧게.
 
 ## 만든 방법
 - three.js(WebGL) 탑, 마지막 붕괴는 cannon-es 물리.
@@ -31,7 +38,6 @@
   (mad, mailbox, make, maze, met, mess, mix, mom, mud)는 카드 없이 블럭만 보입니다 — `public/cards/<단어>.webp`로 넣고 `tools/import_cards.py`를 다시 돌리면 나옵니다.
 - 단어 출처: `tools/build_words.py` (SAD·FPR 단어 연구 자료집 → `src/data/words.json`, 쪽 번호 포함).
 - 여우: 사용자가 만든 Gemini 영상에서 잘라 씀(제미나이 마크 제거).
-- 배경음악: `tools/make_bgm.py`로 만든 오르골 루프.
 
 ## 도구
 | 파일 | 하는 일 |
@@ -40,5 +46,6 @@
 | `tools/build_voice.py` | 단어·튜터 음성(사내 TTS, 사내망에서), 공식 첫소리 복사 → `public/voice/`, `src/data/voice.json` |
 | `tools/import_cards.py` | 그림 카드 가져오기 → `public/cards/`, `src/data/cards.json` |
 | `tools/make_bgm.py` | 배경음악 → `public/bgm.mp3` |
+| `tools/find_sparkles.py` | 배경 그림의 반짝이 불빛 위치 → `src/data/sparkles.json` |
 | `tools/qa/*.py` | 헤드리스 화면·흐름 검사 (`?fake=1`, `?seed=`, `?nointro`, `?m=map,mug` = 그 m단어를 탑에 넣기) |
 | `tools/qa/voice_check.ts` | 음성 파일을 whisper로 다시 들어 단어가 맞는지 확인 |

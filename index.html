@@ -73,6 +73,21 @@
         <h1 class="logo"><img src="./src/assets/logo.webp" alt="Magic Jenga" draggable="false" /></h1>
         <button id="btnStart" class="start-btn" aria-label="Start"><img src="./src/assets/btn_start.webp" alt="START!" draggable="false" /></button>
       </div>
+      <!-- sound (speaker + volume slider) and exit, top right -->
+      <div class="sysbar">
+        <div id="vol" class="vol">
+          <button id="btnSound" class="btn3d sq purple" aria-label="Volume" aria-expanded="false" aria-controls="volPanel">
+            <svg class="ic-on" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11" /></svg>
+            <svg class="ic-off" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M16 9.5l5 5M21 9.5l-5 5" /></svg>
+          </button>
+          <div id="volPanel" class="vol-panel" role="slider" tabindex="0" aria-label="Volume" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" hidden>
+            <div class="vol-track"><i class="vol-fill"></i><i class="vol-thumb"></i></div>
+          </div>
+        </div>
+        <button id="btnExit" class="btn3d sq purple" aria-label="Exit">
+          <svg viewBox="0 0 24 24"><path d="M13.5 4h4.8A1.7 1.7 0 0 1 20 5.7v12.6a1.7 1.7 0 0 1-1.7 1.7h-4.8" /><path d="M9.5 16.5 5 12l4.5-4.5" /><path d="M5 12h10" /></svg>
+        </button>
+      </div>
     </div>
 
     <!-- intro video -->

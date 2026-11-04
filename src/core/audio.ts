@@ -7,8 +7,8 @@ type Clip = [file: string, start: number, gain: number, dur: number];
 const CLIPS = (voiceData as unknown as { clips: Record<string, Clip> }).clips;
 
 const SETTINGS_KEY = 'pj-settings-v1';
-export const settings: { music: boolean; sfx: boolean } = (() => {
-  try { return { music: true, sfx: true, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; } catch { return { music: true, sfx: true }; }
+export const settings: { music: boolean; sfx: boolean; volume: number } = (() => {
+  try { return { music: true, sfx: true, volume: 1, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; } catch { return { music: true, sfx: true, volume: 1 }; }
 })();
 const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* private mode */ } };
 
@@ -27,7 +27,7 @@ export function unlock(): AudioContext {
   if (!ctx) {
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     ctx = new AC({ latencyHint: 'interactive' });
-    master = ctx.createGain(); master.connect(ctx.destination);
+    master = ctx.createGain(); master.gain.value = settings.volume ** 2; master.connect(ctx.destination);
     voiceBus = ctx.createGain(); voiceBus.connect(master);
     sfxBus = ctx.createGain(); sfxBus.gain.value = settings.sfx ? SFX_VOL : 0; sfxBus.connect(master);
     musicDuck = ctx.createGain(); musicDuck.connect(master);
@@ -91,9 +91,14 @@ function applyDuck() {
 
 export function setMusic(on: boolean) { settings.music = on; saveSettings(); if (ctx) musicBus.gain.setTargetAtTime(on ? MUSIC_VOL : 0, ctx.currentTime, 0.1); if (on) startMusic(); }
 export function setSfx(on: boolean) { settings.sfx = on; saveSettings(); if (ctx) sfxBus.gain.setTargetAtTime(on ? SFX_VOL : 0, ctx.currentTime, 0.05); }
+/** Master volume 0–1 (the title's slider), heard as v² so the slider feels even; 0 = silent. */
+export function setVolume(v: number) {
+  settings.volume = Math.max(0, Math.min(1, v)); saveSettings();
+  if (ctx) master.gain.setTargetAtTime(settings.volume ** 2, ctx.currentTime, 0.03);
+}
 
-// ── music: an original music-box loop (tools/make_bgm.py; the concept videos have no music track) ─────────────
-const MUSIC_LOOP = 40;   // seconds: 16 bars at 96 BPM — loop exactly there (an mp3 pads its last frame)
+// ── music: an original upbeat loop (tools/make_bgm.py; the concept videos have no music track) ─────────────────
+const MUSIC_LOOP = 30;   // seconds: 16 bars at 128 BPM — loop exactly there (an mp3 pads its last frame)
 let music: AudioBufferSourceNode | null = null, musicLoading: Promise<AudioBuffer | null> | null = null;
 export async function startMusic() {
   if (!ctx || music || !settings.music) return;
