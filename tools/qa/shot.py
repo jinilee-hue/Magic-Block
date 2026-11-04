@@ -31,7 +31,7 @@ async def main():
         pg = await br.new_page(viewport={'width': W, 'height': H}, device_scale_factor=1)
         pg.on('console', lambda m: errors.append(f'{m.type}: {m.text[:200]}') if m.type in ('error', 'warning') else None)
         pg.on('pageerror', lambda e: errors.append(f'pageerror: {e}'))
-        await pg.goto(BASE + '?nointro&fake=1&seed=3' + os.environ.get('Q', ''), wait_until='load')
+        await pg.goto(BASE + '?nointro&nopick&fake=1&seed=3' + os.environ.get('Q', ''), wait_until='load')
         await pg.wait_for_function('window.__pj && document.querySelector("#app").dataset.screen === "title"', timeout=30000)
         await pg.wait_for_timeout(2500)
         await pg.screenshot(path=f'{OUT}/01_title.png')

@@ -9,6 +9,8 @@ const CHIP_MAX = 8;
 export class Hud {
   readonly app = $('#app');
   private cards = [$('#p1'), $('#p2')];
+  /** each player's animal (symbol #ava-<id>) */
+  private animals: [string, string] = ['bunny', 'kitty'];
   private pill = $('#turnPill');
   private read = $('#read');
   private mic = $('#btnMic');
@@ -108,7 +110,15 @@ export class Hud {
   noMic(on: boolean) { this.thumb.hidden = !on; this.mic.hidden = on; }
   pulseListen(on: boolean) { this.listenBtn.classList.toggle('pulse', on); }
 
-  swipe(on: boolean) { $('#swipe').classList.toggle('on', on); }
+  swipe(on: boolean) { $('#swipe').classList.toggle('on', on); this.onSwipe(on); }
+  /** main.ts: the 3D ring of arrows on the table (game/spinhint.ts) */
+  onSwipe: (on: boolean) => void = () => {};
+
+  /** the animals the players picked on the title: their cards and the result book show them */
+  setAnimals(a: [string, string]) {
+    this.animals = a;
+    this.cards.forEach((c, p) => c.querySelector('.avatar use')?.setAttribute('href', `#ava-${a[p]}`));
+  }
 
   /** the picture card of the word being read, standing just above the presented block (box = its screen rect);
    *  null = put it away. Tapping it plays the word again. */
@@ -154,7 +164,7 @@ export class Hud {
       const got = players[p].got;
       page.classList.toggle('winner', winner === p);
       page.innerHTML = `
-        <div class="ava"><svg viewBox="0 0 64 64"><use href="#${p ? 'ava-kitty' : 'ava-bunny'}" /></svg>${winner === p ? CROWN : ''}</div>
+        <div class="ava"><svg viewBox="0 0 64 64"><use href="#ava-${this.animals[p]}" /></svg>${winner === p ? CROWN : ''}</div>
         <h2>Player ${p + 1}</h2>
         <div class="big"><i class="mini-block" style="--pc: var(--p${p + 1})"></i>${got.length}</div>
         <div class="words"></div>`;

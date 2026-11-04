@@ -43,6 +43,8 @@ export class Game {
   turn = 0;
   state: 'off' | 'intro' | 'choose' | 'busy' | 'end' = 'off';
   firstGame = true;
+  /** the players' animals, picked on the title (ui/picker.ts) */
+  animals: [string, string] = ['bunny', 'kitty'];
   /** test hooks: ?fake=1 replaces the microphone with this queue (string = what was heard, null = silence) */
   test = { fake: false, heard: [] as Heard[], log: [] as string[] };
   /** test hook (?m=map,mug): these m-words are in the next tower whatever the deck says */
@@ -124,17 +126,20 @@ export class Game {
     const r = rng(this.seed ?? ((Math.random() * 1e9) | 0));
     const words = this.pickWords(r, take);
     if (!take) {
-      // the title tower = a game tower with the next game's words, set out for show: an m-word on the front face of
-      // every long layer (slot 2 faces the title camera), the other m-words in the cross layers
-      const nM = words.filter((w) => w.m).length, front = Math.ceil(TITLE_LAYERS / 2);
+      // the title tower = the next game's words (plus a few more: the title tower is taller), set out for show: an
+      // m-word on the front face of every long layer (slot 2 faces the title camera), the other m-words in the cross
+      // layers
+      const extra = shuffle(this.words.filter((w) => !w.m && !words.includes(w)), r).slice(0, Math.max(0, TITLE_LAYERS * 3 - words.length));
+      const all = [...words, ...extra];
+      const nM = all.filter((w) => w.m).length, front = Math.ceil(TITLE_LAYERS / 2);
       const plan: number[][] = Array.from({ length: TITLE_LAYERS }, (_, l) => (l % 2 === 0 ? [2] : []));
       const cross = shuffle(Array.from({ length: TITLE_LAYERS - front }, (_, i) => i * 2 + 1), r);
       let left = nM - front;
       for (const l of cross) if (left > 0) { plan[l] = [Math.floor(r() * 3)]; left--; }
       for (const l of cross) if (left > 0) { plan[l] = [0, 2]; left--; }
-      this.tower.build(words, r, TITLE_LAYERS, nM >= front && left === 0 ? plan : undefined);
+      this.tower.build(all, r, TITLE_LAYERS, nM >= front && left === 0 && all.length === TITLE_LAYERS * 3 ? plan : undefined);
       // and a few blocks lying about on the table: words that are not in the tower (two m-words, two others)
-      const inTower = new Set(words.map((w) => w.w));
+      const inTower = new Set(all.map((w) => w.w));
       const rest = shuffle(this.words.filter((w) => !inTower.has(w.w)), r);
       const ms = rest.filter((w) => w.m), os = rest.filter((w) => !w.m);
       this.tower.scatter([ms[0], os[0], ms[1], os[1]].filter(Boolean), r);
@@ -149,7 +154,7 @@ export class Game {
     this.abort();
     const s = this.session;
     this.players = [{ got: [] }, { got: [] }]; this.turn = 0; this.greatIdx = 0;
-    this.hud.reset(); this.hud.setTurn(0, false); this.hud.screen('game');
+    this.hud.reset(); this.hud.setAnimals(this.animals); this.hud.setTurn(0, false); this.hud.screen('game');
     this.buildTower(true);
     void this.tower.dropIn(() => sfx('tick'));
     this.stage.home();

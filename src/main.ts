@@ -1,16 +1,18 @@
 import './style.css';
 import wordData from './data/words.json';
-import { sfx, startMusic, unlock } from './core/audio';
+import { sfx, startMusic, unlock, voiceLevel } from './core/audio';
 import { micTest } from './core/mic';
 import { onTalk, said, say } from './core/speech';
 import { sttPreload, sttState } from './core/stt';
 import { Game } from './game/game';
+import { SpinHint } from './game/spinhint';
 import { Stage } from './game/stage';
 import { Tower, type WordInfo } from './game/tower';
 import { Confetti } from './ui/confetti';
 import { Fox } from './ui/fox';
 import { Hud } from './ui/hud';
 import { Title } from './ui/title';
+import { Picker } from './ui/picker';
 import { twinkle } from './ui/twinkle';
 import { cornerControls } from './ui/corner';
 
@@ -61,7 +63,10 @@ async function boot() {
   twinkle($('.sky'));
   cornerControls();
   const tower = new Tower(stage);
+  const spin = new SpinHint(stage, $('#swipe'));
+  hud.onSwipe = (on) => spin.show(on);
   const fox = new Fox($('#fox'));
+  fox.level = voiceLevel;          // lip sync: the mouth follows the voice
   const confetti = new Confetti($<HTMLCanvasElement>('#fx'));
   onTalk((on) => fox.onTalk(on));
   void fox.load();
@@ -71,18 +76,27 @@ async function boot() {
   game.test.fake = params.has('fake');
   game.forceM = (params.get('m') ?? '').split(',').filter(Boolean);
   game.buildTower(false);
-  // the title screen (logo on top, a shorter tower on the table, START on its front edge, the fox waving)
+  // the title screen (the game's tower with the logo and START over it, blocks lying on the table, the fox waving)
   const title = new Title(hud.app, stage, tower, fox, confetti);
   game.onTitle = () => title.enter();
+  // START → Player 1 and Player 2 pick their animals → the game (?nopick: straight in, for the QA scripts)
+  const picker = new Picker(hud.app, fox);
 
-  const begin = () => {
-    unlock(); sfx('start');
+  const go = () => { sfx('start'); void game.start(); };
+  const begin = async () => {
+    unlock();
     sttPreload();
     void startMusic();
-    void game.start();
+    if (params.has('nopick')) { go(); return; }
+    if (picker.open) return;
+    sfx('tap');
+    const p = await picker.pick();
+    if (!p || hud.app.dataset.screen !== 'title') return;
+    game.animals = p;
+    go();
   };
-  $('#btnStart').addEventListener('click', begin);
-  hud.onHome = () => game.toTitle();
+  $('#btnStart').addEventListener('click', () => { void begin(); });
+  hud.onHome = () => { picker.close(); game.toTitle(); };
   hud.onAgain = () => { hud.hideResult(); void game.start(); };
   hud.onResultHome = () => { hud.hideResult(); game.toTitle(); };
 
@@ -117,7 +131,7 @@ async function boot() {
   if (await intro) playIntro(hud, toTitle); else toTitle();
 
   // test / debug hooks
-  Object.assign(window, { __pj: { game, tower, stage, hud, fox, confetti, say, said, sttState, begin, micTest } });
+  Object.assign(window, { __pj: { game, tower, stage, hud, fox, confetti, say, said, sttState, begin, micTest, voiceLevel } });
 }
 
 void boot();

@@ -1,12 +1,18 @@
 // The fox tutor: sprite-sheet clips cut from the concept video (public/fox/fox.json + <clip>.webp), played as
 // ping-pong loops on a canvas with a short cross-fade between clips. While the tutor talks it shows a talking clip
 // (talk / point / say …); otherwise it idles. Gestures (happy, cheer) play for a while and fall back.
+// Lip sync: while a line plays, the mouth follows the voice — a closed / half-open / open mouth cut from the fox's own
+// frames (public/fox/mouth.webp, tools/build_fox_mouth.py) is laid over each talking frame at that frame's nose.
 export type Pose = 'idle' | 'talk' | 'point' | 'happy' | 'say' | 'cheer';
+type Mouth = 'closed' | 'half' | 'open';
 
 interface ClipMeta { file: string; frames: number; cols: number; fps: number }
-interface FoxMeta { frameW: number; frameH: number; anchor?: { x: number; y: number }; headTop?: number; clips: Record<string, ClipMeta> }
+interface MouthMeta { box: [number, number, number, number]; clips: Record<string, { nose: [number, number][]; patch: Record<Mouth, number>; skip: number[] }> }
+interface FoxMeta { frameW: number; frameH: number; anchor?: { x: number; y: number }; headTop?: number; clips: Record<string, ClipMeta>; mouth?: MouthMeta }
 
 const FADE_MS = 160;
+// voice loudness (RMS, see audio.voiceLevel) → mouth: about a quarter of the voiced moments closed, the loud half open
+const HALF_AT = 0.04, OPEN_AT = 0.125, HOLD_MS = 55;
 
 export class Fox {
   private cv: HTMLCanvasElement;
@@ -20,6 +26,11 @@ export class Fox {
   private gestureTimer = 0;
   talkPose: Pose = 'talk';
   ready = false;
+  /** the voice level to lip-sync to (main.ts wires audio.voiceLevel) */
+  level: () => number = () => 0;
+  private mouthIm: HTMLImageElement | null = null;
+  mouth: Mouth = 'closed';
+  private mouthAt = 0;
 
   constructor(private el: HTMLElement) {
     this.cv = el.querySelector('canvas')!;
@@ -35,12 +46,21 @@ export class Fox {
       this.meta = await r.json() as FoxMeta;
     } catch { return false; }
     const m = this.meta!;
-    await Promise.all(Object.entries(m.clips).map(([k, c]) => new Promise<void>((res) => {
+    const sheets = Object.entries(m.clips).map(([k, c]) => new Promise<void>((res) => {
       const im = new Image(); im.decoding = 'async';
       im.onload = () => { this.sheets.set(k, im); res(); };
       im.onerror = () => res();
       im.src = base + c.file;
-    })));
+    }));
+    if (m.mouth) {
+      sheets.push(new Promise<void>((res) => {
+        const im = new Image(); im.decoding = 'async';
+        im.onload = () => { this.mouthIm = im; res(); };
+        im.onerror = () => res();
+        im.src = base + 'mouth.webp';
+      }));
+    }
+    await Promise.all(sheets);
     this.cv.width = m.frameW; this.cv.height = m.frameH;
     this.ready = this.sheets.size > 0;
     this.el.classList.toggle('ready', this.ready);
@@ -104,5 +124,17 @@ export class Fox {
     }
     this.blit(pose, f, 1);
     this.g.globalAlpha = 1;
+    this.lipSync(pose, f, now);
+  }
+
+  /** while a line plays, lay the mouth that matches the voice over this frame's mouth */
+  private lipSync(pose: Pose, f: number, now: number) {
+    const mm = this.meta?.mouth, clip = mm?.clips[pose];
+    const lv = this.talking ? this.level() : 0;
+    const want: Mouth = lv > OPEN_AT ? 'open' : lv > HALF_AT ? 'half' : 'closed';
+    if (want !== this.mouth && now - this.mouthAt > HOLD_MS) { this.mouth = want; this.mouthAt = now; }
+    if (!this.talking || !mm || !clip || !this.mouthIm || clip.skip.includes(f) || !clip.nose[f]) return;
+    const [pw, ph, ox, oy] = mm.box, [nx, ny] = clip.nose[f];
+    this.g.drawImage(this.mouthIm, clip.patch[this.mouth] * pw, 0, pw, ph, Math.round(nx + ox), Math.round(ny + oy), pw, ph);
   }
 }

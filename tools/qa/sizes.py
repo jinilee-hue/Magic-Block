@@ -33,7 +33,7 @@ async def main():
             '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'])
         for W, H in SIZES:
             pg = await br.new_page(viewport={'width': W, 'height': H})
-            await pg.goto(f'{BASE}?nointro&fake=1&seed=3', wait_until='load')
+            await pg.goto(f'{BASE}?nointro&nopick&fake=1&seed=3', wait_until='load')
             await pg.wait_for_function('window.__pj && document.querySelector("#app").dataset.screen === "title"', timeout=30000)
             await pg.wait_for_timeout(1500)
             await pg.screenshot(path=f'{OUT}/size_{W}x{H}_title.png')

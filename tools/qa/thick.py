@@ -26,7 +26,7 @@ async def main():
             pg = await br.new_page(viewport={'width': W, 'height': H}, device_scale_factor=1)
             errs = []
             pg.on('pageerror', lambda e: errs.append(str(e)))
-            await pg.goto(f'{BASE}?nointro&fake=1&seed=3&{q}', wait_until='load')
+            await pg.goto(f'{BASE}?nointro&nopick&fake=1&seed=3&{q}', wait_until='load')
             await pg.wait_for_function('window.__pj && document.querySelector("#app").dataset.screen === "title"', timeout=30000)
             await pg.click('#btnStart', force=True)
             await pg.wait_for_function('window.__pj.game.state === "choose"', timeout=60000)

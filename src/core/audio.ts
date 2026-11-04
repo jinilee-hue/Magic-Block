@@ -15,6 +15,16 @@ const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.strin
 const MUSIC_VOL = 0.3, SFX_VOL = 0.55;
 let ctx: AudioContext | null = null;
 let master!: GainNode, voiceBus!: GainNode, sfxBus!: GainNode, musicBus!: GainNode, musicDuck!: GainNode;
+let voiceAn: AnalyserNode | null = null;
+const voiceBuf = new Float32Array(1024);
+/** how loud the tutor's voice is right now (RMS of the last ~21 ms, before the master volume): the fox's mouth */
+export function voiceLevel(): number {
+  if (!voiceAn) return 0;
+  voiceAn.getFloatTimeDomainData(voiceBuf);
+  let s = 0;
+  for (let i = 0; i < voiceBuf.length; i++) s += voiceBuf[i] * voiceBuf[i];
+  return Math.sqrt(s / voiceBuf.length);
+}
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
 const base = new URL('./', location.href).href;
 
@@ -29,6 +39,7 @@ export function unlock(): AudioContext {
     ctx = new AC({ latencyHint: 'interactive' });
     master = ctx.createGain(); master.gain.value = settings.volume ** 2; master.connect(ctx.destination);
     voiceBus = ctx.createGain(); voiceBus.connect(master);
+    voiceAn = ctx.createAnalyser(); voiceAn.fftSize = 1024; voiceBus.connect(voiceAn);
     sfxBus = ctx.createGain(); sfxBus.gain.value = settings.sfx ? SFX_VOL : 0; sfxBus.connect(master);
     musicDuck = ctx.createGain(); musicDuck.connect(master);
     musicBus = ctx.createGain(); musicBus.gain.value = settings.music ? MUSIC_VOL : 0; musicBus.connect(musicDuck);

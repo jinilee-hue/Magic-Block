@@ -28,13 +28,18 @@ export class Title {
     this.nextTease = this.t + 1.2; this.nextWave = this.t + 1.5;
   }
 
-  /** the title tower is the game's own size; the logo + START group is centred on its middle (--tower-mid) */
+  /** the title tower is drawn at the game's scale — taller than the game tower, so it is shrunk (from its foot) only
+   *  if its top would leave the screen; the logo + START group is centred on its middle (--tower-mid) */
   fit() {
     if (!this.on) return;
     this.tower.baseScale = 1;
     this.pose(this.t);
     this.stage.camera.updateMatrixWorld();
-    const foot = this.stage.tableAt.y, top = this.stage.project(new THREE.Vector3(0, this.tower.topH(), 0)).y;
+    const foot = this.stage.tableAt.y, h = this.tower.topH(), margin = this.app.clientHeight * 0.03;
+    const topAt = (s: number) => this.stage.project(new THREE.Vector3(0, h * s, 0)).y;
+    let s = 1, top = topAt(1);
+    if (top < margin) { s = Math.max(0.6, (foot - margin) / Math.max(1, foot - top)); top = topAt(s); }
+    this.tower.baseScale = s;
     document.documentElement.style.setProperty('--tower-mid', `${((top + foot) / 2).toFixed(1)}px`);
   }
 

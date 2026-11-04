@@ -9,12 +9,12 @@ import { animate, ease, shuffle } from './anim';
 import type { Stage } from './stage';
 
 export const L = 3, D = 1;
-/** block thickness: real Jenga is 0.6. ?bh=0.75 overrides it for side-by-side looks. */
-export const H = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('bh')) || 0.6;
-export const LAYERS = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layers')) || 12;
-/** the title screen shows the game's own tower (option A the user picked: the same thick blocks, the logo and START
- *  centred over it, m-words on its front face) */
-export const TITLE_LAYERS = LAYERS;
+/** block thickness (user picked "thicker blocks with 10 layers": 0.75, real Jenga is 0.6). ?bh= overrides it. */
+export const H = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('bh')) || 0.75;
+export const LAYERS = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layers')) || 10;
+/** the title shows a taller tower than the game (user: "첫화면에는 갯수 더 많아도 괜찮은거 같은데"): same blocks,
+ *  logo and START centred over it, m-words on its front face */
+export const TITLE_LAYERS = 12;
 /** m-words in one game */
 export const M_PER_GAME = 14;
 const DG = 0.035, HG = 0.012;                // gaps between blocks / layers

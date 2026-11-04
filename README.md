@@ -6,23 +6,26 @@
 - 로컬 실행: `npm install` 후 `npm run dev` → http://localhost:5195/
 
 ## 게임 규칙
-- 한 판 36블럭(12층×3) = m단어 14개 + 다른 FPR K 단어 22개(함정 단어 jam·lamp 항상 포함).
+- 한 판 30블럭(10층×3) = m단어 14개 + 다른 FPR K 단어 16개(함정 단어 jam·lamp 항상 포함).
 - FPR K m단어 28개를 기기마다 한 줄로 섞어 두고 판마다 다음 14개를 씁니다 → 두 판이면 28개가 한 번씩 다 나옵니다.
 - m블럭을 고르면: 블럭이 빠져 크게 떠오르고, 위에 그 단어의 그림 카드가 섭니다 → 여우가 단어를 읽어 줌 → 아이가 따라 읽음(마이크) → 맞으면 내 블럭, 친구 차례. 그림 카드를 누르면 다시 들려줍니다.
 - 못 읽으면 여우가 다시 들려주고 다시 듣습니다. 진짜로 읽은 시도가 3번 안 통하면 "Good try!"로 블럭을 줍니다(무음은 통과 안 됨).
 - m이 아닌 블럭을 고르면: 안 빠지고 흔들림 → 여우가 그 단어의 첫소리를 알려 줌(FPR K 공식 낱소리 녹음) → 친구 차례.
 - m블럭을 다 빼면 탑이 와르르 무너지고, 더 많이 모은 사람이 이깁니다.
 - 탑은 드래그로 360° 돌리고 조금 기울일 수 있고, 두 손가락(또는 휠)로 가까이 볼 수 있습니다(방 그림도 같이 커짐).
+  - 첫 판에서 여우가 돌리는 법을 알려 줄 때: 테이블 위 탑 둘레에 화살표 고리가 돌고, 할리갈리 손가락이 고리 앞을 따라 끌어 보여 줌(`src/game/spinhint.ts`, 손 그림 = 할리갈리 `tap_hand.png` → `src/assets/hand.webp`).
 
 ## 화면
 - 배경: `jenga_bg`(사용자 그림, 분홍 테이블)를 필터 없이 `src/assets/bg.webp`로 씀. 탑은 그림 속 둥근 테이블 위에 서도록 카메라를 맞춤(`stage.ts`의 `BG` 좌표 — 그림을 바꾸면 테이블 중심·반지름을 다시 재야 함).
   - 그림 속 햇살의 금빛 먼지 불빛 82개가 각자 박자로 계속 반짝임(`src/ui/twinkle.ts`; 위치는 `tools/find_sparkles.py` → `src/data/sparkles.json`, 그림을 바꾸면 다시 돌림).
   - 탑 그림자는 탑 가까이에만 짧고 부드럽게(멀어질수록 옅어져 테이블 끝에서 잘리지 않음).
-- 첫 화면: 게임과 같은 탑(12층) 위 가운데에 로고(`jenga_logo` → `src/assets/logo.webp`)와 START(`jenga_btn_start` → `src/assets/btn_start.webp`).
+- 첫 화면: 탑(12층 — 게임보다 2층 많음, 화면 위로 넘치면 조금 줄임) 위 가운데에 로고(`jenga_logo` → `src/assets/logo.webp`)와 START(`jenga_btn_start` → `src/assets/btn_start.webp`).
   - 탑 앞면 긴 블럭마다 m단어. 몇 초마다 m블럭 하나가 반짝이며 반쯤 빠졌다 들어감. 테이블 위에 블럭 4개가 떨어져 있음. 여우는 오른쪽에서 손을 흔듦.
-  - 오른쪽 위: 소리 버튼(누르면 세로 볼륨 막대, 위 = 크게, 맨 아래 = 소리 끔) · 나가기 버튼(게임을 연 이전 페이지로).
+  - 오른쪽 위: 소리 버튼(누르면 세로 볼륨 막대, 위 = 크게, 맨 아래 = 소리 끔 → 버튼에 빨간 X) · 나가기 버튼(게임을 연 이전 페이지로). 버튼 그림은 사용자 그림(`jenga_btn_sound`, `jenga_btn_out` → 투명 여백을 잘라 280px `src/assets/btn_sound.webp`, `btn_out.webp`).
+- 캐릭터 고르기: START → 플레이어 1이 동물 4종(토끼·고양이·강아지·판다) 중 하나 → 플레이어 2(먼저 고른 동물은 P1 표시, 못 고름) → 게임. 여우가 "Player one, pick your animal!" 등으로 안내하고 고른 동물 이름을 말해 줌. 고른 동물이 게임 화면 플레이어 카드와 결과 화면에 나옴. 왼쪽 위 `<`는 첫 화면으로(`src/ui/picker.ts`).
+  - 지금 동물 그림은 임시 SVG(`index.html`의 `#ava-*`). 여우 같은 3D 그림 4장이 오면 바꿈.
 - 인트로 영상: 아직 없음. `public/intro.mp4`를 넣으면 첫 화면 앞에서 자동 재생(건너뛰기 버튼 포함), 없으면 바로 첫 화면.
-- 블럭: 파스텔로 칠한 나무(나뭇결), 실제 젠가 비율(두께 0.6). `?bh=0.75`(두께), `?layers=10`(층수)로 바꿔 볼 수 있음.
+- 블럭: 파스텔로 칠한 나무(나뭇결), 실제 젠가(0.6)보다 두꺼운 0.75에 10층 — 블럭과 글자가 크게 보이도록(사용자 선택). `?bh=`(두께), `?layers=`(층수)로 바꿔 볼 수 있음.
 
 ## 소리
 - 배경음악: `tools/make_bgm.py`로 직접 만든 신나는 루프(C장조 128 BPM, 30초: 마림바 멜로디 · 통통 튀는 베이스 · 우쿨렐레 반주 · 킥/박수/하이햇). 첫 화면부터 게임 끝까지 이어지고, 아이가 읽는 동안은 꺼짐.
@@ -38,6 +41,7 @@
   (mad, mailbox, make, maze, met, mess, mix, mom, mud)는 카드 없이 블럭만 보입니다 — `public/cards/<단어>.webp`로 넣고 `tools/import_cards.py`를 다시 돌리면 나옵니다.
 - 단어 출처: `tools/build_words.py` (SAD·FPR 단어 연구 자료집 → `src/data/words.json`, 쪽 번호 포함).
 - 여우: 사용자가 만든 Gemini 영상에서 잘라 씀(제미나이 마크 제거).
+  - 입 모양(립싱크): 3D 모델 없이, 여우가 말할 때 목소리 크기(Web Audio AnalyserNode)에 따라 닫힘·조금 벌림·크게 벌림 3단계 입 그림을 코 아래에 덮어 그림. 입 그림은 영상 프레임에서 뽑음(`tools/build_fox_mouth.py` → `public/fox/mouth.webp`, 위치는 `public/fox/fox.json`의 `mouth`).
 
 ## 도구
 | 파일 | 하는 일 |
@@ -47,5 +51,6 @@
 | `tools/import_cards.py` | 그림 카드 가져오기 → `public/cards/`, `src/data/cards.json` |
 | `tools/make_bgm.py` | 배경음악 → `public/bgm.mp3` |
 | `tools/find_sparkles.py` | 배경 그림의 반짝이 불빛 위치 → `src/data/sparkles.json` |
-| `tools/qa/*.py` | 헤드리스 화면·흐름 검사 (`?fake=1`, `?seed=`, `?nointro`, `?m=map,mug` = 그 m단어를 탑에 넣기) |
+| `tools/build_fox_mouth.py` | 여우 영상에서 입 모양 3단계 뽑기 → `public/fox/mouth.webp`, `fox.json` |
+| `tools/qa/*.py` | 헤드리스 화면·흐름 검사 (`?fake=1`, `?seed=`, `?nointro`, `?nopick` = 캐릭터 고르기 건너뛰기, `?m=map,mug` = 그 m단어를 탑에 넣기) |
 | `tools/qa/voice_check.ts` | 음성 파일을 whisper로 다시 들어 단어가 맞는지 확인 |
