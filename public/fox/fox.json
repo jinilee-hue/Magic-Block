@@ -1,0 +1,47 @@
+{
+ "frameW": 386,
+ "frameH": 490,
+ "anchor": {
+  "x": 176.8,
+  "y": 457.0
+ },
+ "headTop": 46.0,
+ "clips": {
+  "talk": {
+   "file": "talk.webp",
+   "frames": 17,
+   "cols": 5,
+   "fps": 12
+  },
+  "point": {
+   "file": "point.webp",
+   "frames": 15,
+   "cols": 5,
+   "fps": 12
+  },
+  "happy": {
+   "file": "happy.webp",
+   "frames": 20,
+   "cols": 6,
+   "fps": 12
+  },
+  "idle": {
+   "file": "idle.webp",
+   "frames": 12,
+   "cols": 4,
+   "fps": 12
+  },
+  "say": {
+   "file": "say.webp",
+   "frames": 17,
+   "cols": 5,
+   "fps": 12
+  },
+  "cheer": {
+   "file": "cheer.webp",
+   "frames": 15,
+   "cols": 5,
+   "fps": 12
+  }
+ }
+}

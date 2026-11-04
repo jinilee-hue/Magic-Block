@@ -1,0 +1,1522 @@
+{
+ "book": "FPR K (From Phonics to Reading K)",
+ "source": "SAD·FPR 단어 연구 자료집 v1.0 (2026-10-05) · b2_book_FPRK.json",
+ "target": "m",
+ "excluded": {
+  "max": "이름(Max)",
+  "meg": "이름(Meg)",
+  "mike": "이름(Mike)",
+  "man digging": "그림 설명 구절",
+  "man juggling": "그림 설명 구절",
+  "man with hats": "그림 설명 구절",
+  "mom with popcorn": "그림 설명 구절"
+ },
+ "words": [
+  {
+   "w": "mad",
+   "lemma": "mad",
+   "m": true,
+   "first": "m",
+   "ko": "화난",
+   "pos": "adjective",
+   "pages": [
+    141,
+    177,
+    363,
+    370,
+    374,
+    386,
+    397
+   ],
+   "lessons": [
+    11,
+    14,
+    29,
+    30
+   ],
+   "cat": "인쇄",
+   "alts": [],
+   "rivals": [
+    "bad",
+    "dad",
+    "had",
+    "pad",
+    "sad",
+    "lad",
+    "fad"
+   ]
+  },
+  {
+   "w": "mail",
+   "lemma": "mail",
+   "m": true,
+   "first": "m",
+   "ko": "우편",
+   "pos": "noun",
+   "pages": [
+    387
+   ],
+   "lessons": [],
+   "cat": "그림",
+   "alts": [
+    "male"
+   ],
+   "rivals": [
+    "bail",
+    "fail",
+    "jail",
+    "nail",
+    "pail",
+    "rail",
+    "sail",
+    "tail",
+    "hail"
+   ]
+  },
+  {
+   "w": "mailbox",
+   "lemma": "mailbox",
+   "m": true,
+   "first": "m",
+   "ko": "우편함",
+   "pos": "noun",
+   "pages": [
+    387
+   ],
+   "lessons": [],
+   "cat": "그림",
+   "alts": [
+    "mail box"
+   ],
+   "rivals": []
+  },
+  {
+   "w": "make",
+   "lemma": "make",
+   "m": true,
+   "first": "m",
+   "ko": "만들다",
+   "pos": "verb",
+   "pages": [
+    216,
+    217,
+    218,
+    221,
+    224,
+    313,
+    363,
+    366
+   ],
+   "lessons": [
+    17,
+    25,
+    29,
+    30
+   ],
+   "cat": "인쇄",
+   "alts": [],
+   "rivals": [
+    "bake",
+    "cake",
+    "fake",
+    "lake",
+    "rake",
+    "take",
+    "wake"
+   ]
+  },
+  {
+   "w": "man",
+   "lemma": "man",
+   "m": true,
+   "first": "m",
+   "ko": "남자",
+   "pos": "noun",
+   "pages": [
+    14,
+    38,
+    46,
+    79,
+    81,
+    85,
+    88,
+    90
+   ],
+   "lessons": [
+    1,
+    3,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    28,
+    30
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "ban",
+    "can",
+    "fan",
+    "pan",
+    "ran",
+    "tan",
+    "van"
+   ]
+  },
+  {
+   "w": "map",
+   "lemma": "map",
+   "m": true,
+   "first": "m",
+   "ko": "지도",
+   "pos": "noun",
+   "pages": [
+    17,
+    65,
+    71,
+    74,
+    76,
+    79,
+    84,
+    90
+   ],
+   "lessons": [
+    1,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    17,
+    25,
+    27,
+    30
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "cap",
+    "gap",
+    "lap",
+    "nap",
+    "rap",
+    "tap",
+    "zap"
+   ]
+  },
+  {
+   "w": "mask",
+   "lemma": "mask",
+   "m": true,
+   "first": "m",
+   "ko": "가면",
+   "pos": "noun",
+   "pages": [
+    223,
+    387
+   ],
+   "lessons": [
+    17
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": [
+    "task",
+    "bask",
+    "cask"
+   ]
+  },
+  {
+   "w": "mat",
+   "lemma": "mat",
+   "m": true,
+   "first": "m",
+   "ko": "매트",
+   "pos": "noun",
+   "pages": [
+    51,
+    52,
+    53,
+    57,
+    60,
+    62,
+    74,
+    76
+   ],
+   "lessons": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    15,
+    17
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "bat",
+    "cat",
+    "fat",
+    "hat",
+    "pat",
+    "rat",
+    "sat"
+   ]
+  },
+  {
+   "w": "match",
+   "lemma": "match",
+   "m": true,
+   "first": "m",
+   "ko": "성냥·어울리다",
+   "pos": "verb",
+   "pages": [
+    49,
+    63,
+    387
+   ],
+   "lessons": [
+    4,
+    5
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "batch",
+    "catch",
+    "hatch",
+    "latch",
+    "patch",
+    "watch"
+   ]
+  },
+  {
+   "w": "maze",
+   "lemma": "maze",
+   "m": true,
+   "first": "m",
+   "ko": "미로",
+   "pos": "noun",
+   "pages": [
+    303,
+    304
+   ],
+   "lessons": [
+    24
+   ],
+   "cat": "그림",
+   "alts": [
+    "maize"
+   ],
+   "rivals": [
+    "daze",
+    "gaze",
+    "haze"
+   ]
+  },
+  {
+   "w": "meat",
+   "lemma": "meat",
+   "m": true,
+   "first": "m",
+   "ko": "고기",
+   "pos": "noun",
+   "pages": [
+    16
+   ],
+   "lessons": [
+    1
+   ],
+   "cat": "그림",
+   "alts": [
+    "meet"
+   ],
+   "rivals": [
+    "beat",
+    "feet",
+    "heat",
+    "neat",
+    "seat"
+   ]
+  },
+  {
+   "w": "met",
+   "lemma": "meet",
+   "m": true,
+   "first": "m",
+   "ko": "만나다",
+   "pos": "verb",
+   "pages": [
+    215,
+    351
+   ],
+   "lessons": [
+    17,
+    28
+   ],
+   "cat": "인쇄",
+   "alts": [],
+   "rivals": [
+    "bet",
+    "get",
+    "jet",
+    "let",
+    "net",
+    "pet",
+    "set",
+    "wet",
+    "yet"
+   ]
+  },
+  {
+   "w": "mess",
+   "lemma": "mess",
+   "m": true,
+   "first": "m",
+   "ko": "엉망",
+   "pos": "noun",
+   "pages": [
+    217,
+    227,
+    327,
+    339,
+    350,
+    362,
+    374,
+    386
+   ],
+   "lessons": [
+    17,
+    18,
+    26,
+    27,
+    28,
+    29,
+    30
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "less",
+    "yes",
+    "guess"
+   ]
+  },
+  {
+   "w": "milk",
+   "lemma": "milk",
+   "m": true,
+   "first": "m",
+   "ko": "우유",
+   "pos": "noun",
+   "pages": [
+    14
+   ],
+   "lessons": [
+    1
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "silk"
+   ]
+  },
+  {
+   "w": "mirror",
+   "lemma": "mirror",
+   "m": true,
+   "first": "m",
+   "ko": "거울",
+   "pos": "noun",
+   "pages": [
+    16
+   ],
+   "lessons": [
+    1
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": []
+  },
+  {
+   "w": "mitt",
+   "lemma": "mitt",
+   "m": true,
+   "first": "m",
+   "ko": "야구 글러브",
+   "pos": "noun",
+   "pages": [
+    14,
+    223,
+    389,
+    393
+   ],
+   "lessons": [
+    1,
+    17
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": [
+    "bit",
+    "fit",
+    "hit",
+    "kit",
+    "lit",
+    "pit",
+    "sit"
+   ]
+  },
+  {
+   "w": "mitten",
+   "lemma": "mitten",
+   "m": true,
+   "first": "m",
+   "ko": "벙어리장갑",
+   "pos": "noun",
+   "pages": [
+    45,
+    197
+   ],
+   "lessons": [
+    3,
+    15
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": [
+    "kitten",
+    "bitten"
+   ]
+  },
+  {
+   "w": "mix",
+   "lemma": "mix",
+   "m": true,
+   "first": "m",
+   "ko": "섞다",
+   "pos": "verb",
+   "pages": [
+    251,
+    306
+   ],
+   "lessons": [
+    20,
+    24
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "fix",
+    "six",
+    "nix"
+   ]
+  },
+  {
+   "w": "mom",
+   "lemma": "mom",
+   "m": true,
+   "first": "m",
+   "ko": "엄마",
+   "pos": "noun",
+   "pages": [
+    155,
+    156,
+    164,
+    165,
+    176,
+    177,
+    188,
+    200
+   ],
+   "lessons": [
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    25,
+    27
+   ],
+   "cat": "인쇄+그림",
+   "alts": [
+    "mum"
+   ],
+   "rivals": [
+    "tom",
+    "bomb"
+   ]
+  },
+  {
+   "w": "monkey",
+   "lemma": "monkey",
+   "m": true,
+   "first": "m",
+   "ko": "원숭이",
+   "pos": "noun",
+   "pages": [
+    17,
+    59,
+    389
+   ],
+   "lessons": [
+    1,
+    4
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": [
+    "donkey"
+   ]
+  },
+  {
+   "w": "moon",
+   "lemma": "moon",
+   "m": true,
+   "first": "m",
+   "ko": "달",
+   "pos": "noun",
+   "pages": [
+    14,
+    28,
+    31,
+    41,
+    45,
+    56,
+    87
+   ],
+   "lessons": [
+    1,
+    2,
+    3,
+    4,
+    6
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": [
+    "noon",
+    "soon",
+    "june",
+    "tune"
+   ]
+  },
+  {
+   "w": "mop",
+   "lemma": "mop",
+   "m": true,
+   "first": "m",
+   "ko": "대걸레",
+   "pos": "noun",
+   "pages": [
+    12,
+    14,
+    31,
+    153,
+    165,
+    194,
+    285,
+    343
+   ],
+   "lessons": [
+    1,
+    2,
+    12,
+    13,
+    15,
+    22,
+    27
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "top",
+    "hop",
+    "pop",
+    "cop",
+    "bop"
+   ]
+  },
+  {
+   "w": "mouse",
+   "lemma": "mouse",
+   "m": true,
+   "first": "m",
+   "ko": "쥐",
+   "pos": "noun",
+   "pages": [
+    17,
+    42,
+    375,
+    387,
+    389,
+    391
+   ],
+   "lessons": [
+    1,
+    3,
+    30
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "house",
+    "louse"
+   ]
+  },
+  {
+   "w": "mouth",
+   "lemma": "mouth",
+   "m": true,
+   "first": "m",
+   "ko": "입",
+   "pos": "noun",
+   "pages": [
+    59,
+    387
+   ],
+   "lessons": [
+    4
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": [
+    "south"
+   ]
+  },
+  {
+   "w": "mud",
+   "lemma": "mud",
+   "m": true,
+   "first": "m",
+   "ko": "진흙",
+   "pos": "noun",
+   "pages": [
+    277,
+    280
+   ],
+   "lessons": [
+    22
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "bud",
+    "dud",
+    "cud"
+   ]
+  },
+  {
+   "w": "mug",
+   "lemma": "mug",
+   "m": true,
+   "first": "m",
+   "ko": "머그잔",
+   "pos": "noun",
+   "pages": [
+    14
+   ],
+   "lessons": [
+    1
+   ],
+   "cat": "인쇄+그림",
+   "alts": [],
+   "rivals": [
+    "bug",
+    "hug",
+    "jug",
+    "rug",
+    "tug",
+    "dug"
+   ]
+  },
+  {
+   "w": "mushroom",
+   "lemma": "mushroom",
+   "m": true,
+   "first": "m",
+   "ko": "버섯",
+   "pos": "noun",
+   "pages": [
+    16
+   ],
+   "lessons": [
+    1
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": []
+  },
+  {
+   "w": "my",
+   "lemma": "my",
+   "m": true,
+   "first": "m",
+   "ko": "나의",
+   "pos": "pronoun",
+   "pages": [
+    11,
+    104,
+    105,
+    106,
+    109,
+    112,
+    124,
+    136
+   ],
+   "lessons": [
+    1,
+    8,
+    9,
+    10,
+    12,
+    13,
+    14,
+    16,
+    17,
+    19,
+    21,
+    22,
+    23,
+    24,
+    28,
+    29,
+    30
+   ],
+   "cat": "인쇄",
+   "alts": [],
+   "rivals": [
+    "by",
+    "pie",
+    "tie",
+    "die",
+    "lie",
+    "hi",
+    "why",
+    "guy"
+   ]
+  },
+  {
+   "w": "pan",
+   "lemma": "pan",
+   "m": false,
+   "first": "p",
+   "ko": "냄비",
+   "pos": "noun",
+   "pages": [
+    79,
+    82,
+    84,
+    90,
+    95,
+    102,
+    114,
+    115
+   ],
+   "lessons": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    21,
+    27
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "van",
+   "lemma": "van",
+   "m": false,
+   "first": "v",
+   "ko": "승합차",
+   "pos": "noun",
+   "pages": [
+    27,
+    265,
+    269,
+    271,
+    274,
+    276,
+    277,
+    288
+   ],
+   "lessons": [
+    2,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "cap",
+   "lemma": "cap",
+   "m": false,
+   "first": "c",
+   "ko": "모자(챙)",
+   "pos": "noun",
+   "pages": [
+    27,
+    103,
+    112,
+    115,
+    132,
+    174,
+    239,
+    370
+   ],
+   "lessons": [
+    2,
+    8,
+    9,
+    10,
+    13,
+    19,
+    29,
+    30
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "nap",
+   "lemma": "nap",
+   "m": false,
+   "first": "n",
+   "ko": "낮잠",
+   "pos": "noun",
+   "pages": [
+    79,
+    85,
+    88,
+    90,
+    91,
+    100,
+    102,
+    114
+   ],
+   "lessons": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    24
+   ],
+   "cat": "인쇄"
+  },
+  {
+   "w": "cat",
+   "lemma": "cat",
+   "m": false,
+   "first": "c",
+   "ko": "고양이",
+   "pos": "noun",
+   "pages": [
+    9,
+    12,
+    23,
+    28,
+    53,
+    54,
+    61,
+    103
+   ],
+   "lessons": [
+    1,
+    2,
+    4,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    18,
+    21,
+    24,
+    27,
+    29
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "hat",
+   "lemma": "hat",
+   "m": false,
+   "first": "h",
+   "ko": "모자",
+   "pos": "noun",
+   "pages": [
+    11,
+    27,
+    99,
+    141,
+    143,
+    144,
+    146,
+    147
+   ],
+   "lessons": [
+    1,
+    2,
+    7,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    24,
+    29
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "top",
+   "lemma": "top",
+   "m": false,
+   "first": "t",
+   "ko": "팽이",
+   "pos": "noun",
+   "pages": [
+    108,
+    131,
+    153,
+    157,
+    164,
+    176,
+    188,
+    189
+   ],
+   "lessons": [
+    8,
+    10,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "hop",
+   "lemma": "hop",
+   "m": false,
+   "first": "h",
+   "ko": "깡충 뛰다",
+   "pos": "verb",
+   "pages": [
+    24,
+    155,
+    212,
+    217,
+    259,
+    277,
+    279,
+    292
+   ],
+   "lessons": [
+    2,
+    12,
+    16,
+    17,
+    20,
+    22,
+    23,
+    27,
+    30
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "rug",
+   "lemma": "rug",
+   "m": false,
+   "first": "r",
+   "ko": "깔개",
+   "pos": "noun",
+   "pages": [
+    51,
+    103,
+    106,
+    173,
+    197,
+    265,
+    282,
+    343
+   ],
+   "lessons": [
+    4,
+    8,
+    13,
+    15,
+    21,
+    22,
+    27,
+    30
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "bug",
+   "lemma": "bug",
+   "m": false,
+   "first": "b",
+   "ko": "벌레",
+   "pos": "noun",
+   "pages": [
+    231,
+    277,
+    286,
+    289,
+    339,
+    346,
+    347,
+    395
+   ],
+   "lessons": [
+    18,
+    22,
+    23,
+    27
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "sad",
+   "lemma": "sad",
+   "m": false,
+   "first": "s",
+   "ko": "슬픈",
+   "pos": "adjective",
+   "pages": [
+    127,
+    128,
+    130,
+    133,
+    138,
+    152,
+    153,
+    164
+   ],
+   "lessons": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    27,
+    28
+   ],
+   "cat": "인쇄"
+  },
+  {
+   "w": "bad",
+   "lemma": "bad",
+   "m": false,
+   "first": "b",
+   "ko": "나쁜",
+   "pos": "adjective",
+   "pages": [
+    177,
+    179,
+    180,
+    183,
+    188,
+    189,
+    198,
+    200
+   ],
+   "lessons": [
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    22
+   ],
+   "cat": "인쇄"
+  },
+  {
+   "w": "six",
+   "lemma": "six",
+   "m": false,
+   "first": "s",
+   "ko": "6",
+   "pos": "noun",
+   "pages": [
+    251,
+    253,
+    255,
+    257,
+    259,
+    262,
+    276,
+    277
+   ],
+   "lessons": [
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "fix",
+   "lemma": "fix",
+   "m": false,
+   "first": "f",
+   "ko": "고치다",
+   "pos": "verb",
+   "pages": [
+    251,
+    253,
+    254,
+    257,
+    274,
+    289,
+    383
+   ],
+   "lessons": [
+    20,
+    21,
+    23,
+    30
+   ],
+   "cat": "인쇄"
+  },
+  {
+   "w": "net",
+   "lemma": "net",
+   "m": false,
+   "first": "n",
+   "ko": "그물",
+   "pos": "noun",
+   "pages": [
+    83,
+    87,
+    359,
+    389
+   ],
+   "lessons": [
+    6,
+    28
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "jet",
+   "lemma": "jet",
+   "m": false,
+   "first": "j",
+   "ko": "제트기",
+   "pos": "noun",
+   "pages": [
+    219,
+    289,
+    293,
+    295,
+    297,
+    300,
+    312,
+    324
+   ],
+   "lessons": [
+    17,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "cake",
+   "lemma": "cake",
+   "m": false,
+   "first": "c",
+   "ko": "케이크",
+   "pos": "noun",
+   "pages": [
+    103,
+    107,
+    111,
+    363,
+    365,
+    366,
+    367,
+    371
+   ],
+   "lessons": [
+    8,
+    29
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "lake",
+   "lemma": "lake",
+   "m": false,
+   "first": "l",
+   "ko": "호수",
+   "pos": "noun",
+   "pages": [
+    197,
+    363,
+    368,
+    371
+   ],
+   "lessons": [
+    15,
+    29
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "nail",
+   "lemma": "nail",
+   "m": false,
+   "first": "n",
+   "ko": "못",
+   "pos": "noun",
+   "pages": [
+    83,
+    87
+   ],
+   "lessons": [
+    6
+   ],
+   "cat": "그림"
+  },
+  {
+   "w": "tail",
+   "lemma": "tail",
+   "m": false,
+   "first": "t",
+   "ko": "꼬리",
+   "pos": "noun",
+   "pages": [
+    59
+   ],
+   "lessons": [
+    4
+   ],
+   "cat": "그림"
+  },
+  {
+   "w": "kit",
+   "lemma": "kit",
+   "m": false,
+   "first": "k",
+   "ko": "도구 세트",
+   "pos": "noun",
+   "pages": [
+    161,
+    208,
+    285,
+    301,
+    312,
+    324,
+    338,
+    350
+   ],
+   "lessons": [
+    12,
+    16,
+    22,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "fit",
+   "lemma": "fit",
+   "m": false,
+   "first": "f",
+   "ko": "맞다",
+   "pos": "verb",
+   "pages": [
+    115,
+    117,
+    118,
+    121,
+    124,
+    126,
+    138,
+    152
+   ],
+   "lessons": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
+   "cat": "인쇄"
+  },
+  {
+   "w": "sun",
+   "lemma": "sun",
+   "m": false,
+   "first": "s",
+   "ko": "해",
+   "pos": "noun",
+   "pages": [
+    11,
+    41,
+    56,
+    70,
+    153,
+    277,
+    279,
+    281
+   ],
+   "lessons": [
+    1,
+    3,
+    4,
+    5,
+    12,
+    22,
+    25,
+    26,
+    27,
+    30
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "dog",
+   "lemma": "dog",
+   "m": false,
+   "first": "d",
+   "ko": "개",
+   "pos": "noun",
+   "pages": [
+    9,
+    12,
+    39,
+    40,
+    47,
+    94,
+    131,
+    135
+   ],
+   "lessons": [
+    1,
+    3,
+    7,
+    10,
+    15,
+    18,
+    19,
+    21,
+    23,
+    24,
+    25,
+    27,
+    30
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "jam",
+   "lemma": "jam",
+   "m": false,
+   "first": "j",
+   "ko": "잼",
+   "pos": "noun",
+   "pages": [
+    289,
+    293,
+    295,
+    297,
+    300,
+    312,
+    324,
+    327
+   ],
+   "lessons": [
+    23,
+    24,
+    25,
+    26,
+    27,
+    28
+   ],
+   "cat": "인쇄+그림"
+  },
+  {
+   "w": "lamp",
+   "lemma": "lamp",
+   "m": false,
+   "first": "l",
+   "ko": "램프",
+   "pos": "noun",
+   "pages": [
+    181,
+    193,
+    208
+   ],
+   "lessons": [
+    14,
+    15,
+    16
+   ],
+   "cat": "그림"
+  }
+ ]
+}
