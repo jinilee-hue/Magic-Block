@@ -5,6 +5,7 @@
 // other line shows while it plays and a moment after, then the turn call comes back (or the bubble goes).
 import voiceData from '../data/voice.json';
 import { isTalking, onLine, onTalk, type Part } from '../core/speech';
+import { ANI_ART } from './animals';
 
 const LINES: Record<string, string> = (voiceData as { lines?: Record<string, string> }).lines ?? {};
 const HOLD_MS = 1400;
@@ -30,7 +31,7 @@ function format(keys: string[]) {
 export class FoxSay {
   animals: [string, string] = ['bunny', 'kitty'];
   private text: HTMLElement;
-  private use: SVGUseElement;
+  private ava: HTMLImageElement;
   /** whose turn call stays up (null: none) */
   private sticky: number | null = null;
   private key = '';
@@ -39,7 +40,7 @@ export class FoxSay {
 
   constructor(private el: HTMLElement) {
     this.text = el.querySelector('.fs-text') as HTMLElement;
-    this.use = el.querySelector('use') as SVGUseElement;
+    this.ava = el.querySelector('.fs-ava .ani') as HTMLImageElement;
     onLine((parts) => this.line(parts));
     onTalk((on) => { if (on) clearTimeout(this.hideT); else this.later(); });
   }
@@ -77,7 +78,7 @@ export class FoxSay {
     this.text.innerHTML = html;
     this.el.classList.toggle('turn', p !== null);
     this.el.classList.toggle('p2', p === 1);
-    if (p !== null) this.use.setAttribute('href', `#ava-${this.animals[p]}`);
+    if (p !== null) this.ava.src = ANI_ART[this.animals[p]];
     this.el.hidden = false;
     this.el.classList.remove('off', 'pop'); void this.el.offsetWidth; this.el.classList.add('pop');
   }

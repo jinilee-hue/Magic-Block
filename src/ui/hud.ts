@@ -1,6 +1,7 @@
 // DOM layer: player cards, the fox's speech bubble, read-aloud mic, settings, rotate buttons, result book.
 import { settings, setMusic, setSfx, sfx } from '../core/audio';
 import type { Pastel, WordInfo } from '../game/tower';
+import { ANI_ART } from './animals';
 import { FoxSay } from './foxsay';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
@@ -10,7 +11,7 @@ const CHIP_MAX = 8;
 export class Hud {
   readonly app = $('#app');
   private cards = [$('#p1'), $('#p2')];
-  /** each player's animal (symbol #ava-<id>) */
+  /** each player's animal (ui/animals.ts id) */
   private animals: [string, string] = ['bunny', 'kitty'];
   /** the fox's speech bubble (replaces the old "Player 1's Turn" banner) */
   readonly foxSay = new FoxSay($('#foxSay'));
@@ -122,7 +123,7 @@ export class Hud {
   setAnimals(a: [string, string]) {
     this.animals = a;
     this.foxSay.animals = a;
-    this.cards.forEach((c, p) => c.querySelector('.avatar use')?.setAttribute('href', `#ava-${a[p]}`));
+    this.cards.forEach((c, p) => { const im = c.querySelector<HTMLImageElement>('.avatar .ani'); if (im) im.src = ANI_ART[a[p]]; });
   }
 
   /** the picture card of the word being read, standing just above the presented block (box = its screen rect);
@@ -169,7 +170,7 @@ export class Hud {
       const got = players[p].got;
       page.classList.toggle('winner', winner === p);
       page.innerHTML = `
-        <div class="ava"><svg viewBox="0 0 64 64"><use href="#ava-${this.animals[p]}" /></svg>${winner === p ? CROWN : ''}</div>
+        <div class="ava"><img class="ani" src="${ANI_ART[this.animals[p]]}" alt="" draggable="false" />${winner === p ? CROWN : ''}</div>
         <h2>Player ${p + 1}</h2>
         <div class="big"><i class="mini-block" style="--pc: var(--p${p + 1})"></i>${got.length}</div>
         <div class="words"></div>`;

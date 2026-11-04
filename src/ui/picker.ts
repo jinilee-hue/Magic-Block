@@ -1,13 +1,12 @@
 // Character pick (user: "첫화면에서 플레이어1과 플레이어2의 동물 캐릭터를 선택해서 들어오게"): after START, Player 1
 // picks an animal, then Player 2 (the one already taken is marked P1 and can't be picked), and the game begins.
-// The fox calls each step out; tapping an animal says its name. The art is placeholder SVG (index.html <symbol>s)
-// until the user's animals in the fox's style arrive.
+// The fox calls each step out; tapping an animal says its name. The art is the user's badges (ui/animals.ts).
 import { sfx } from '../core/audio';
 import { say } from '../core/speech';
+import { ANI_ART, type Animal } from './animals';
 import type { Fox } from './fox';
 
-export const ANIMALS = ['bunny', 'kitty', 'puppy', 'panda'] as const;
-export type Animal = (typeof ANIMALS)[number];
+export { ANIMALS, type Animal } from './animals';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector(s) as T;
 
@@ -53,7 +52,7 @@ export class Picker {
     b.classList.add(`p${p + 1}`, 'chosen'); b.setAttribute('aria-disabled', 'true');
     (b.querySelector('.pa-tag') as HTMLElement).textContent = `P${p + 1}`;
     const slot = this.el.querySelectorAll('.pv')[p] as HTMLElement;
-    slot.querySelector('use')!.setAttribute('href', `#ava-${id}`);
+    (slot.querySelector('.ani') as HTMLImageElement).src = ANI_ART[id];
     slot.classList.add('set');
     this.fox.gesture('happy', 1200);
     if (p === 0) {
