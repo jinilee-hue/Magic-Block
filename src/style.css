@@ -277,10 +277,11 @@ svg { display: block; }
 .sysbar { position: absolute; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); right: calc(2.4 * var(--u)); display: flex; gap: calc(1.6 * var(--u)); align-items: flex-start; }
 .app[data-screen="title"] .sysbar { pointer-events: auto; }
 .vol { position: relative; }
-/* the user's button art (jenga_btn_sound / jenga_btn_out: glossy purple squares with a coral + yellow rim) */
-.img-btn { position: relative; display: block; width: calc(9.6 * var(--u)); aspect-ratio: 280 / 267; padding: 0; border: 0; background: none; cursor: pointer;
+/* the user's button art (jenga_btn_sound / jenga_btn_out, v3: yellow square + white speaker, blue square + white door;
+   both ~square → 280 px webp, shown 1:1) */
+.img-btn { position: relative; display: block; width: calc(9.6 * var(--u)); aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer;
   filter: drop-shadow(0 calc(.6 * var(--u)) calc(.8 * var(--u)) rgba(90, 40, 120, .28)); transition: transform .12s, filter .12s; -webkit-tap-highlight-color: transparent; }
-.img-btn img { display: block; width: 100%; height: 100%; pointer-events: none; }
+.img-btn img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .img-btn:hover { filter: drop-shadow(0 calc(.6 * var(--u)) calc(.8 * var(--u)) rgba(90, 40, 120, .28)) brightness(1.06); }
 .img-btn:active { transform: translateY(calc(.4 * var(--u))) scale(.94); }
 .img-btn:focus-visible { outline: calc(.5 * var(--u)) solid rgba(255, 255, 255, .95); outline-offset: calc(.3 * var(--u)); border-radius: 26%; }
