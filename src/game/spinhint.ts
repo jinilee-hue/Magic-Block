@@ -59,18 +59,12 @@ function ringTexture(rf: number) {
     g.lineTo(bx - ox * w, by - oy * w);
     g.closePath(); g.fill();
   };
-  const pass = (color: string, width: number, headW: number, glow: boolean) => {
-    g.save();
-    if (glow) { g.shadowColor = 'rgba(122, 90, 245, .65)'; g.shadowBlur = N * 0.03; }
-    g.strokeStyle = color; g.fillStyle = color; g.lineWidth = width; g.lineCap = 'round';
-    for (const [from, to] of arcs) {
-      g.beginPath(); g.arc(c, c, r, to * Math.PI / 180 + 0.05, from * Math.PI / 180); g.stroke();
-      head(to, headW);
-    }
-    g.restore();
-  };
-  pass('#7a5af5', band + N * 0.016, band * 1.45 + N * 0.012, true);     // purple edge + glow
-  pass('#ffffff', band, band * 1.45, false);                           // white body
+  // white only (user: "보라색 선은 빼줘. 흰색 면으로만 해줘" — the purple edge + glow are gone)
+  g.strokeStyle = g.fillStyle = '#ffffff'; g.lineWidth = band; g.lineCap = 'round';
+  for (const [from, to] of arcs) {
+    g.beginPath(); g.arc(c, c, r, to * Math.PI / 180 + 0.05, from * Math.PI / 180); g.stroke();
+    head(to, band * 1.45);
+  }
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
