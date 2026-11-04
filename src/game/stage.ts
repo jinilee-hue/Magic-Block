@@ -28,6 +28,8 @@ export class Stage {
   tableR = 6;
   /** where the table-top centre is on screen (CSS px) */
   tableAt = { x: 0, y: 0, rx: 0 };
+  /** CSS px per world unit at the tower's foot */
+  pxPerUnit = 1;
   /** the painted background element: it zooms with the camera (around the table) so the tower stays on its table */
   bg: HTMLElement | null = null;
   private bgZoom = 1;
@@ -117,6 +119,7 @@ export class Stage {
     // scale: the whole tower between the top bar (≈13.5 u) and the table, as big as the painted table allows
     const u = Math.min(h / 100, w * 0.005625);
     const k = Math.min((t.y - 13.5 * u) / TOWER_H, t.rx / TABLE_MIN);   // CSS px per world unit at the tower's foot
+    this.pxPerUnit = k;
     this.tableR = t.rx / k;
     this.catcher.scale.setScalar(this.tableR);
     this.occluder.scale.set(this.tableR, 1, this.tableR);
@@ -125,6 +128,9 @@ export class Stage {
     c.setViewOffset(w, h, w / 2 - t.x, h / 2 - t.y, w, h);
     c.updateProjectionMatrix();
     this.bg?.style.setProperty('transform-origin', `${t.x}px ${t.y}px`);
+    // the title lays the START button on the painted table (CSS reads these)
+    const root = document.documentElement.style;
+    root.setProperty('--table-x', `${t.x.toFixed(1)}px`); root.setProperty('--table-y', `${t.y.toFixed(1)}px`); root.setProperty('--table-rx', `${t.rx.toFixed(1)}px`);
     this.onResize();
   }
 
@@ -137,6 +143,10 @@ export class Stage {
   }
   turnBy(dAzDeg: number) { const a = (this.goal?.az ?? this.rig.az) + dAzDeg * DEG; this.goal = { az: a, el: this.goal?.el ?? this.rig.el, zoom: this.goal?.zoom ?? this.rig.zoom }; }
   home() { this.turnTo(28 + 90 * Math.round((this.rig.az / DEG - 28) / 90), EL0, 1); }
+  /** stop any turn in progress (the title sets the view itself every frame) */
+  stopTurn() { this.goal = null; this.rig.azVel = 0; }
+  /** the painted table's own viewing angle (degrees) */
+  static readonly EL0 = EL0;
 
   /** veil the tower and the room (not the presented block, the HUD or the fox) so the picture and the word stand out */
   focus(on: boolean) { this.scrimGoal = on ? 1 : 0; if (on) this.scrim.visible = true; }

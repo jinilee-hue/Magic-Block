@@ -10,6 +10,7 @@ import { Tower, type WordInfo } from './game/tower';
 import { Confetti } from './ui/confetti';
 import { Fox } from './ui/fox';
 import { Hud } from './ui/hud';
+import { Title } from './ui/title';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const params = new URLSearchParams(location.search);
@@ -66,9 +67,9 @@ async function boot() {
   game.test.fake = params.has('fake');
   game.forceM = (params.get('m') ?? '').split(',').filter(Boolean);
   game.buildTower(false);
-
-  // title & intro: the tower turns slowly on its table
-  stage.tick((dt) => { const s = hud.app.dataset.screen; if (s === 'title' || s === 'intro') stage.rig.az += dt * 0.16; });
+  // the title screen (logo on top, a shorter tower on the table, START on its front edge, the fox waving)
+  const title = new Title(hud.app, stage, tower, fox, confetti);
+  game.onTitle = () => title.enter();
 
   const begin = () => {
     unlock(); sfx('start');
@@ -81,7 +82,7 @@ async function boot() {
   hud.onAgain = () => { hud.hideResult(); void game.start(); };
   hud.onResultHome = () => { hud.hideResult(); game.toTitle(); };
 
-  const toTitle = () => { hud.screen('title'); fox.gesture('talk', 1800); };
+  const toTitle = () => { hud.screen('title'); title.enter(); fox.gesture('talk', 1800); };
   if (await intro) playIntro(hud, toTitle); else toTitle();
 
   // test / debug hooks

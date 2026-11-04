@@ -14,7 +14,7 @@ import cardList from '../data/cards.json';
 import { rng, shuffle } from './anim';
 import { collapse } from './collapse';
 import type { Stage } from './stage';
-import { LAYERS, M_PER_GAME, type Block, type Tower, type WordInfo } from './tower';
+import { LAYERS, M_PER_GAME, TITLE_LAYERS, type Block, type Tower, type WordInfo } from './tower';
 
 type Heard = string | null | 'nomic';
 type HearResult = 'ok' | 'miss' | 'silence' | 'nomic' | 'again';
@@ -123,9 +123,17 @@ export class Game {
   buildTower(take = false) {
     const r = rng(this.seed ?? ((Math.random() * 1e9) | 0));
     const words = this.pickWords(r, take);
+    if (!take) {
+      // the title tower (the mockup): an m-word on the front face of every long layer (slot 2 faces the title camera)
+      // and one in each cross layer; the logo stands above it, so it is shorter
+      const ms = words.filter((w) => w.m).slice(0, TITLE_LAYERS), os = words.filter((w) => !w.m).slice(0, TITLE_LAYERS * 2);
+      const plan = Array.from({ length: TITLE_LAYERS }, (_, l) => (l % 2 === 0 ? [2] : [Math.floor(r() * 3)]));
+      this.tower.build([...ms, ...os], r, TITLE_LAYERS, plan);
+      return;
+    }
     this.tower.build(words, r);
     // the picture cards of this tower's m-words, ready before anyone pulls a block
-    if (take) for (const w of words) { const u = w.m && cardUrl(w.w); if (u) new Image().src = u; }
+    for (const w of words) { const u = w.m && cardUrl(w.w); if (u) new Image().src = u; }
   }
 
   async start() {
@@ -134,6 +142,7 @@ export class Game {
     this.players = [{ got: [] }, { got: [] }]; this.turn = 0; this.greatIdx = 0;
     this.hud.reset(); this.hud.setTurn(0, false); this.hud.screen('game');
     this.buildTower(true);
+    void this.tower.dropIn(() => sfx('tick'));
     this.stage.home();
     this.state = 'intro'; this.hud.busy(true);
     this.log('start');
@@ -383,8 +392,10 @@ export class Game {
     this.hud.reset();
     this.hud.screen('title');
     this.buildTower(false);
-    this.stage.home();
+    this.onTitle();
   }
+  /** the title screen takes over the new (shorter) tower: size, stack-up, sway (ui/title.ts) */
+  onTitle: () => void = () => {};
 
   /** tests: hand out all but `leave` m-blocks (alternating players) so the ending can be checked quickly */
   debugFastForward(leave = 1) {

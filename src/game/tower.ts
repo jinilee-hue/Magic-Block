@@ -12,6 +12,8 @@ export const L = 3, D = 1;
 /** block thickness: real Jenga is 0.6. ?bh=0.75 overrides it for side-by-side looks. */
 export const H = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('bh')) || 0.6;
 export const LAYERS = 12;
+/** the title screen's tower (the user's mockup: a slim tower right under the logo, m-words on its front face) */
+export const TITLE_LAYERS = 10;
 /** m-words in one game */
 export const M_PER_GAME = 14;
 const DG = 0.035, HG = 0.012;                // gaps between blocks / layers
@@ -120,14 +122,14 @@ function makeTexture(cv: HTMLCanvasElement, aniso: number) {
 }
 
 /** Which slots in each layer hold m-words (stability by construction). */
-export function planLayers(mCount: number, r: () => number): number[][] {
-  const kMin = Math.max(0, mCount - LAYERS), kMax = Math.min(LAYERS, Math.floor(mCount / 2));
+export function planLayers(mCount: number, r: () => number, layers = LAYERS): number[][] {
+  const kMin = Math.max(0, mCount - layers), kMax = Math.min(layers, Math.floor(mCount / 2));
   const both = Math.min(kMax, kMin + Math.floor(r() * 4));            // layers whose two side blocks are m-words
   const single = mCount - both * 2;                                     // layers with one m-word
   const types: ('both' | 'one' | 'none')[] = [];
   for (let i = 0; i < both; i++) types.push('both');
   for (let i = 0; i < single; i++) types.push('one');
-  while (types.length < LAYERS) types.push('none');
+  while (types.length < layers) types.push('none');
   shuffle(types, r);
   return types.map((t) => t === 'both' ? [0, 2] : t === 'one' ? [r() < 0.4 ? 1 : r() < 0.5 ? 0 : 2] : []);
 }
@@ -138,11 +140,16 @@ export const layerStable = (present: boolean[]) => present[1] || (present[0] && 
 export class Tower {
   readonly root = new THREE.Group();
   blocks: Block[] = [];
+  /** overall size of the tower (the title shows it a little smaller so the logo fits above it) */
+  baseScale = 1;
   private ray = new THREE.Raycaster();
   private sway = { ax: 0, az: 0, vx: 0, vz: 0 };
   private jelly = { y: 0, v: 0 };
   private hovered: Block | null = null;
   private aniso: number;
+  private busyAnim = false;
+  /** a stack-up or a title tease is playing */
+  get busy() { return this.busyAnim; }
 
   constructor(private stage: Stage) {
     stage.world.add(this.root);
@@ -150,13 +157,14 @@ export class Tower {
     stage.tick((dt, t) => this.update(dt, t));
   }
 
-  build(words: WordInfo[], r: () => number) {
+  /** layers: 12 for a game; the title tower is shorter. plan: which slots hold m-words (default: planLayers) */
+  build(words: WordInfo[], r: () => number, layers = LAYERS, plan?: number[][]) {
     this.clear();
     const ms = shuffle(words.filter((w) => w.m), r), others = shuffle(words.filter((w) => !w.m), r);
-    const plan = planLayers(ms.length, r);
+    plan ??= planLayers(ms.length, r, layers);
     const geo = blockGeometry();
     let id = 0;
-    for (let layer = 0; layer < LAYERS; layer++) {
+    for (let layer = 0; layer < layers; layer++) {
       const used = new Set<string>();
       for (let slot = 0; slot < 3; slot++) {
         const word = plan[layer].includes(slot) ? ms.pop()! : others.pop()!;
@@ -192,7 +200,7 @@ export class Tower {
     this.blocks = [];
     this.root.position.set(0, 0, 0); this.root.rotation.set(0, 0, 0);
     this.sway = { ax: 0, az: 0, vx: 0, vz: 0 };
-    this.jelly = { y: 0, v: 0 }; this.root.scale.set(1, 1, 1);
+    this.jelly = { y: 0, v: 0 }; this.baseScale = 1; this.root.scale.set(1, 1, 1);
   }
 
   inTower() { return this.blocks.filter((b) => b.state === 'in'); }
@@ -373,15 +381,69 @@ export class Tower {
     this.jelly.v -= amount * 14;
   }
 
+  /** The tower stacks itself up: layer by layer the blocks drop in from above and land with a soft squash.
+   *  onLand(layer) fires as each layer lands (a tick sound). */
+  async dropIn(onLand: (layer: number) => void = () => {}, stagger = 0.075, fall = 0.42) {
+    const bs = this.blocks.slice();
+    if (!bs.length) return;
+    this.busyAnim = true;
+    const n = Math.max(...bs.map((b) => b.layer)) + 1, drop = 6;
+    const landed = new Set<number>();
+    for (const b of bs) b.mesh.visible = false;
+    await animate(this.stage, (n - 1) * stagger + 0.06 + fall + 0.35, (_k, t) => {
+      for (const b of bs) {
+        if (b.state !== 'in') continue;
+        const p = (t - b.layer * stagger - b.slot * 0.03) / fall;
+        if (p < 0) { b.mesh.visible = false; continue; }
+        b.mesh.visible = true;
+        if (p < 1) { b.mesh.position.y = b.home.y + drop * (1 - p * p); squish(b.mesh, 0.06 * (1 - p)); continue; }
+        b.mesh.position.y = b.home.y;
+        const q = p - 1;
+        squish(b.mesh, -0.16 * Math.exp(-q * 5) * Math.cos(q * 14));
+        if (b.slot === 2 && !landed.has(b.layer)) { landed.add(b.layer); onLand(b.layer); }
+      }
+    }, ease.linear);
+    for (const b of bs) if (b.state === 'in') { b.mesh.position.y = b.home.y; squish(b.mesh, 0); b.mesh.visible = true; }
+    this.jelly.v -= 0.35;
+    this.busyAnim = false;
+  }
+
+  /** Title screen: an m-block on the front face slides half out to the right with sparkles (onSpark gets screen px),
+   *  then back in. */
+  async tease(onSpark: (x: number, y: number) => void) {
+    if (this.busyAnim) return;
+    const top = Math.max(...this.blocks.map((b) => b.layer));
+    const cands = this.blocks.filter((b) => b.state === 'in' && b.word.m && b.axis === 'x' && b.layer >= 2 && b.layer <= top - 2);
+    const front = cands.filter((b) => b.slot === 2);
+    const pool = front.length ? front : cands;
+    if (!pool.length) return;
+    const b = pool[Math.floor(Math.random() * pool.length)];
+    this.busyAnim = true;
+    const x0 = b.home.x, out = L * 0.5;
+    // sparkles at the block's sliding end (front edge, anywhere along its height)
+    const spark = () => {
+      const p = this.stage.project(this.root.localToWorld(new THREE.Vector3(b.mesh.position.x + L / 2, b.mesh.position.y + H * (Math.random() - 0.5), b.mesh.position.z + D / 2)));
+      onSpark(p.x, p.y);
+    };
+    await animate(this.stage, 0.6, (k) => { b.mesh.position.x = x0 + out * k; b.mat.emissiveIntensity = GLOW + 0.1 * k; spark(); }, ease.out);
+    await animate(this.stage, 1.1, () => spark(), ease.linear);
+    await animate(this.stage, 0.5, (k) => { b.mesh.position.x = x0 + out * (1 - k); b.mat.emissiveIntensity = GLOW + 0.1 * (1 - k); }, ease.inOut);
+    b.mesh.position.x = x0; b.mat.emissiveIntensity = GLOW;
+    this.busyAnim = false;
+  }
+
+  /** height of the tower in world units, before baseScale */
+  topH() { return (Math.max(0, ...this.blocks.filter((b) => b.state === 'in').map((b) => b.layer)) + 1) * H; }
+
   private update(dt: number, t: number) {
     const s = this.sway, k = 60, c = 3.2;
     s.vx += (-k * s.ax - c * s.vx) * dt; s.vz += (-k * s.az - c * s.vz) * dt;
     s.ax += s.vx * dt; s.az += s.vz * dt;
     this.root.rotation.x = s.ax; this.root.rotation.z = s.az;
     // squash & stretch of the whole tower from its foot: a quick, soft spring
-    const j = this.jelly;
+    const j = this.jelly, sc = this.baseScale;
     j.v += (-140 * j.y - 5 * j.v) * dt; j.y += j.v * dt;
-    this.root.scale.set(1 - j.y * 0.5, 1 + j.y, 1 - j.y * 0.5);
+    this.root.scale.set(sc * (1 - j.y * 0.5), sc * (1 + j.y), sc * (1 - j.y * 0.5));
     for (const b of this.blocks) {
       const pr = b.mesh.userData.presented as { pos: THREE.Vector3; t0: number; scale: number } | undefined;
       if (pr) {
