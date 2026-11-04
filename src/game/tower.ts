@@ -1,14 +1,19 @@
-// The Jenga tower: 18 layers × 3 pastel blocks (Jenga proportions 7.5 : 1.5 : 2.5), each painted with its word on
-// all four sides. 28 blocks carry an m-word. The m-blocks are placed so the tower can always stand once every one
-// of them is pulled out (per layer: none, one side, the middle, or both sides — never "middle + a side"), so a
-// correct pull never knocks it over; the big fall is saved for the end.
+// The Jenga tower: 12 layers × 3 pastel blocks (Jenga proportions 7.5 : 1.5 : 2.5), each painted with its word on
+// all four sides. 14 blocks carry an m-word (half of the 28 FPR K m-words: the next game brings the other half). The
+// m-blocks are placed so the tower can always stand once every one of them is pulled out (per layer: none, one side,
+// the middle, or both sides — never "middle + a side"), so a correct pull never knocks it over; the big fall is saved
+// for the end.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { animate, ease, shuffle } from './anim';
 import type { Stage } from './stage';
 
-export const L = 3, H = 0.6, D = 1;
-export const LAYERS = 18;
+export const L = 3, D = 1;
+/** block thickness: real Jenga is 0.6. ?bh=0.75 overrides it for side-by-side looks. */
+export const H = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('bh')) || 0.6;
+export const LAYERS = 12;
+/** m-words in one game */
+export const M_PER_GAME = 14;
 const DG = 0.035, HG = 0.012;                // gaps between blocks / layers
 
 export interface WordInfo { w: string; m: boolean; first: string; ko: string; alts?: string[]; rivals?: string[] }
@@ -28,15 +33,20 @@ export const PASTELS: Pastel[] = [
   { name: 'lavender', base: '#cab9f2', ink: '#5539a3', light: '#e7defb', edge: '#ad99e6' },
   { name: 'peach', base: '#ffc8a7', ink: '#a2511f', light: '#ffe3d1', edge: '#f1ab82' },
 ];
+/** emissive (white) at rest: the hover / hint glows add to it */
+const GLOW = 0;
 
 // texture atlas: one canvas per block. LONG = the two long faces, END = the two end faces, PLAIN = top/bottom.
-const AW = 1024, AH = 128;
+// The canvas height follows the block's thickness so the letters keep their shape (LONG.w : AH = L : H).
+const AW = 1024;
 const LONG = { x: 0, w: 640 }, END = { x: 648, w: 213 }, PLAIN = { x: 870, w: 154 };
+const AH = Math.round(LONG.w * H / L);
 
 let sharedGeo: RoundedBoxGeometry | null = null;
 export function blockGeometry() {
   if (sharedGeo) return sharedGeo;
-  const g = new RoundedBoxGeometry(L, H - HG, D - DG, 3, 0.075);
+  // soft, puffy corners (radius 22 % of the thickness): squishy toy blocks; the word stays on the flat middle band
+  const g = new RoundedBoxGeometry(L, H - HG, D - DG, 6, 0.22 * H);
   const pos = g.attributes.position, uv = g.attributes.uv;
   const h = H - HG, d = D - DG;
   const c01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -71,15 +81,15 @@ export function paintBlock(word: string, p: Pastel, k = 1): HTMLCanvasElement {
   let seed = 0; for (const ch of word + p.name) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
   const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
   for (let i = 0; i < 26; i++) {
-    const y = rnd() * AH, a = 0.035 + rnd() * 0.05;
+    const y = rnd() * AH, a = 0.025 + rnd() * 0.035;
     g.strokeStyle = `rgba(120, 80, 60, ${a})`; g.lineWidth = 0.6 + rnd() * 1.6;
     g.beginPath(); g.moveTo(0, y);
     for (let x = 0; x <= AW; x += 64) g.lineTo(x, y + Math.sin(x * 0.01 + i) * (1 + rnd() * 2.2));
     g.stroke();
   }
-  // soft light band at the top, shade at the bottom of each face (a painted bevel)
+  // soft roundness: light along the top, a gentle shade toward the bottom of each face (no hard bevel lines)
   const sh = g.createLinearGradient(0, 0, 0, AH);
-  sh.addColorStop(0, 'rgba(255,255,255,0.20)'); sh.addColorStop(0.18, 'rgba(255,255,255,0)'); sh.addColorStop(0.82, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(90,50,40,0.10)');
+  sh.addColorStop(0, 'rgba(255,255,255,0.30)'); sh.addColorStop(0.3, 'rgba(255,255,255,0.06)'); sh.addColorStop(0.7, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(90,50,40,0.12)');
   g.fillStyle = sh; g.fillRect(0, 0, PLAIN.x, AH);
   const text = (x: number, w: number, pad: number, max: number) => {
     let size = max;
@@ -97,8 +107,8 @@ export function paintBlock(word: string, p: Pastel, k = 1): HTMLCanvasElement {
     g.fillStyle = p.light; g.globalAlpha = 0.9; g.fillText(word, cx, by + size * 0.035);
     g.globalAlpha = 1; g.fillStyle = p.ink; g.fillText(word, cx, by);
   };
-  text(LONG.x, LONG.w, 36, 78);
-  text(END.x, END.w, 10, 64);
+  text(LONG.x, LONG.w, 36, AH * 0.61);
+  text(END.x, END.w, 10, AH * 0.5);
   return cv;
 }
 
@@ -112,7 +122,7 @@ function makeTexture(cv: HTMLCanvasElement, aniso: number) {
 /** Which slots in each layer hold m-words (stability by construction). */
 export function planLayers(mCount: number, r: () => number): number[][] {
   const kMin = Math.max(0, mCount - LAYERS), kMax = Math.min(LAYERS, Math.floor(mCount / 2));
-  const both = Math.min(kMax, kMin + Math.floor(r() * 3));            // layers whose two side blocks are m-words
+  const both = Math.min(kMax, kMin + Math.floor(r() * 4));            // layers whose two side blocks are m-words
   const single = mCount - both * 2;                                     // layers with one m-word
   const types: ('both' | 'one' | 'none')[] = [];
   for (let i = 0; i < both; i++) types.push('both');
@@ -130,6 +140,7 @@ export class Tower {
   blocks: Block[] = [];
   private ray = new THREE.Raycaster();
   private sway = { ax: 0, az: 0, vx: 0, vz: 0 };
+  private jelly = { y: 0, v: 0 };
   private hovered: Block | null = null;
   private aniso: number;
 
@@ -151,8 +162,12 @@ export class Tower {
         const word = plan[layer].includes(slot) ? ms.pop()! : others.pop()!;
         const choices = PASTELS.filter((p) => !used.has(p.name));
         const color = choices[Math.floor(r() * choices.length)]; used.add(color.name);
-        const mat = new THREE.MeshStandardMaterial({ map: makeTexture(paintBlock(word.w, color), this.aniso), roughness: 0.58, metalness: 0, envMapIntensity: 0.55 });
-        mat.emissive = new THREE.Color(0xffffff); mat.emissiveIntensity = 0;
+        // soft-touch painted wood: a satin coat and a velvety sheen on the rounded edges (not the candy gloss)
+        const mat = new THREE.MeshPhysicalMaterial({
+          map: makeTexture(paintBlock(word.w, color), this.aniso), roughness: 0.5, metalness: 0,
+          clearcoat: 0.35, clearcoatRoughness: 0.32, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xfff1e6),
+        });
+        mat.emissive = new THREE.Color(0xffffff); mat.emissiveIntensity = GLOW;
         const mesh = new THREE.Mesh(geo, mat);
         mesh.castShadow = true; mesh.receiveShadow = true;
         const axis: 'x' | 'z' = layer % 2 === 0 ? 'x' : 'z';
@@ -177,6 +192,7 @@ export class Tower {
     this.blocks = [];
     this.root.position.set(0, 0, 0); this.root.rotation.set(0, 0, 0);
     this.sway = { ax: 0, az: 0, vx: 0, vz: 0 };
+    this.jelly = { y: 0, v: 0 }; this.root.scale.set(1, 1, 1);
   }
 
   inTower() { return this.blocks.filter((b) => b.state === 'in'); }
@@ -191,9 +207,9 @@ export class Tower {
 
   hover(b: Block | null) {
     if (this.hovered === b) return;
-    if (this.hovered && this.hovered.state === 'in') this.hovered.mat.emissiveIntensity = 0;
+    if (this.hovered && this.hovered.state === 'in') this.hovered.mat.emissiveIntensity = GLOW;
     this.hovered = b;
-    if (b) b.mat.emissiveIntensity = 0.09;
+    if (b) b.mat.emissiveIntensity = GLOW + 0.14;
   }
 
   /** is this block's centre visible from the camera (not hidden behind other blocks)? */
@@ -244,8 +260,11 @@ export class Tower {
       const jit = Math.sin(t * 46) * 0.012 * (1 - k);
       b.mesh.position.copy(from).addScaledVector(local, k * (L + 0.35)).addScaledVector(side, jit);
       b.mesh.rotation.y = b.homeRotY + Math.sin(t * 31) * 0.012 * (1 - k);
-      b.mat.emissiveIntensity = 0.12 + 0.08 * Math.sin(t * 9);
+      b.mat.emissiveIntensity = GLOW + 0.12 + 0.08 * Math.sin(t * 9);
+      // a squishy wobble as it is grabbed and starts to slide
+      squish(b.mesh, Math.sin(k * Math.PI * 6) * 0.07 * Math.max(0, 1 - k * 2.2));
     }, ease.inOut);
+    squish(b.mesh, 0);
     b.state = 'out';
   }
 
@@ -264,16 +283,19 @@ export class Tower {
       const a = Math.sin(t * 38) * (1 - k);
       b.mesh.position.copy(from).addScaledVector(local, 0.42).addScaledVector(side, a * 0.05);
       b.mesh.rotation.y = b.homeRotY + a * 0.045;
+      squish(b.mesh, Math.sin(t * 24) * 0.08 * (1 - k));             // it won't come: it quivers
     }, ease.linear);
+    squish(b.mesh, 0);
     await animate(this.stage, 0.35, (k) => { b.mesh.position.copy(from).addScaledVector(local, 0.42 * (1 - k)); b.mesh.rotation.y = b.homeRotY; }, ease.inOut);
     b.mesh.position.copy(from);
     this.glow(b, false);
-    b.mat.emissiveIntensity = 0;
+    b.mat.emissiveIntensity = GLOW;
     b.state = 'in';
   }
 
-  /** where the pulled block floats while the child reads it: centre of the screen, a little above the middle */
-  presentPose(screenY = 0.43) {
+  /** where the pulled block floats while the child reads it: centre of the screen; lower when a picture card
+   *  stands above it */
+  presentPose(screenY = 0.45) {
     const s = this.stage, cam = s.camera, { w, h } = s.size;
     const dist = 10;
     const vh = 2 * dist * Math.tan((cam.fov * Math.PI) / 360), vw = vh * cam.aspect;
@@ -282,8 +304,19 @@ export class Tower {
     return { pos, quat: cam.quaternion.clone(), scale: len / L };
   }
 
+  /** screen box (CSS px) of the presented block */
+  presentedBox(b: Block) {
+    const corners = [-1, 1].flatMap((sx) => [-1, 1].map((sy) => new THREE.Vector3(sx * L / 2, sy * H / 2, D / 2)));
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const c of corners) {
+      const p = this.stage.project(b.mesh.localToWorld(c));
+      x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+    }
+    return { x0, x1, y0, y1, cx: (x0 + x1) / 2 };
+  }
+
   /** Fly the pulled block in front of the camera, big, its long face (the word) toward the child. */
-  async present(b: Block) {
+  async present(b: Block, screenY = 0.45) {
     const scene = this.stage.scene;
     scene.attach(b.mesh);
     // crisper texture for the close-up
@@ -291,7 +324,7 @@ export class Tower {
     const lo = b.mat.map; b.mat.map = hi; b.mat.needsUpdate = true; lo?.dispose();
     b.mesh.castShadow = false;
     const p0 = b.mesh.position.clone(), q0 = b.mesh.quaternion.clone(), s0 = b.mesh.scale.x;
-    const goal = this.presentPose();
+    const goal = this.presentPose(screenY);
     // the block's local +z (a long face) must face the camera: camera quaternion already does that
     const lift = new THREE.Vector3(0, 1.4, 0);
     await animate(this.stage, 0.8, (k) => {
@@ -301,8 +334,8 @@ export class Tower {
       (b.outline.material as THREE.MeshBasicMaterial).opacity = 0.9 * (1 - k);
     }, ease.inOut);
     this.glow(b, false);
-    b.mat.emissiveIntensity = 0.05;
-    b.mesh.userData.presented = { pos: goal.pos.clone(), t0: performance.now() };
+    b.mat.emissiveIntensity = GLOW + 0.05;
+    b.mesh.userData.presented = { pos: goal.pos.clone(), t0: performance.now(), scale: goal.scale };
   }
 
   /** after a good read: shrink and fly to the player's card (screen px), then vanish */
@@ -327,16 +360,17 @@ export class Tower {
     await animate(this.stage, ms / 1000, (_k, t) => {
       if (b.state !== 'in') { b.outline.visible = false; return; }
       const a = 0.5 + 0.5 * Math.sin(t * 7);
-      m.opacity = 0.35 + 0.6 * a; b.mat.emissiveIntensity = 0.04 + 0.1 * a;
+      m.opacity = 0.35 + 0.6 * a; b.mat.emissiveIntensity = GLOW + 0.06 + 0.16 * a;
     }, ease.linear);
-    if (b.state === 'in') { b.outline.visible = false; m.opacity = 0; b.mat.emissiveIntensity = 0; }
+    if (b.state === 'in') { b.outline.visible = false; m.opacity = 0; b.mat.emissiveIntensity = GLOW; }
   }
 
-  /** knock the tower: spring wobble around its base */
+  /** knock the tower: spring wobble around its base, and a soft squash of the whole tower (it's squishy) */
   kick(dir: THREE.Vector3, amount: number) {
     const d = dir.clone().normalize();
     this.sway.vx += d.z * amount * 6;
     this.sway.vz += -d.x * amount * 6;
+    this.jelly.v -= amount * 14;
   }
 
   private update(dt: number, t: number) {
@@ -344,9 +378,21 @@ export class Tower {
     s.vx += (-k * s.ax - c * s.vx) * dt; s.vz += (-k * s.az - c * s.vz) * dt;
     s.ax += s.vx * dt; s.az += s.vz * dt;
     this.root.rotation.x = s.ax; this.root.rotation.z = s.az;
+    // squash & stretch of the whole tower from its foot: a quick, soft spring
+    const j = this.jelly;
+    j.v += (-140 * j.y - 5 * j.v) * dt; j.y += j.v * dt;
+    this.root.scale.set(1 - j.y * 0.5, 1 + j.y, 1 - j.y * 0.5);
     for (const b of this.blocks) {
-      const pr = b.mesh.userData.presented as { pos: THREE.Vector3; t0: number } | undefined;
-      if (pr) b.mesh.position.y = pr.pos.y + Math.sin(t * 2.2) * 0.06;
+      const pr = b.mesh.userData.presented as { pos: THREE.Vector3; t0: number; scale: number } | undefined;
+      if (pr) {
+        // the floating block bobs and breathes a little
+        const w = Math.sin(t * 2.2);
+        b.mesh.position.y = pr.pos.y + w * 0.06;
+        b.mesh.scale.set(pr.scale * (1 + 0.01 * w), pr.scale * (1 - 0.018 * w), pr.scale * (1 + 0.01 * w));
+      }
     }
   }
 }
+
+/** squash & stretch of one block: taller and thinner for j > 0, flatter and wider for j < 0 (0 = its own shape) */
+function squish(m: THREE.Object3D, j: number) { m.scale.set(1 - j * 0.5, 1 + j, 1 - j * 0.5); }

@@ -38,7 +38,7 @@ async def main():
             name = urllib.parse.unquote(route.request.url.split('/qa-clip/')[1])
             await route.fulfill(body=(RAW / name).read_bytes(), content_type='audio/mpeg')
         await pg.route('**/qa-clip/**', clip)
-        await pg.goto(f'{BASE}?nointro&seed=5', wait_until='load')
+        await pg.goto(f'{BASE}?nointro&seed=5&m=' + ','.join(t for t, _, _ in CASES), wait_until='load')
         for _ in range(90):
             await pg.wait_for_timeout(1000)
             s = await pg.evaluate('[!!window.__pj, document.querySelector("#app")?.dataset.screen]')

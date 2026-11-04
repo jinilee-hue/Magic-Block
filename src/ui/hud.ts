@@ -14,6 +14,8 @@ export class Hud {
   private mic = $('#btnMic');
   private thumb = $('#btnThumb');
   private listenBtn = $('#btnListen');
+  private picCard = $('#picCard');
+  private cardTimer = 0;
   private homeArmed = 0;
   onMic: () => void = () => {};
   onListen: () => void = () => {};
@@ -27,6 +29,7 @@ export class Hud {
   constructor() {
     this.mic.addEventListener('click', () => this.onMic());
     this.listenBtn.addEventListener('click', () => { sfx('tap'); this.onListen(); });
+    this.picCard.addEventListener('click', () => { sfx('tap'); this.onListen(); });
     this.thumb.addEventListener('click', () => { sfx('pop'); this.onThumb(); });
     $('#rotL').addEventListener('click', () => { sfx('tick'); this.onRotate(-1); });
     $('#rotR').addEventListener('click', () => { sfx('tick'); this.onRotate(1); });
@@ -62,6 +65,7 @@ export class Hud {
     this.cards.forEach((c) => { c.querySelector('.num')!.textContent = '0'; c.querySelector('.chips')!.innerHTML = ''; });
     $('#result').hidden = true;
     this.showRead(false);
+    this.showCard(null);
   }
 
   setTurn(p: number, animate = true) {
@@ -105,6 +109,28 @@ export class Hud {
   pulseListen(on: boolean) { this.listenBtn.classList.toggle('pulse', on); }
 
   swipe(on: boolean) { $('#swipe').classList.toggle('on', on); }
+
+  /** the picture card of the word being read, standing just above the presented block (box = its screen rect);
+   *  null = put it away. Tapping it plays the word again. */
+  showCard(url: string | null, box?: { x0: number; x1: number; y0: number }) {
+    const el = this.picCard, img = el.querySelector('img')!;
+    clearTimeout(this.cardTimer);
+    if (!url || !box) {
+      if (el.hidden) return;
+      el.classList.remove('on'); el.classList.add('off');
+      this.cardTimer = window.setTimeout(() => { el.hidden = true; el.classList.remove('off'); }, 400);
+      return;
+    }
+    const h = this.app.clientHeight;
+    const gap = Math.max(8, h * 0.018);
+    const bottom = box.y0 - gap;
+    const top = Math.max(...[this.pill, ...this.cards].map((e) => e.getBoundingClientRect().bottom)) + gap;
+    const size = Math.max(80, Math.min(h * 0.32, (box.x1 - box.x0) * 0.55, bottom - top));
+    el.style.left = `${(box.x0 + box.x1) / 2}px`; el.style.top = `${bottom}px`;
+    el.style.width = el.style.height = `${size}px`;
+    img.src = url;
+    el.hidden = false; el.classList.remove('off', 'on'); void el.offsetWidth; el.classList.add('on');
+  }
 
   /** wrong block: its word pops up with the first letter big (the first sound the fox says) */
   letterPop(x: number, y: number, word: string, c: Pastel) {

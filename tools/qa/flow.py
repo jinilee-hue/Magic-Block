@@ -26,7 +26,7 @@ async def main():
         pg.on('console', lambda m: errors.append(f'{m.type}: {m.text[:220]}') if m.type == 'error' else None)
         pg.on('pageerror', lambda e: errors.append(f'pageerror: {e}'))
         fake = '&fake=1' if MODE == 'ending' else ''
-        await pg.goto(f'{BASE}?nointro&seed=5{fake}', wait_until='load')
+        await pg.goto(f'{BASE}?nointro&seed=5{fake}&m=monkey,mug,map', wait_until='load')
         await pg.wait_for_function('window.__pj && document.querySelector("#app").dataset.screen === "title"', timeout=30000)
         await pg.evaluate('document.querySelector("#btnStart").click()')
         await pg.wait_for_function('window.__pj.game.state === "choose"', timeout=90000)

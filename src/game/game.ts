@@ -10,10 +10,11 @@ import { check, sttState, sttWhenReady } from '../core/stt';
 import type { Confetti } from '../ui/confetti';
 import type { Fox } from '../ui/fox';
 import type { Got, Hud } from '../ui/hud';
-import { rng } from './anim';
+import cardList from '../data/cards.json';
+import { rng, shuffle } from './anim';
 import { collapse } from './collapse';
 import type { Stage } from './stage';
-import type { Block, Tower, WordInfo } from './tower';
+import { LAYERS, M_PER_GAME, type Block, type Tower, type WordInfo } from './tower';
 
 type Heard = string | null | 'nomic';
 type HearResult = 'ok' | 'miss' | 'silence' | 'nomic' | 'again';
@@ -21,6 +22,11 @@ const GREAT = ['t:great1', 't:great2', 't:great3'];
 const IDLE_HINT_MS = 16000;
 /** real readings the recogniser didn't take before the fox says "Good try!" and the block is yours anyway */
 const MAX_MISSES = 3;
+/** the m-words still to come on this device: each game takes the next M_PER_GAME, so two games show all 28 */
+const DECK_KEY = 'pj.mdeck.v1';
+/** m-words that have a picture card (public/cards/<word>.webp, from tools/import_cards.py) */
+const CARDS = new Set(cardList as string[]);
+const cardUrl = (w: string) => CARDS.has(w) ? new URL(`./cards/${w}.webp`, location.href).href : null;
 
 /** did the child say the target word? lenient: near misses and split compounds ("mail box") count (test hook only) */
 export function heardOk(target: string, text: string) {
@@ -39,6 +45,8 @@ export class Game {
   firstGame = true;
   /** test hooks: ?fake=1 replaces the microphone with this queue (string = what was heard, null = silence) */
   test = { fake: false, heard: [] as Heard[], log: [] as string[] };
+  /** test hook (?m=map,mug): these m-words are in the next tower whatever the deck says */
+  forceM: string[] = [];
   lastHeard: string | null = null;
   private session = 0;
   private idleAt = 0;
@@ -77,6 +85,8 @@ export class Game {
     this.closeMic();
     holdMusic(false);
     this.hud.showRead(false);
+    this.hud.showCard(null);
+    this.stage.focus(false);
     this.hud.busy(false);
     this.hud.swipe(false);
     this.stage.controls = true;
@@ -85,14 +95,45 @@ export class Game {
 
   private closeMic() { this.mic?.close(); this.mic = null; }
 
-  buildTower() { this.tower.build(this.words, rng(this.seed ?? ((Math.random() * 1e9) | 0))); }
+  /** The words for one tower: M_PER_GAME m-words, the next ones from the deck (take = the game starts and uses them
+   *  up; otherwise a preview, e.g. the title tower), and the rest of the LAYERS × 3 blocks from the other words —
+   *  always with the trap words that have an m inside (jam, lamp). */
+  pickWords(r: () => number, take: boolean): WordInfo[] {
+    const ms = this.words.filter((w) => w.m), byW = new Map(ms.map((w) => [w.w, w]));
+    let deck: string[] = [];
+    try { deck = (JSON.parse(localStorage.getItem(DECK_KEY) ?? '[]') as string[]).filter((w) => byW.has(w)); } catch { deck = []; }
+    const pick = this.forceM.filter((w, i, a) => byW.has(w) && a.indexOf(w) === i).slice(0, M_PER_GAME);
+    const rest = deck.filter((w) => !pick.includes(w));
+    while (pick.length < M_PER_GAME) {
+      if (!rest.length) {
+        // a fresh round of all 28 (keep it for the next game too)
+        const fresh = shuffle(ms.map((w) => w.w), r).filter((w) => !pick.includes(w));
+        rest.push(...fresh); deck.push(...fresh);
+      }
+      pick.push(rest.shift()!);
+    }
+    const left = deck.filter((w) => !pick.includes(w));
+    try { localStorage.setItem(DECK_KEY, JSON.stringify(take ? left : [...pick.filter((w) => !this.forceM.includes(w)), ...left])); } catch { /* private mode */ }
+    const others = this.words.filter((w) => !w.m);
+    const trap = others.filter((w) => w.w.includes('m'));
+    const fill = shuffle(others.filter((w) => !trap.includes(w)), r).slice(0, LAYERS * 3 - M_PER_GAME - trap.length);
+    return [...pick.map((w) => byW.get(w)!), ...trap, ...fill];
+  }
+
+  buildTower(take = false) {
+    const r = rng(this.seed ?? ((Math.random() * 1e9) | 0));
+    const words = this.pickWords(r, take);
+    this.tower.build(words, r);
+    // the picture cards of this tower's m-words, ready before anyone pulls a block
+    if (take) for (const w of words) { const u = w.m && cardUrl(w.w); if (u) new Image().src = u; }
+  }
 
   async start() {
     this.abort();
     const s = this.session;
     this.players = [{ got: [] }, { got: [] }]; this.turn = 0; this.greatIdx = 0;
     this.hud.reset(); this.hud.setTurn(0, false); this.hud.screen('game');
-    this.buildTower();
+    this.buildTower(true);
     this.stage.home();
     this.state = 'intro'; this.hud.busy(true);
     this.log('start');
@@ -147,8 +188,12 @@ export class Game {
     await this.tower.pullOut(b);
     if (!this.alive(s)) return;
     sfx('whoosh');
-    await this.tower.present(b);
+    // with a picture card the block floats lower and the card stands above it (picture over word, like a flashcard)
+    const pic = cardUrl(b.word.w);
+    this.stage.focus(true);
+    await this.tower.present(b, pic ? 0.6 : 0.45);
     if (!this.alive(s)) return;
+    if (pic) this.hud.showCard(pic, this.tower.presentedBox(b));
     this.hud.showRead(true); this.hud.micState('idle');
     const read = await this.readLoop(b, s);
     if (!read || !this.alive(s)) return;
@@ -163,6 +208,8 @@ export class Game {
     if (!this.alive(s)) return;
     const tgt = this.hud.cardTarget(this.turn);
     sfx('whoosh');
+    this.hud.showCard(null);
+    this.stage.focus(false);
     await this.tower.flyTo(b, tgt.x, tgt.y);
     if (!this.alive(s)) return;
     sfx('pop');
@@ -335,7 +382,7 @@ export class Game {
     this.abort();
     this.hud.reset();
     this.hud.screen('title');
-    this.buildTower();
+    this.buildTower(false);
     this.stage.home();
   }
 

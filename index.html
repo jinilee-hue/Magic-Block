@@ -4,14 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#f6d9d0" />
-  <title>Phonics Jenga</title>
+  <title>Magic Jenga</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='40' width='48' height='14' rx='4' fill='%23f7afc3'/%3E%3Crect x='8' y='24' width='48' height='14' rx='4' fill='%23a8e2c4'/%3E%3Crect x='8' y='8' width='48' height='14' rx='4' fill='%23f8dc80'/%3E%3Ctext x='32' y='51' font-family='Arial' font-weight='700' font-size='12' text-anchor='middle' fill='%23a8365f'%3Em%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
   <div id="app" class="app" data-screen="intro">
-    <!-- soft pastel sky (behind the WebGL canvas) -->
+    <!-- the painted playroom (behind the WebGL canvas; the tower stands on its table) + a few floating bubbles -->
     <div class="sky" aria-hidden="true">
-      <i class="cloud c1"></i><i class="cloud c2"></i><i class="cloud c3"></i><i class="cloud c4"></i>
       <i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><i class="orb o4"></i><i class="orb o5"></i>
     </div>
 
@@ -54,6 +53,9 @@
     </div>
     <div id="swipe" class="swipe-hint" aria-hidden="true"><i class="hand"></i><i class="arc"></i></div>
 
+    <!-- picture card shown above the pulled block while the child reads the word -->
+    <div id="picCard" class="pic-card" hidden><img alt="" draggable="false" /></div>
+
     <!-- read-aloud controls -->
     <div id="read" class="read" hidden>
       <button id="btnListen" class="btn3d round blue small" aria-label="Listen again"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11" /></svg></button>
@@ -67,7 +69,7 @@
 
     <!-- title -->
     <div id="title" class="title-screen">
-      <h1 class="logo" aria-label="Phonics Jenga"><span class="l1" data-t="PHONICS">PHONICS</span><span class="l2" data-t="JENGA">JENGA</span></h1>
+      <h1 class="logo"><img src="./src/assets/logo.webp" alt="Magic Jenga" draggable="false" /></h1>
       <button id="btnStart" class="btn3d pill green start"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" /></svg><span>START</span></button>
     </div>
 

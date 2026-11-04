@@ -2,7 +2,6 @@
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import type { Stage } from './stage';
-import { TABLE_R } from './stage';
 import { L, H, D, type Tower } from './tower';
 
 export function collapse(stage: Stage, tower: Tower, seconds = 4.2): Promise<void> {
@@ -13,7 +12,8 @@ export function collapse(stage: Stage, tower: Tower, seconds = 4.2): Promise<voi
   world.defaultContactMaterial.restitution = 0.14;
   (world.solver as CANNON.GSSolver).iterations = 14;
 
-  const table = new CANNON.Body({ mass: 0, shape: new CANNON.Cylinder(TABLE_R, TABLE_R, 0.5, 32) });
+  // the painted table-top (its size in world units depends on the screen: stage.tableR)
+  const table = new CANNON.Body({ mass: 0, shape: new CANNON.Cylinder(stage.tableR, stage.tableR, 0.5, 32) });
   table.position.set(0, -0.27, 0);
   world.addBody(table);
   const floor = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
@@ -21,7 +21,7 @@ export function collapse(stage: Stage, tower: Tower, seconds = 4.2): Promise<voi
   world.addBody(floor);
 
   // straighten the tower (it may still be swaying) and hand every remaining block to the physics world
-  tower.root.rotation.set(0, 0, 0); tower.root.updateMatrixWorld(true);
+  tower.root.rotation.set(0, 0, 0); tower.root.scale.set(1, 1, 1); tower.root.updateMatrixWorld(true);
   const cam = stage.camera.position.clone().setY(0).normalize();
   const right = new THREE.Vector3(cam.z, 0, -cam.x);            // fall sideways across the view: easy to watch
   const pairs: [THREE.Mesh, CANNON.Body][] = [];

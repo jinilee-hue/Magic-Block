@@ -22,23 +22,12 @@ svg { display: block; }
 
 .app { position: fixed; inset: 0; overflow: hidden; }
 
-/* ── sky ─────────────────────────────────────────────── */
-.sky { position: absolute; inset: 0; z-index: 0; overflow: hidden;
-  background:
-    radial-gradient(120% 80% at 92% 0%, #a9dcf3 0%, rgba(169,220,243,0) 58%),
-    radial-gradient(90% 70% at 0% 100%, #ffc9b5 0%, rgba(255,201,181,0) 60%),
-    linear-gradient(180deg, #c3e4f3 0%, #e6e3f0 38%, #f9dcd2 72%, #fbcfbf 100%); }
-.cloud { position: absolute; display: block; width: calc(40 * var(--u)); height: calc(11 * var(--u)); border-radius: 999px;
-  background: rgba(255,255,255,.62); filter: blur(calc(.9 * var(--u))); animation: drift 60s linear infinite; }
-.cloud::before, .cloud::after { content: ''; position: absolute; border-radius: 50%; background: inherit; }
-.cloud::before { width: 46%; height: 170%; left: 14%; bottom: 20%; }
-.cloud::after { width: 34%; height: 140%; left: 50%; bottom: 25%; }
-.cloud.c1 { left: -4%; top: 14%; transform: scale(1.25); animation-duration: 90s; }
-.cloud.c2 { right: 2%; top: 30%; transform: scale(1.1); animation-duration: 120s; animation-direction: reverse; opacity: .85; }
-.cloud.c3 { left: 18%; top: 62%; transform: scale(.8); opacity: .55; animation-duration: 140s; }
-.cloud.c4 { right: 24%; top: 6%; transform: scale(.7); opacity: .7; animation-duration: 100s; }
-@keyframes drift { from { translate: 0 0; } 50% { translate: calc(6 * var(--u)) 0; } to { translate: 0 0; } }
-.orb { position: absolute; display: block; border-radius: 50%; filter: blur(calc(.25 * var(--u))); animation: bob 9s ease-in-out infinite; }
+/* ── the painted playroom (jenga_bg) ─────────────────── */
+/* background-size: cover, centred: stage.ts finds the painted table with the same rule (BG in stage.ts) */
+/* the painted room: the user's jenga_bg (already soft and light), as bg.webp */
+.sky { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #f3e4da url('./assets/bg.webp') center / cover no-repeat;
+  will-change: transform; }
+.orb { position: absolute; display: block; border-radius: 50%; filter: blur(calc(.25 * var(--u))); opacity: .75; animation: bob 9s ease-in-out infinite; }
 .orb.o1 { width: calc(3.4 * var(--u)); height: calc(3.4 * var(--u)); left: 9%; top: 48%; background: #ffc6d8; }
 .orb.o2 { width: calc(2.2 * var(--u)); height: calc(2.2 * var(--u)); left: 30%; top: 20%; background: #ffe7a6; animation-delay: -3s; }
 .orb.o3 { width: calc(3 * var(--u)); height: calc(3 * var(--u)); right: 18%; top: 13%; background: #ffd0c0; animation-delay: -5s; }
@@ -194,15 +183,19 @@ svg { display: block; }
 /* ── title ───────────────────────────────────────────── */
 .title-screen { position: absolute; inset: 0; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .5s; }
 .app[data-screen="title"] .title-screen { opacity: 1; pointer-events: auto; }
-.logo { position: absolute; left: calc(5 * var(--u)); top: calc(6 * var(--u)); margin: 0; display: flex; flex-direction: column; align-items: center;
-  font-weight: 800; line-height: .86; letter-spacing: .02em; transform: rotate(-4deg); animation: logoIn .9s cubic-bezier(.3,1.5,.5,1) both; }
-.logo span { position: relative; display: block; font-size: calc(13 * var(--u)); color: #fff; -webkit-text-stroke: .2em #fff; paint-order: stroke fill; padding: 0 .06em;
-  filter: drop-shadow(0 .06em 0 #e2cff3) drop-shadow(0 .1em .14em rgba(120, 80, 170, .35)); }
-.logo span::after { content: attr(data-t); position: absolute; inset: 0; padding: inherit; color: transparent; -webkit-text-stroke: 0; -webkit-background-clip: text; background-clip: text; background-image: var(--grad); }
-.logo .l1 { --grad: linear-gradient(180deg, #a5ecdc 0%, #6fd3c0 45%, #3fb3a5 100%); }
-.logo .l2 { font-size: calc(15.5 * var(--u)); --grad: linear-gradient(180deg, #ffe58e 0%, #ffc94e 50%, #f3a62c 100%); }
-@keyframes logoIn { from { opacity: 0; transform: rotate(-4deg) scale(.4) translateY(calc(-10 * var(--u))); } }
-.btn3d.start { position: absolute; left: calc(9 * var(--u)); top: calc(46 * var(--u)); height: calc(13 * var(--u)); padding: 0 calc(8 * var(--u)) 0 calc(6 * var(--u)); font-size: calc(6.4 * var(--u)); --edge: var(--u); animation: breathe 2.2s ease-in-out infinite; }
+/* the logo art (jenga_logo) on the left, the tower on the painted table in the middle, START under the logo */
+.logo { position: absolute; left: calc(3 * var(--u)); top: calc(3 * var(--u)); margin: 0; width: min(calc(66 * var(--u)), 33vw);
+  animation: logoIn .9s cubic-bezier(.3,1.5,.5,1) both; transform-origin: 50% 60%; }
+.logo img { display: block; width: 100%; height: auto; filter: drop-shadow(0 calc(1.2 * var(--u)) calc(1.6 * var(--u)) rgba(120, 70, 40, .25)); animation: logoFloat 4.6s ease-in-out 1s infinite; }
+@keyframes logoIn { from { opacity: 0; transform: scale(.4) translateY(calc(-10 * var(--u))); } }
+@keyframes logoFloat { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(calc(-1.2 * var(--u))) rotate(-1deg); } }
+.btn3d.start { position: absolute; left: calc(3 * var(--u) + min(calc(66 * var(--u)), 33vw) / 2); top: calc(3 * var(--u) + min(calc(66 * var(--u)), 33vw) * .7 + 4 * var(--u)); translate: -50% 0;
+  height: calc(13 * var(--u)); padding: 0 calc(8 * var(--u)) 0 calc(6 * var(--u)); font-size: calc(6.4 * var(--u)); --edge: var(--u); animation: breathe 2.2s ease-in-out infinite; }
+/* portrait: no room beside the tower — logo across the top, START on the table */
+@media (max-aspect-ratio: 1/1) {
+  .logo { left: 50%; translate: -50% 0; width: min(74vw, calc(90 * var(--u))); }
+  .btn3d.start { left: 50%; top: auto; bottom: calc(7 * var(--u) + env(safe-area-inset-bottom)); }
+}
 .btn3d.start svg { width: calc(6.4 * var(--u)); height: calc(6.4 * var(--u)); fill: #fff; }
 @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.06; } }
 
@@ -240,6 +233,15 @@ svg { display: block; }
 
 .loading { position: absolute; z-index: 70; right: calc(3 * var(--u)); top: calc(3 * var(--u)); width: calc(5 * var(--u)); height: calc(5 * var(--u)); pointer-events: none; opacity: 0; transition: opacity .3s; }
 
+/* picture card over the presented block (hud.showCard sets left / top = its bottom centre, and the size) */
+.pic-card { position: absolute; z-index: 21; translate: -50% -100%; box-sizing: border-box; padding: 5%; border-radius: 14%; background: #fff; cursor: pointer;
+  box-shadow: 0 calc(.9 * var(--u)) 0 #efd6c4, 0 calc(2.2 * var(--u)) calc(4.4 * var(--u)) rgba(110, 60, 30, .28), inset 0 0 0 calc(.5 * var(--u)) #fff3ea;
+  opacity: 0; transform: scale(.3) rotate(-8deg); transform-origin: 50% 100%; transition: transform .5s cubic-bezier(.3,1.6,.5,1), opacity .25s; }
+.pic-card.on { opacity: 1; transform: rotate(-2deg); }
+.pic-card.off { opacity: 0; transform: scale(.6) translateY(-8%) rotate(4deg); transition: transform .35s ease-in, opacity .3s; }
+.pic-card img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.pic-card:active { transform: scale(.96) rotate(-2deg); }
+
 .letter-pop { position: absolute; z-index: 24; translate: calc(-100% - 3 * var(--u)) -50%; pointer-events: none; display: flex; align-items: baseline; gap: .02em;
   padding: calc(1.4 * var(--u)) calc(3.4 * var(--u)) calc(1.8 * var(--u)); border-radius: calc(3.4 * var(--u)); background: #fff;
   font-family: var(--font-word); font-weight: 700; color: color-mix(in oklab, var(--tc) 55%, #9a9aa8); font-size: calc(7 * var(--u)); line-height: 1;
@@ -259,5 +261,5 @@ svg { display: block; }
   .chips { max-width: calc(26 * var(--u)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cloud, .orb, .btn3d.start, .pcard.active .avatar { animation: none !important; }
+  .orb, .btn3d.start, .logo img, .pcard.active .avatar { animation: none !important; }
 }
