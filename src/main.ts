@@ -2,7 +2,7 @@ import './style.css';
 import wordData from './data/words.json';
 import { sfx, startMusic, unlock } from './core/audio';
 import { micTest } from './core/mic';
-import { onTalk, say } from './core/speech';
+import { onTalk, said, say } from './core/speech';
 import { sttPreload, sttState } from './core/stt';
 import { Game } from './game/game';
 import { Stage } from './game/stage';
@@ -11,6 +11,7 @@ import { Confetti } from './ui/confetti';
 import { Fox } from './ui/fox';
 import { Hud } from './ui/hud';
 import { Title } from './ui/title';
+import { twinkle } from './ui/twinkle';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const params = new URLSearchParams(location.search);
@@ -56,6 +57,7 @@ async function boot() {
   const hud = new Hud();
   const stage = new Stage($('#stage'));
   stage.bg = $('.sky'); stage.resize();
+  twinkle($('.sky'));
   const tower = new Tower(stage);
   const fox = new Fox($('#fox'));
   const confetti = new Confetti($<HTMLCanvasElement>('#fx'));
@@ -82,11 +84,37 @@ async function boot() {
   hud.onAgain = () => { hud.hideResult(); void game.start(); };
   hud.onResultHome = () => { hud.hideResult(); game.toTitle(); };
 
-  const toTitle = () => { hud.screen('title'); title.enter(); fox.gesture('talk', 1800); };
+  const toTitle = () => {
+    hud.screen('title'); title.enter(); fox.gesture('talk', 1800);
+    // where the browser lets sound start without a touch (an installed app, a kiosk, a skipped intro film), greet now
+    const c = unlock();
+    if (c.state === 'running') hello();
+    else void c.resume().then(() => { if (c.state === 'running') hello(); }).catch(() => {});
+  };
+  // Title sound (user: "첫화면과 게임에 들어갈 배경음악 · 튜터의 인사말"): the music and the fox's hello start with the
+  // first touch on the title — browsers keep sound off until then. A first touch on START goes straight to the game's
+  // own welcome and how-to instead. The music then plays on through the game.
+  let greeted = false;
+  function hello() {
+    if (greeted || hud.app.dataset.screen !== 'title') return;
+    greeted = true;
+    void startMusic();
+    fox.speakAs('talk');
+    void say(['t:hello', 0.4, 't:pressstart']);
+  }
+  const firstTouch = (e: Event) => {
+    window.removeEventListener('pointerdown', firstTouch, true);
+    window.removeEventListener('keydown', firstTouch, true);
+    unlock();
+    if ((e.target as Element | null)?.closest?.('#btnStart')) { greeted = true; return; }
+    hello();
+  };
+  window.addEventListener('pointerdown', firstTouch, true);
+  window.addEventListener('keydown', firstTouch, true);
   if (await intro) playIntro(hud, toTitle); else toTitle();
 
   // test / debug hooks
-  Object.assign(window, { __pj: { game, tower, stage, hud, fox, confetti, say, sttState, begin, micTest } });
+  Object.assign(window, { __pj: { game, tower, stage, hud, fox, confetti, say, said, sttState, begin, micTest } });
 }
 
 void boot();

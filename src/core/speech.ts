@@ -9,6 +9,8 @@ let token = 0;
 let playing: Playing[] = [];
 let talking = false;
 const listeners: Listener[] = [];
+/** the last lines played (clip keys, for tests via window.__pj.said) */
+export const said: string[] = [];
 export const onTalk = (f: Listener) => { listeners.push(f); };
 export const isTalking = () => talking;
 function emit(on: boolean) { if (talking === on) return; talking = on; duck(on); listeners.forEach((f) => f(on)); }
@@ -22,6 +24,7 @@ export async function say(parts: Part[]): Promise<boolean> {
   await Promise.all(keys.filter(hasClip).map(loadClip));
   const ctx = audioCtx();
   if (my !== token || !ctx) return false;
+  said.push(keys.join(' ')); if (said.length > 60) said.shift();
   let t = ctx.currentTime + 0.04;
   const mine: Playing[] = [];
   for (const p of parts) {

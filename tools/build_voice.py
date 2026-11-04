@@ -72,7 +72,12 @@ T_INS = ['Speak like a cheerful, energetic 7-year-old boy: bright and excited.',
          'Like a cheerful, energetic 7-year-old boy: bright, excited and clear.']
 
 TUTOR = {
+    'hello': 'Hi, friends! Welcome to Magic Jenga!',
+    'pressstart': 'Press start to play!',
     'welcome': "Let's play Magic Jenga!",
+    'howto1': 'Take turns with your friend.',
+    'howto2': 'Pull it out and read the word. Then the block is yours!',
+    'howto3': 'Get the most blocks to win!',
     'rule': 'Find a block that starts with m!',
     'rotate': 'Turn the tower to see all the blocks!',
     'turn1': 'Player one, your turn!',

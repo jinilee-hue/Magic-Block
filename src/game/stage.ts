@@ -76,7 +76,7 @@ export class Stage {
     key.shadow.mapSize.set(2048, 2048);
     const sc = key.shadow.camera as THREE.OrthographicCamera;
     sc.left = -10; sc.right = 10; sc.top = 14; sc.bottom = -7; sc.near = 1; sc.far = 50;
-    key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02; key.shadow.radius = 4;
+    key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02; key.shadow.radius = 6;
     key.target.position.set(0, 4, 0);
     this.scene.add(key, key.target);
     const fill = new THREE.DirectionalLight(0xffe9dc, 0.45);
@@ -84,8 +84,18 @@ export class Stage {
     this.scene.add(fill);
 
     this.scene.add(this.world);
-    // the painted table only gets the tower's shadow, plus a soft contact shadow right under its foot
-    this.catcher = new THREE.Mesh(new THREE.CircleGeometry(1, 96), new THREE.ShadowMaterial({ opacity: 0.2, color: 0x6b3f22 }));
+    // the painted table only gets the tower's shadow, plus a soft contact shadow right under its foot. The shadow fades
+    // out away from the tower (from 2 to 3.4 units), so its long tail never runs to the table's edge and gets cut there
+    // (user: "젠가 그림자가 테이블에 맞지 않은데") — the painting's light is soft, so a short soft shadow fits it
+    const shadowMat = new THREE.ShadowMaterial({ opacity: 0.2, color: 0x6b3f22 });
+    shadowMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uFade = { value: new THREE.Vector2(2.0, 3.4) };
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vFadeXZ;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFadeXZ = (modelMatrix * vec4(transformed, 1.0)).xz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vFadeXZ;\nuniform vec2 uFade;')
+        .replace('#include <tonemapping_fragment>', 'gl_FragColor.a *= 1.0 - smoothstep(uFade.x, uFade.y, length(vFadeXZ));\n#include <tonemapping_fragment>');
+    };
+    this.catcher = new THREE.Mesh(new THREE.CircleGeometry(1, 96), shadowMat);
     this.catcher.rotation.x = -Math.PI / 2; this.catcher.position.y = 0.002; this.catcher.receiveShadow = true;
     // an invisible stand-in for the painted table (depth only, drawn first): blocks that fall behind or below it
     // in the final crash are hidden by it instead of showing through the painting

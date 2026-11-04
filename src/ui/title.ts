@@ -1,5 +1,5 @@
-// Title screen, after the user's mockup: the logo centred on top, a shorter tower on the painted table, the START art
-// lying on the table's front edge, the fox waving on the right. Now and then an m-block slides half out of the tower
+// Title screen (option A the user picked, after their mockup): the game's own tower on the painted table, the logo and
+// the START art centred over it, the fox waving on the right. Now and then an m-block slides half out of the tower
 // with golden sparkles. The view sways gently around a front view (long faces of every other layer readable).
 import * as THREE from 'three';
 import { Stage } from '../game/stage';
@@ -8,7 +8,6 @@ import type { Confetti } from './confetti';
 import type { Fox } from './fox';
 
 const DEG = Math.PI / 180;
-const LOGO_ASPECT = 846 / 1200;     // src/assets/logo.webp
 
 export class Title {
   private nextTease = 0;
@@ -22,24 +21,21 @@ export class Title {
 
   private get on() { const s = this.app.dataset.screen; return s === 'title' || s === 'intro'; }
 
-  /** a title tower was just built: size it under the logo and let it stack itself up */
+  /** a title tower was just built: place the logo + START over it and let it stack itself up */
   enter() {
     this.fit();
     void this.tower.dropIn();
     this.nextTease = this.t + 1.2; this.nextWave = this.t + 1.5;
   }
 
-  /** shrink the title tower (from its foot) until its top clears the logo */
+  /** the title tower is the game's own size; the logo + START group is centred on its middle (--tower-mid) */
   fit() {
     if (!this.on) return;
-    const logo = this.app.querySelector('.logo') as HTMLElement;
-    const limit = logo.offsetTop + logo.offsetWidth * LOGO_ASPECT + this.app.clientHeight * 0.012;
-    this.pose(0);
-    const foot = this.stage.tableAt.y, h = this.tower.topH();
-    const top = (s: number) => this.stage.project(new THREE.Vector3(0, h * s, 0)).y;
-    let s = 1;
-    for (let i = 0; i < 2; i++) { const t = top(s); if (t >= limit) break; s *= (foot - limit) / Math.max(1, foot - t); }
-    this.tower.baseScale = Math.max(0.5, Math.min(1, s));
+    this.tower.baseScale = 1;
+    this.pose(this.t);
+    this.stage.camera.updateMatrixWorld();
+    const foot = this.stage.tableAt.y, top = this.stage.project(new THREE.Vector3(0, this.tower.topH(), 0)).y;
+    document.documentElement.style.setProperty('--tower-mid', `${((top + foot) / 2).toFixed(1)}px`);
   }
 
   private pose(t: number) {

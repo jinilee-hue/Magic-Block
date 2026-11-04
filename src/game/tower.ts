@@ -11,9 +11,10 @@ import type { Stage } from './stage';
 export const L = 3, D = 1;
 /** block thickness: real Jenga is 0.6. ?bh=0.75 overrides it for side-by-side looks. */
 export const H = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('bh')) || 0.6;
-export const LAYERS = 12;
-/** the title screen's tower (the user's mockup: a slim tower right under the logo, m-words on its front face) */
-export const TITLE_LAYERS = 10;
+export const LAYERS = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layers')) || 12;
+/** the title screen shows the game's own tower (option A the user picked: the same thick blocks, the logo and START
+ *  centred over it, m-words on its front face) */
+export const TITLE_LAYERS = LAYERS;
 /** m-words in one game */
 export const M_PER_GAME = 14;
 const DG = 0.035, HG = 0.012;                // gaps between blocks / layers
@@ -137,6 +138,22 @@ export function planLayers(mCount: number, r: () => number, layers = LAYERS): nu
 /** a stand-alone layer can stand: middle present, or both sides present */
 export const layerStable = (present: boolean[]) => present[1] || (present[0] && present[2]);
 
+let looseShadow: THREE.MeshBasicMaterial | null = null;
+/** soft rounded-rectangle shadow under a block lying on the table (shared by the title's loose blocks) */
+function looseShadowMat() {
+  if (looseShadow) return looseShadow;
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
+  const g = cv.getContext('2d')!;
+  // only the blurred shadow of a shape drawn off-canvas lands on the canvas
+  g.shadowColor = 'rgba(90, 50, 25, 0.6)'; g.shadowBlur = 22; g.shadowOffsetX = 1000;
+  g.beginPath();
+  if (g.roundRect) g.roundRect(-1000 + 34, 34, 256 - 68, 128 - 68, 18); else g.rect(-1000 + 34, 34, 256 - 68, 128 - 68);
+  g.fill();
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  looseShadow = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false });
+  return looseShadow;
+}
+
 export class Tower {
   readonly root = new THREE.Group();
   blocks: Block[] = [];
@@ -148,6 +165,8 @@ export class Tower {
   private hovered: Block | null = null;
   private aniso: number;
   private busyAnim = false;
+  /** title decor: blocks lying about on the table (scatter); not part of the tower */
+  private loose: THREE.Object3D[] = [];
   /** a stack-up or a title tease is playing */
   get busy() { return this.busyAnim; }
 
@@ -198,6 +217,12 @@ export class Tower {
   clear() {
     for (const b of this.blocks) { b.mesh.removeFromParent(); b.mat.map?.dispose(); b.mat.dispose(); (b.outline.material as THREE.Material).dispose(); }
     this.blocks = [];
+    for (const o of this.loose) {
+      o.removeFromParent();
+      const m = (o as THREE.Mesh).material as THREE.MeshPhysicalMaterial | THREE.MeshBasicMaterial;
+      if (m !== looseShadowMat()) { m.map?.dispose(); m.dispose(); }
+    }
+    this.loose = [];
     this.root.position.set(0, 0, 0); this.root.rotation.set(0, 0, 0);
     this.sway = { ax: 0, az: 0, vx: 0, vz: 0 };
     this.jelly = { y: 0, v: 0 }; this.baseScale = 1; this.root.scale.set(1, 1, 1);
@@ -434,6 +459,37 @@ export class Tower {
 
   /** height of the tower in world units, before baseScale */
   topH() { return (Math.max(0, ...this.blocks.filter((b) => b.state === 'in').map((b) => b.layer)) + 1) * H; }
+
+  /** Title decor (user: "테이블에 젠가 몇개 떨어져있는걸로"): a few blocks lying about on the table as if they had
+   *  fallen — flat or on their side, each with a soft contact shadow. They sit in the room, not in the tower, so they
+   *  don't sway, can't be picked, and go with the next build. Spots are clear of the tower and each other and inside
+   *  the table (tableR ≥ 4); found with a small search. */
+  scatter(words: WordInfo[], r: () => number) {
+    const SPOTS: [number, number, number, boolean][] = [[-1.77, 2.48, -18, false], [1.71, 2.44, 38, false], [-2.38, -1.25, 76, false], [2.52, -1.2, 105, false]];
+    const geo = blockGeometry(), used = new Set<string>();
+    SPOTS.forEach(([x, z, yaw, side], i) => {
+      const word = words[i % words.length];
+      if (!word) return;
+      const choices = PASTELS.filter((p) => !used.has(p.name));
+      const color = choices[Math.floor(r() * choices.length)]; used.add(color.name);
+      const mat = new THREE.MeshPhysicalMaterial({
+        map: makeTexture(paintBlock(word.w, color), this.aniso), roughness: 0.5, metalness: 0,
+        clearcoat: 0.35, clearcoatRoughness: 0.32, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xfff1e6),
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      const a = (yaw + (r() - 0.5) * 6) * Math.PI / 180;
+      mesh.rotation.order = 'YXZ';                       // roll onto its side first, then turn
+      mesh.rotation.set(side ? Math.PI / 2 : 0, a, 0);
+      mesh.position.set(x, side ? (D - DG) / 2 : (H - HG) / 2, z);
+      const shadow = new THREE.Mesh(new THREE.PlaneGeometry(L + 0.7, (side ? H : D) + 0.7), looseShadowMat());
+      shadow.rotation.order = 'YXZ';                     // lay it flat first, then turn it with the block
+      shadow.rotation.set(-Math.PI / 2, a, 0);
+      shadow.position.set(x, 0.005, z); shadow.renderOrder = -1;
+      this.stage.world.add(mesh, shadow);
+      this.loose.push(mesh, shadow);
+    });
+  }
 
   private update(dt: number, t: number) {
     const s = this.sway, k = 60, c = 3.2;

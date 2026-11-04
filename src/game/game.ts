@@ -124,11 +124,20 @@ export class Game {
     const r = rng(this.seed ?? ((Math.random() * 1e9) | 0));
     const words = this.pickWords(r, take);
     if (!take) {
-      // the title tower (the mockup): an m-word on the front face of every long layer (slot 2 faces the title camera)
-      // and one in each cross layer; the logo stands above it, so it is shorter
-      const ms = words.filter((w) => w.m).slice(0, TITLE_LAYERS), os = words.filter((w) => !w.m).slice(0, TITLE_LAYERS * 2);
-      const plan = Array.from({ length: TITLE_LAYERS }, (_, l) => (l % 2 === 0 ? [2] : [Math.floor(r() * 3)]));
-      this.tower.build([...ms, ...os], r, TITLE_LAYERS, plan);
+      // the title tower = a game tower with the next game's words, set out for show: an m-word on the front face of
+      // every long layer (slot 2 faces the title camera), the other m-words in the cross layers
+      const nM = words.filter((w) => w.m).length, front = Math.ceil(TITLE_LAYERS / 2);
+      const plan: number[][] = Array.from({ length: TITLE_LAYERS }, (_, l) => (l % 2 === 0 ? [2] : []));
+      const cross = shuffle(Array.from({ length: TITLE_LAYERS - front }, (_, i) => i * 2 + 1), r);
+      let left = nM - front;
+      for (const l of cross) if (left > 0) { plan[l] = [Math.floor(r() * 3)]; left--; }
+      for (const l of cross) if (left > 0) { plan[l] = [0, 2]; left--; }
+      this.tower.build(words, r, TITLE_LAYERS, nM >= front && left === 0 ? plan : undefined);
+      // and a few blocks lying about on the table: words that are not in the tower (two m-words, two others)
+      const inTower = new Set(words.map((w) => w.w));
+      const rest = shuffle(this.words.filter((w) => !inTower.has(w.w)), r);
+      const ms = rest.filter((w) => w.m), os = rest.filter((w) => !w.m);
+      this.tower.scatter([ms[0], os[0], ms[1], os[1]].filter(Boolean), r);
       return;
     }
     this.tower.build(words, r);
@@ -146,13 +155,20 @@ export class Game {
     this.stage.home();
     this.state = 'intro'; this.hud.busy(true);
     this.log('start');
-    void preload(['t:welcome', 't:rule', 's:m', 't:rotate', 't:turn1', 't:turn2', 't:perfect', 't:sayit', ...GREAT, 't:again', 't:louder', 't:uhoh', 't:startswith']);
+    void preload(['t:welcome', 't:howto1', 't:rule', 's:m', 't:howto2', 't:howto3', 't:rotate', 't:turn1', 't:turn2', 't:perfect', 't:sayit', ...GREAT, 't:again', 't:louder', 't:uhoh', 't:startswith']);
+    // the first game gets the whole how-to (user: "게임소개 tts"), later games just the reminder
+    const first = this.firstGame;
     this.fox.speakAs('talk'); this.fox.hop();
-    await say(['t:welcome']);
+    await say(first ? ['t:welcome', 0.35, 't:howto1'] : ['t:welcome']);
     if (!this.alive(s)) return;
     this.fox.speakAs('point');
     await say(['t:rule', 0.3, 's:m', 0.2, 's:m']);
     if (!this.alive(s)) return;
+    if (first) {
+      this.fox.speakAs('talk');
+      await say(['t:howto2', 0.35, 't:howto3']);
+      if (!this.alive(s)) return;
+    }
     if (this.firstGame) {
       this.firstGame = false;
       this.hud.swipe(true);

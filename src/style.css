@@ -27,6 +27,16 @@ svg { display: block; }
 /* the painted room: the user's jenga_bg (already soft and light), as bg.webp */
 .sky { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #f3e4da url('./assets/bg.webp') center / cover no-repeat;
   will-change: transform; }
+/* the painted sparkle lights (warm dust motes in the window's sunbeam) twinkle on their own slow beats (ui/twinkle.ts
+   sizes the box to the picture's cover crop; --d = flare size in picture px, --k = picture px → CSS px) */
+.twinkles { position: absolute; pointer-events: none; }
+.twinkles i { position: absolute; width: calc(var(--d) * var(--k) * 1px); aspect-ratio: 1; translate: -50% -50%; opacity: 0; border-radius: 50%;
+  background: radial-gradient(circle, #fffef6 0 10%, rgba(255, 238, 178, .9) 20%, rgba(255, 216, 128, .38) 40%, rgba(255, 210, 110, 0) 68%);
+  mix-blend-mode: screen; animation: twinkle var(--t) ease-in-out var(--dl) infinite; }
+.twinkles i.star::before, .twinkles i.star::after { content: ''; position: absolute; left: 50%; top: 50%; width: 200%; height: 8%; translate: -50% -50%;
+  border-radius: 50%; background: radial-gradient(closest-side, #fffdf0, rgba(255, 230, 160, .75) 40%, rgba(255, 222, 140, 0)); }
+.twinkles i.star::after { rotate: 90deg; }
+@keyframes twinkle { 0%, 40%, 100% { opacity: 0; scale: .3; } 56% { opacity: var(--a); scale: 1; } 74% { opacity: calc(var(--a) * .2); scale: .55; } }
 .orb { position: absolute; display: block; border-radius: 50%; filter: blur(calc(.25 * var(--u))); opacity: .75; animation: bob 9s ease-in-out infinite; }
 .orb.o1 { width: calc(3.4 * var(--u)); height: calc(3.4 * var(--u)); left: 9%; top: 48%; background: #ffc6d8; }
 .orb.o2 { width: calc(2.2 * var(--u)); height: calc(2.2 * var(--u)); left: 30%; top: 20%; background: #ffe7a6; animation-delay: -3s; }
@@ -180,21 +190,19 @@ svg { display: block; }
 .fox.hop { animation: hop .6s cubic-bezier(.3,1.4,.5,1); }
 @keyframes hop { 40% { translate: 0 calc(-3.5 * var(--u)); } }
 
-/* ── title (the user's mockup) ───────────────────────── */
-/* the logo centred on top, a shorter tower on the painted table, the START art lying on the table's front edge
-   (stage.ts puts the table's screen position in --table-x / --table-y), the fox waving on the right */
+/* ── title (option A the user picked) ────────────────── */
+/* the game's own tower on the painted table, the logo and the START art centred over it (stage.ts sets --table-x,
+   ui/title.ts --tower-mid), the fox waving on the right */
 .title-screen { position: absolute; inset: 0; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .5s; }
 .app[data-screen="title"] .title-screen { opacity: 1; }
-.logo { position: absolute; left: 50%; top: calc(2 * var(--u)); translate: -50% 0; margin: 0; width: min(33vw, 50vh);
-  animation: logoIn .9s cubic-bezier(.3,1.5,.5,1) both; transform-origin: 50% 60%; pointer-events: none; }
+.title-group { position: absolute; left: var(--table-x, 50%); top: var(--tower-mid, 50%); translate: -50% -50%;
+  display: flex; flex-direction: column; align-items: center; gap: 1.2vh; }
+.logo { margin: 0; width: min(33vw, 50vh); animation: logoIn .9s cubic-bezier(.3,1.5,.5,1) both; transform-origin: 50% 60%; pointer-events: none; }
 .logo img { display: block; width: 100%; height: auto; filter: drop-shadow(0 calc(1.2 * var(--u)) calc(1.6 * var(--u)) rgba(120, 70, 40, .25)); animation: logoFloat 4.6s ease-in-out 1s infinite; }
 @keyframes logoIn { from { opacity: 0; transform: scale(.4) translateY(calc(-10 * var(--u))); } }
 @keyframes logoFloat { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(calc(-1.2 * var(--u))) rotate(-1deg); } }
-/* jenga_btn_start art (2.063 : 1; the pill itself runs from 23 % to 91 % of its height, stars above): the pill's top
-   edge sits at the tower's foot */
-.start-btn { --sb-w: min(17vw, 30vh); position: absolute; left: var(--table-x, 50%); width: var(--sb-w); translate: -50% 0;
-  top: min(calc(var(--table-y, 80vh) - var(--sb-w) * .1115 + .4 * var(--u)), calc(100% - var(--sb-w) * .4847 - 1 * var(--u)));
-  padding: 0; border: 0; background: none; cursor: pointer; pointer-events: none; transition: transform .12s;
+/* jenga_btn_start art (2.063 : 1, stars above the pill) */
+.start-btn { --sb-w: min(17vw, 30vh); width: var(--sb-w); padding: 0; border: 0; background: none; cursor: pointer; pointer-events: none; transition: transform .12s;
   filter: drop-shadow(0 calc(.9 * var(--u)) calc(1.2 * var(--u)) rgba(110, 60, 140, .28)); animation: startIn .7s cubic-bezier(.3,1.6,.5,1) .3s both; }
 .app[data-screen="title"] .start-btn { pointer-events: auto; }
 .start-btn img { display: block; width: 100%; height: auto; pointer-events: none; animation: breathe 2.2s ease-in-out 1.1s infinite; }
@@ -274,4 +282,5 @@ svg { display: block; }
 }
 @media (prefers-reduced-motion: reduce) {
   .orb, .start-btn img, .logo img, .pcard.active .avatar { animation: none !important; }
+  .twinkles { display: none; }
 }

@@ -326,11 +326,41 @@
 1.554,
 0.988
 ],
+"t:hello": [
+"t_hello.mp3",
+0.02,
+0.923,
+2.596
+],
+"t:pressstart": [
+"t_pressstart.mp3",
+0.02,
+0.917,
+1.228
+],
 "t:welcome": [
 "t_welcome.mp3",
 0.03,
 0.94,
 1.554
+],
+"t:howto1": [
+"t_howto1.mp3",
+0.03,
+0.977,
+1.458
+],
+"t:howto2": [
+"t_howto2.mp3",
+0.02,
+0.948,
+3.076
+],
+"t:howto3": [
+"t_howto3.mp3",
+0.03,
+0.862,
+1.698
 ],
 "t:rule": [
 "t_rule.mp3",
