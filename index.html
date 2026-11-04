@@ -18,7 +18,13 @@
     <canvas id="fx" class="fx" aria-hidden="true"></canvas>
 
     <!-- tutor fox -->
-    <div id="fox" class="fox" aria-hidden="true"><canvas></canvas></div>
+    <div id="fox" class="fox"><canvas aria-hidden="true"></canvas>
+      <!-- the fox's speech bubble: what it is saying; the turn call stays up during a turn (ui/foxsay.ts) -->
+      <div id="foxSay" class="fox-say" role="status" aria-live="polite" hidden>
+        <div class="fs-bubble"><span class="fs-ava"><svg viewBox="0 0 64 64"><use href="#ava-bunny" /></svg></span><span class="fs-text"></span></div>
+        <i class="fs-tail" aria-hidden="true"></i>
+      </div>
+    </div>
 
     <!-- top HUD -->
     <header class="hud">
@@ -30,7 +36,6 @@
         <div class="pinfo"><b class="pname">Player 1</b><span class="pscore"><i class="mini-block"></i><b class="num">0</b></span></div>
         <div class="chips"></div>
       </div>
-      <div id="turnPill" class="turn-pill" aria-live="polite"><span class="tp-dot"></span><span class="tp-text">Player 1's Turn</span></div>
       <div id="p2" class="pcard p2" data-p="1">
         <div class="avatar"><svg viewBox="0 0 64 64"><use href="#ava-kitty" /></svg></div>
         <div class="pinfo"><b class="pname">Player 2</b><span class="pscore"><i class="mini-block"></i><b class="num">0</b></span></div>

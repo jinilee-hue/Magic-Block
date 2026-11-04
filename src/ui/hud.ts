@@ -1,6 +1,7 @@
-// DOM layer: player cards, turn pill, read-aloud mic, settings, rotate buttons, result book.
+// DOM layer: player cards, the fox's speech bubble, read-aloud mic, settings, rotate buttons, result book.
 import { settings, setMusic, setSfx, sfx } from '../core/audio';
 import type { Pastel, WordInfo } from '../game/tower';
+import { FoxSay } from './foxsay';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 export interface Got { word: WordInfo; color: Pastel }
@@ -11,7 +12,8 @@ export class Hud {
   private cards = [$('#p1'), $('#p2')];
   /** each player's animal (symbol #ava-<id>) */
   private animals: [string, string] = ['bunny', 'kitty'];
-  private pill = $('#turnPill');
+  /** the fox's speech bubble (replaces the old "Player 1's Turn" banner) */
+  readonly foxSay = new FoxSay($('#foxSay'));
   private read = $('#read');
   private mic = $('#btnMic');
   private thumb = $('#btnThumb');
@@ -61,21 +63,23 @@ export class Hud {
   }
 
   screen(name: 'intro' | 'title' | 'game' | 'result') { this.app.dataset.screen = name; }
-  busy(on: boolean) { this.app.classList.toggle('busy', on); }
+  busy(on: boolean) { this.app.classList.toggle('busy', on); if (on) this.foxSay.release(); }
 
   reset() {
     this.cards.forEach((c) => { c.querySelector('.num')!.textContent = '0'; c.querySelector('.chips')!.innerHTML = ''; });
     $('#result').hidden = true;
     this.showRead(false);
     this.showCard(null);
+    this.foxSay.clear();
   }
 
+  /** whose turn: their card lights up (the fox calls it, and its bubble keeps the call up — foxTurn) */
   setTurn(p: number, animate = true) {
     this.cards.forEach((c, i) => { c.classList.toggle('active', i === p); c.classList.toggle('idle', i !== p); });
-    this.pill.classList.toggle('p2', p === 1);
-    this.pill.querySelector('.tp-text')!.textContent = `Player ${p + 1}'s Turn`;
-    if (animate) { this.pill.classList.remove('flip'); void this.pill.offsetWidth; this.pill.classList.add('flip'); }
+    if (animate) { const a = this.cards[p].querySelector('.avatar')!; a.classList.remove('pop'); void (a as HTMLElement).offsetWidth; a.classList.add('pop'); }
   }
+  /** a turn starts: the fox's "Player N, your turn!" bubble stays up until a block is picked */
+  foxTurn(p: number) { this.foxSay.turn(p); }
 
   /** centre of a player's score (where collected blocks fly) in CSS px */
   cardTarget(p: number) {
@@ -117,6 +121,7 @@ export class Hud {
   /** the animals the players picked on the title: their cards and the result book show them */
   setAnimals(a: [string, string]) {
     this.animals = a;
+    this.foxSay.animals = a;
     this.cards.forEach((c, p) => c.querySelector('.avatar use')?.setAttribute('href', `#ava-${a[p]}`));
   }
 
@@ -134,7 +139,7 @@ export class Hud {
     const h = this.app.clientHeight;
     const gap = Math.max(8, h * 0.018);
     const bottom = box.y0 - gap;
-    const top = Math.max(...[this.pill, ...this.cards].map((e) => e.getBoundingClientRect().bottom)) + gap;
+    const top = Math.max(...this.cards.map((e) => e.getBoundingClientRect().bottom)) + gap;
     const size = Math.max(80, Math.min(h * 0.32, (box.x1 - box.x0) * 0.55, bottom - top));
     el.style.left = `${(box.x0 + box.x1) / 2}px`; el.style.top = `${bottom}px`;
     el.style.width = el.style.height = `${size}px`;

@@ -4,14 +4,18 @@ import { audioCtx, duck, hasClip, loadClip, playClip, type Playing } from './aud
 
 export type Part = string | number;
 type Listener = (talking: boolean) => void;
+type LineListener = (parts: Part[]) => void;
 
 let token = 0;
 let playing: Playing[] = [];
 let talking = false;
 const listeners: Listener[] = [];
+const lineListeners: LineListener[] = [];
 /** the last lines played (clip keys, for tests via window.__pj.said) */
 export const said: string[] = [];
 export const onTalk = (f: Listener) => { listeners.push(f); };
+/** a line starts playing (the fox's speech bubble shows its words) */
+export const onLine = (f: LineListener) => { lineListeners.push(f); };
 export const isTalking = () => talking;
 function emit(on: boolean) { if (talking === on) return; talking = on; duck(on); listeners.forEach((f) => f(on)); }
 
@@ -25,6 +29,7 @@ export async function say(parts: Part[]): Promise<boolean> {
   const ctx = audioCtx();
   if (my !== token || !ctx) return false;
   said.push(keys.join(' ')); if (said.length > 60) said.shift();
+  lineListeners.forEach((f) => f(parts));
   let t = ctx.currentTime + 0.04;
   const mine: Playing[] = [];
   for (const p of parts) {

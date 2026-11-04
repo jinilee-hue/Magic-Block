@@ -306,7 +306,8 @@ for L in sorted(set(letters) | {'m'}):
 
 voice = {'engine': 'edge', 'voice': VOICE, 'word': [WORD_RATE, WORD_PITCH], 'tutor': [TUTOR_RATE, TUTOR_PITCH]} if ENGINE == 'edge' \
     else {'engine': 'company-tts', 'voice': QWEN_VOICE}
-JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest}, indent=0), encoding='utf-8')
+# 'lines' = what each tutor line says, for the fox's speech bubble (ui/foxsay.ts)
+JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR}, indent=0), encoding='utf-8')
 d = sorted((v[3], k) for k, v in manifest.items())
 size = sum((OUT / v[0]).stat().st_size for v in manifest.values())
 print(f'{len(manifest)} clips · {size / 1024:.0f} KB · shortest {d[:3]} · longest {d[-3:]}')

@@ -187,6 +187,7 @@ export class Game {
 
   private async beginTurn(s: number) {
     this.hud.setTurn(this.turn);
+    this.hud.foxTurn(this.turn);
     this.hud.busy(false);
     this.stage.controls = true;
     sfx('turn');

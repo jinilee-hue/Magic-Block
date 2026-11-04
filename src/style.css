@@ -110,18 +110,8 @@ svg { display: block; }
 .pcard .pop { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
 @keyframes pop { 30% { transform: scale(1.5); } }
 
-.turn-pill { --pc: var(--p1); margin: 0 auto; position: relative; display: inline-flex; align-items: center; gap: calc(1.3 * var(--u));
-  height: calc(9.2 * var(--u)); padding: 0 calc(4.8 * var(--u)) 0 calc(3.6 * var(--u)); border-radius: 999px; background: #fff;
-  box-shadow: 0 calc(.8 * var(--u)) 0 #e2dcf3, 0 calc(1.8 * var(--u)) calc(3.6 * var(--u)) rgba(90, 70, 160, .2);
-  font-weight: 800; font-size: calc(4.1 * var(--u)); color: var(--pc); white-space: nowrap; transition: color .3s; }
-.turn-pill::before, .turn-pill::after { content: ''; position: absolute; background: #fff; border-radius: 50%; z-index: -1; }
-.turn-pill::before { width: calc(9 * var(--u)); height: calc(9 * var(--u)); left: 18%; top: calc(-3.2 * var(--u)); }
-.turn-pill::after { width: calc(7 * var(--u)); height: calc(7 * var(--u)); right: 22%; top: calc(-2.2 * var(--u)); }
-.turn-pill.p2 { --pc: var(--p2-deep); }
-.turn-pill .tp-dot { width: calc(3 * var(--u)); height: calc(3 * var(--u)); border-radius: 50%; background: var(--pc); box-shadow: inset 0 calc(-.4 * var(--u)) 0 rgba(0,0,0,.15); }
-.turn-pill.flip { animation: flip .55s cubic-bezier(.3,1.5,.5,1); }
-@keyframes flip { 0% { transform: scale(1); } 40% { transform: scale(.82) rotateX(80deg); } 100% { transform: scale(1); } }
-.turn-pill .tp-text { text-shadow: 0 calc(.2 * var(--u)) 0 rgba(0,0,0,.06); }
+/* the old "Player 1's Turn" banner is gone (the fox calls the turn in its speech bubble): Player 2's card keeps right */
+#p2 { margin-left: auto; }
 
 /* settings */
 .settings { position: absolute; z-index: 25; top: calc(13.4 * var(--u)); right: calc(2.4 * var(--u)); display: flex; flex-direction: column; gap: calc(1.2 * var(--u));
@@ -195,6 +185,36 @@ svg { display: block; }
 .app[data-screen="intro"] .fox { opacity: 0; translate: 0 calc(10 * var(--u)); }
 .fox.hop { animation: hop .6s cubic-bezier(.3,1.4,.5,1); }
 @keyframes hop { 40% { translate: 0 calc(-3.5 * var(--u)); } }
+/* the fox's speech bubble (ui/foxsay.ts): grows out of its head; placed in % of the fox box so it follows every fox size.
+   Only on the game screen. The turn call carries that player's animal and colour. */
+.fox-say { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft); position: absolute; left: 0; right: 0; bottom: 92%; height: 0;
+  pointer-events: none; transform-origin: 46% 100%; }
+.fox-say.p2 { --pc: var(--p2); --pd: var(--p2-deep); --ps: var(--p2-soft); }
+.fox-say[hidden], .app:not([data-screen="game"]) .fox-say { display: none; }
+.fs-bubble { position: absolute; right: 16%; bottom: calc(1.9 * var(--u)); width: max-content; min-width: calc(26 * var(--u)); max-width: calc(42 * var(--u));
+  display: flex; align-items: center; gap: calc(1.4 * var(--u)); padding: calc(1.5 * var(--u)) calc(2.6 * var(--u)); border-radius: calc(3.4 * var(--u));
+  background: #fff; color: #4a3c78; font-weight: 800; font-size: calc(3.1 * var(--u)); line-height: 1.28; text-wrap: balance;
+  box-shadow: 0 calc(.7 * var(--u)) 0 #e2dcf3, 0 calc(1.6 * var(--u)) calc(3.2 * var(--u)) rgba(90, 70, 160, .22); }
+.fs-tail { position: absolute; left: 43%; bottom: calc(.3 * var(--u)); width: calc(3.8 * var(--u)); height: calc(2.6 * var(--u)); background: #fff;
+  clip-path: polygon(0 0, 100% 0, 38% 100%); }
+.fs-ava { display: none; flex: none; width: calc(6.4 * var(--u)); aspect-ratio: 1; border-radius: 50%; place-items: center; background: var(--ps);
+  box-shadow: inset 0 0 0 calc(.4 * var(--u)) var(--pc); }
+.fs-ava svg { width: 90%; height: 90%; color: var(--pd); }
+.fox-say.turn .fs-ava { display: grid; }
+.fox-say.turn .fs-bubble { color: var(--pd); box-shadow: 0 0 0 calc(.5 * var(--u)) var(--pc), 0 calc(.9 * var(--u)) 0 color-mix(in oklab, var(--pc) 40%, #e2dcf3),
+  0 calc(1.8 * var(--u)) calc(3.4 * var(--u)) rgba(90, 70, 160, .24); }
+.fs-word { font-family: var(--font-word); font-weight: 700; color: #7a5af5; background: #f1ecff; border-radius: calc(.8 * var(--u)); padding: 0 calc(.6 * var(--u)); }
+.fs-snd { font-style: normal; color: #ff5f9e; }
+.fox-say.pop { animation: fsIn .4s cubic-bezier(.3,1.6,.5,1) both; }
+.fox-say.off { opacity: 0; transition: opacity .25s; }
+@keyframes fsIn { from { opacity: 0; transform: translateY(calc(1.4 * var(--u))) scale(.7); } }
+/* portrait: the tower's lower layers reach right up to the fox, so the bubble keeps to the strip right of the tower —
+   narrower, flush with the fox's right edge, long lines wrap upward */
+@media (max-aspect-ratio: 1/1) {
+  .fs-bubble { right: 0; min-width: 0; max-width: calc(26 * var(--u)); gap: calc(1 * var(--u)); padding: calc(1.2 * var(--u)) calc(1.9 * var(--u));
+    border-radius: calc(3 * var(--u)); font-size: calc(2.9 * var(--u)); }
+  .fs-ava { width: calc(5.4 * var(--u)); }
+}
 
 /* ── title (option A the user picked) ────────────────── */
 /* the game's own tower on the painted table, the logo and the START art centred over it (stage.ts sets --table-x,
