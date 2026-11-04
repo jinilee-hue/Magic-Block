@@ -41,6 +41,7 @@
   (mad, mailbox, make, maze, met, mess, mix, mom, mud)는 카드 없이 블럭만 보입니다 — `public/cards/<단어>.webp`로 넣고 `tools/import_cards.py`를 다시 돌리면 나옵니다.
 - 단어 출처: `tools/build_words.py` (SAD·FPR 단어 연구 자료집 → `src/data/words.json`, 쪽 번호 포함).
 - 여우: 사용자가 만든 Gemini 영상에서 잘라 씀(제미나이 마크 제거).
+  - 꼬리가 턱 밑까지 올라오는 프레임은 재생하지 않음: 원본 영상에서 크림색 꼬리 끝과 옅은 살구색 배경이 거의 같은 색이라 잘라내기가 턱과 꼬리 사이를 납작한 살색 면으로 남김. `public/fox/fox.json`의 클립별 `use: [처음, 끝]` 범위만 왕복 재생(talk 0–9, point 2–14, happy 0–13, idle 2–10, say 1–9, cheer 전체).
   - 입 모양(립싱크): 3D 모델 없이, 여우가 말할 때 목소리 크기(Web Audio AnalyserNode)에 따라 닫힘·조금 벌림·크게 벌림 3단계 입 그림을 코 아래에 덮어 그림. 입 그림은 영상 프레임에서 뽑음(`tools/build_fox_mouth.py` → `public/fox/mouth.webp`, 위치는 `public/fox/fox.json`의 `mouth`).
 
 ## 도구

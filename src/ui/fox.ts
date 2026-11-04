@@ -6,7 +6,7 @@
 export type Pose = 'idle' | 'talk' | 'point' | 'happy' | 'say' | 'cheer';
 type Mouth = 'closed' | 'half' | 'open';
 
-interface ClipMeta { file: string; frames: number; cols: number; fps: number }
+interface ClipMeta { file: string; frames: number; cols: number; fps: number; use?: [number, number] }
 interface MouthMeta { box: [number, number, number, number]; clips: Record<string, { nose: [number, number][]; patch: Record<Mouth, number>; skip: number[] }> }
 interface FoxMeta { frameW: number; frameH: number; anchor?: { x: number; y: number }; headTop?: number; clips: Record<string, ClipMeta>; mouth?: MouthMeta }
 
@@ -93,14 +93,18 @@ export class Fox {
     this.cur = { pose, t0: performance.now() };
   }
 
+  /** ping-pong over the clip's frames — or only over `use` [first, last] when fox.json gives one: frames where the
+   *  tail swings up under the chin are left out (in the source video the cream tail tip has the pale background's
+   *  colour, the matte guessed there and kept a flat skin-coloured plane between chin and tail) */
   private frameOf(p: Pose, elapsedMs: number) {
     const c = this.meta?.clips[p];
     if (!c) return 0;
-    const n = c.frames;
-    if (n <= 1) return 0;
-    const period = 2 * n - 2;                         // ping-pong: 0..n-1..1
+    const [a, b] = c.use ?? [0, c.frames - 1];
+    const n = b - a + 1;
+    if (n <= 1) return a;
+    const period = 2 * n - 2;                         // ping-pong: a..b..a+1
     const i = Math.floor((elapsedMs / 1000) * c.fps * (p === 'idle' ? 0.75 : 1)) % period;
-    return i < n ? i : period - i;
+    return a + (i < n ? i : period - i);
   }
 
   private blit(p: Pose, frame: number, alpha: number) {

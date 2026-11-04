@@ -11,31 +11,51 @@
    "file": "talk.webp",
    "frames": 17,
    "cols": 5,
-   "fps": 12
+   "fps": 12,
+   "use": [
+    0,
+    9
+   ]
   },
   "point": {
    "file": "point.webp",
    "frames": 15,
    "cols": 5,
-   "fps": 12
+   "fps": 12,
+   "use": [
+    2,
+    14
+   ]
   },
   "happy": {
    "file": "happy.webp",
    "frames": 20,
    "cols": 6,
-   "fps": 12
+   "fps": 12,
+   "use": [
+    0,
+    13
+   ]
   },
   "idle": {
    "file": "idle.webp",
    "frames": 12,
    "cols": 4,
-   "fps": 12
+   "fps": 12,
+   "use": [
+    2,
+    10
+   ]
   },
   "say": {
    "file": "say.webp",
    "frames": 17,
    "cols": 5,
-   "fps": 12
+   "fps": 12,
+   "use": [
+    1,
+    9
+   ]
   },
   "cheer": {
    "file": "cheer.webp",
