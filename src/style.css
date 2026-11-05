@@ -73,13 +73,12 @@ svg { display: block; }
 /* ── HUD ─────────────────────────────────────────────── */
 .hud { position: absolute; z-index: 20; inset: 0; pointer-events: none; transition: opacity .4s, translate .4s; }
 .hud > * { pointer-events: auto; }
-/* the game's logo top-left (user: "게임화면 상단 왼쪽에는 로고가 들어갔으면 좋겠어"): the title's art (1200 × 846, no padding) */
+/* the game's logo top-left (user: "게임화면 상단 왼쪽에는 로고가 들어갔으면 좋겠어"): the title's art (1200 × 859, no padding) */
 .hud::before { content: ''; position: absolute; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); left: calc(2.4 * var(--u));
   width: calc(14.67 * var(--u)); height: calc(10.35 * var(--u));   /* 90 % of 16.3 × 11.5 (user: "게임화면에 있는 로고는 지금보다 90% 크기로") */
   background: url('./assets/logo.webp') center / contain no-repeat; filter: drop-shadow(0 calc(.6 * var(--u)) calc(.9 * var(--u)) rgba(120, 70, 40, .25)); pointer-events: none; }
 .app:not([data-screen="game"]) .hud, .app:not([data-screen="game"]) .dock { opacity: 0; translate: 0 calc(-3 * var(--u)); pointer-events: none; }
 .app:not([data-screen="game"]) .hud > * { pointer-events: none; }
-@keyframes wiggle { 0%,100% { rotate: 0deg; } 25% { rotate: -8deg; } 75% { rotate: 8deg; } }
 
 .pcard { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft);
   position: absolute; bottom: calc(3.2 * var(--u) + env(safe-area-inset-bottom)); display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: calc(1.4 * var(--u));
@@ -198,7 +197,8 @@ svg { display: block; }
   background: none; filter: drop-shadow(0 calc(.5 * var(--u)) calc(.8 * var(--u)) rgba(90, 40, 120, .24)); transition: transform .15s; }
 .mic .ok { width: 46%; height: 46%; fill: none; stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; grid-area: 1 / 1;
   opacity: 0; transform: scale(.4); filter: drop-shadow(0 0 calc(.35 * var(--u)) #2a8f4a); transition: opacity .2s, transform .3s; }
-.mic .ring { position: absolute; inset: calc(-.9 * var(--u)); border-radius: 50%; border: calc(.7 * var(--u)) solid transparent; border-top-color: #7a5af5; opacity: 0; }
+.mic .ring { position: absolute; inset: calc(-1.25 * var(--u)); width: auto; height: auto; overflow: visible; color: #a24aee; opacity: 0; pointer-events: none; }
+.mic .ring circle { fill: none; stroke: currentColor; stroke-width: 6.5; stroke-linecap: round; stroke-dasharray: 22% 78%; }
 .read.thinking .mic .ring { opacity: 1; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .read.listening .mic { transform: scale(calc(1 + var(--lv) * .08)); }
@@ -207,10 +207,11 @@ svg { display: block; }
 .read.done .mic .ok { opacity: 1; transform: scale(1); }
 .read.miss .mic { animation: shake .45s; }
 @keyframes shake { 20%,60% { translate: calc(-1 * var(--u)) 0; } 40%,80% { translate: calc(1 * var(--u)) 0; } }
-.wave { display: block; width: calc(2.4 * var(--u)); border: calc(.75 * var(--u)) solid #c084fc; border-radius: 50%; opacity: .2; filter: drop-shadow(0 0 calc(.5 * var(--u)) rgba(255,255,255,.9)); transition: opacity .12s, border-color .2s; }
-.read.saying:not(.listening) .wave { border-color: #f6b423; }
-.wave.l { border-right: 0; border-top-color: transparent; border-bottom-color: transparent; }
-.wave.r { border-left: 0; border-top-color: transparent; border-bottom-color: transparent; }
+.wave { display: block; width: calc(3.1 * var(--u)); border: 0; color: #c084fc; opacity: .2; filter: drop-shadow(0 0 calc(.5 * var(--u)) rgba(255,255,255,.9)); transition: opacity .12s, color .2s; }
+.wave svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.wave path { fill: none; stroke: currentColor; stroke-width: calc(.72 * var(--u)); stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.read.saying:not(.listening) .wave { color: #f6b423; }
+.wave.r svg { transform: scaleX(-1); }
 .wave.w1 { height: calc(5 * var(--u)); } .wave.w2 { height: calc(7.4 * var(--u)); } .wave.w3 { height: calc(9.8 * var(--u)); }
 .wave.l.w3, .wave.r.w1 { order: 0; }
 .read.listening .wave { opacity: calc(.35 + var(--lv) * .65); }
@@ -228,6 +229,15 @@ svg { display: block; }
 /* the box is the fox's frame (fox.json frameW × frameH); the canvas overflows it by fox.ts PAD so the tail, ears and
    sway never get cut at the frame's edge (set from fox.json at load) */
 .fox { aspect-ratio: var(--fox-ar, 1162 / 1177); }
+/* a soft shadow on the floor under the tutor's feet (user: "튜터 밑에 자연스러운 그림자 줘. 그림자 없으니까 어색해 따로 놀아"):
+   centred under the feet of every pose (frame x 405–698, ground y ≈ 1157 of 1162 × 1177), behind the canvas — in the
+   jump pose the feet are above it */
+.fox::before { content: ''; position: absolute; z-index: -1; left: 47.5%; top: 97.2%; width: 48%; height: 10%; translate: -50% -50%;
+  border-radius: 50%; pointer-events: none;
+  /* a darker contact core right under the soles + a wide soft falloff onto the floor (the feet stand ~1u above the
+     screen's bottom edge, so the ellipse is centred a little above the soles to stay on screen) */
+  background: radial-gradient(closest-side, rgba(70, 38, 25, .42), rgba(70, 38, 25, 0)) 50% 60% / 64% 52% no-repeat,
+    radial-gradient(closest-side, rgba(78, 42, 28, .5), rgba(78, 42, 28, .32) 45%, rgba(78, 42, 28, .12) 75%, rgba(78, 42, 28, 0)); }
 .fox canvas { position: absolute; display: block; left: calc(-100% * var(--fox-pl, 0)); top: calc(-100% * var(--fox-pt, 0));
   width: calc(100% * var(--fox-cw, 1)); height: calc(100% * var(--fox-ch, 1)); }
 .app[data-screen="intro"] .fox { opacity: 0; translate: 0 calc(10 * var(--u)); }
@@ -340,10 +350,6 @@ svg { display: block; }
 .sysbar { position: absolute; z-index: 55; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); right: calc(2.4 * var(--u)); display: flex; gap: calc(1.6 * var(--u)); align-items: center; transition: opacity .4s; }
 .app[data-screen="intro"] .sysbar { opacity: 0; pointer-events: none; }
 .app:not([data-screen="game"]) .sysbar .lang-tog { display: none; }
-/* in a game the exit asks twice: the first tap arms it (it turns red and wiggles), a second one within 2.6 s goes to the title */
-#btnExit.armed { animation: wiggle .35s ease-in-out 2; }
-#btnExit.armed img { filter: hue-rotate(150deg) saturate(1.5); }
-#btnExit.armed::after { content: ''; position: absolute; inset: -9%; border-radius: 30%; border: calc(.5 * var(--u)) solid #ff5a6e; animation: ping 1.2s ease-out infinite; pointer-events: none; }
 .vol { position: relative; }
 /* the user's button art (jenga_btn_sound / jenga_btn_out, v3: yellow square + white speaker, blue square + white door;
    both ~square → 280 px webp, shown 1:1) */
@@ -417,7 +423,7 @@ svg { display: block; }
   height: calc(7.6 * var(--u)); padding: 0 calc(3.2 * var(--u)) 0 calc(2.4 * var(--u)); border-radius: 999px;
   color: #fff; font-weight: 800; font-size: calc(3.8 * var(--u)); line-height: 1; letter-spacing: .01em; white-space: nowrap;
   background: linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 46%), linear-gradient(180deg, var(--face) 0%, var(--face-deep) 100%);
-  box-shadow: 0 0 0 calc(.48 * var(--u)) #ffe7a4, 0 0 0 calc(1.12 * var(--u)) #ff9aa8, 0 calc(.7 * var(--u)) calc(1.4 * var(--u)) rgba(80, 40, 110, .28), inset 0 calc(.32 * var(--u)) 0 rgba(255,255,255,.4);
+  box-shadow: 0 0 0 calc(.62 * var(--u)) var(--face-deep), 0 calc(.7 * var(--u)) calc(1.4 * var(--u)) rgba(60, 30, 90, .22), inset 0 calc(.32 * var(--u)) 0 rgba(255,255,255,.4);
   text-shadow: 0 calc(.16 * var(--u)) 0 rgba(0,0,0,.16); transition: transform .12s; }
 .box-btn.home { --face: #8d5cf6; --face-deep: #6234d0; }
 .box-btn.replay { --face: #5eb6f2; --face-deep: #2f86c8; }

@@ -1,4 +1,4 @@
-# Magic Jenga (Phonics Jenga)
+# Magic Block (Phonics Jenga)
 
 친구와 둘이 하는 파닉스 젠가 (FPR K · 5세). 탑에서 **m으로 시작하는 단어** 블럭을 골라 빼고, 그 단어를 **소리 내어 읽어야** 내 차례가 끝나고 친구 차례로 넘어갑니다. 여우 튜터가 말로 이끌어 줍니다.
 
@@ -49,8 +49,8 @@
 
 ## 소리
 - 배경음악: `tools/make_bgm.py`로 직접 만든 신나는 루프(C장조 128 BPM, 30초: 마림바 멜로디 · 통통 튀는 베이스 · 우쿨렐레 반주 · 킥/박수/하이햇). 첫 화면부터 게임 끝까지 이어지고, 아이가 읽는 동안은 꺼짐.
-- 브라우저는 화면을 한 번 누르기 전에는 소리를 못 냄 → 첫 화면에서 처음 누르면 음악과 여우 인사("Hi, friends! Welcome to Magic Jenga!" · "Press start to play!")가 시작. 처음 누른 곳이 START면 바로 게임 안내로.
-- 첫 판 시작 때 게임 안내: "Let's play Magic Jenga!" → "Take turns with your friend." → "Find a block that starts with m!" /m/ /m/ → "Pull it out and read the word. Then the block is yours!" → "Get the most blocks to win!" → "But pick a wrong block three times, and the tower falls!" → 탑 돌리기 안내. 다음 판부터는 짧게.
+- 브라우저는 화면을 한 번 누르기 전에는 소리를 못 냄 → 첫 화면에서 처음 누르면 음악과 여우 인사("Hi, friends! Welcome to Magic Block!" · "Press start to play!")가 시작. 처음 누른 곳이 START면 바로 게임 안내로.
+- 첫 판 시작 때 게임 안내: "Let's play Magic Block!" → "Take turns with your friend." → "Find a block that starts with m!" /m/ /m/ → "Pull it out and read the word. Then the block is yours!" → "Get the most blocks to win!" → "But pick a wrong block three times, and the tower falls!" → 탑 돌리기 안내. 다음 판부터는 짧게.
 - 마이크: 차례마다 한 번 열고, 듣기 시작할 때 부드러운 '딩' 한 번(처음 0.3초는 판정 안 함). 반향 제거(echoCancellation)는 끔 — 여우가 말하는 동안은 듣지 않고, 켜 두면 마이크가 열리는 순간 크롬이 소리 출력을 반향 제거 쪽으로 돌려 여우 목소리에 딸꾹질 같은 소리가 낄 수 있음. 잡음 제거·자동 음량은 켬.
 - 말이 중간에 끊길 때는 40ms 동안 줄여 끔(딸깍 소리 없음). 블럭을 뺄 때의 "Perfect! Pull it out!"은 끝까지 말한 뒤 읽기 안내로.
 

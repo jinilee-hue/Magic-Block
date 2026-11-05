@@ -74,7 +74,7 @@ export class Stage {
     r.shadowMap.type = THREE.PCFShadowMap;
     r.setClearColor(0x000000, 0);
     host.appendChild(r.domElement);
-    r.domElement.setAttribute('aria-label', 'Jenga tower');
+    r.domElement.setAttribute('aria-label', 'Magic Block tower');
 
     const pmrem = new THREE.PMREMGenerator(r);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;

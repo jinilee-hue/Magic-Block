@@ -207,8 +207,11 @@ function sampler(im: HTMLImageElement, P: PoseMeta): Weigh {
   g.drawImage(im, 0, 0);
   const d = g.getImageData(0, 0, W, H).data;
   return (fx, fy) => {
-    const x = (fx - P.x) * k, y = (fy - P.y) * k;
-    if (x < 0 || y < 0 || x > W - 1 || y > H - 1) return [0, 0, 0];
+    // clamped to the map: the grid's last column / row lie exactly on the picture's edge — read as outside (0) they never
+    // moved, and the tail tip, 5 px from teach's right edge, was squeezed flat against them when it swung out (user:
+    // "여우 끝 꼬리가 잘리는 현상이 있어"). The maps carry each part's weight out into the transparent band
+    // (tools/extend_tutor_weights.py), so the edge points now move with the part next to them.
+    const x = Math.min(W - 1, Math.max(0, (fx - P.x) * k)), y = Math.min(H - 1, Math.max(0, (fy - P.y) * k));
     const x0 = Math.floor(x), y0 = Math.floor(y), x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1), ax = x - x0, ay = y - y0;
     const at = (xx: number, yy: number, c: number) => d[(yy * W + xx) * 4 + c];
     const out: RGB = [0, 0, 0];

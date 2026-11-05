@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#f6d9d0" />
-  <title>Magic Jenga</title>
+  <title>Magic Block</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='40' width='48' height='14' rx='4' fill='%23f7afc3'/%3E%3Crect x='8' y='24' width='48' height='14' rx='4' fill='%23a8e2c4'/%3E%3Crect x='8' y='8' width='48' height='14' rx='4' fill='%23f8dc80'/%3E%3Ctext x='32' y='51' font-family='Arial' font-weight='700' font-size='12' text-anchor='middle' fill='%23a8365f'%3Em%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
@@ -72,9 +72,9 @@
     <div id="read" class="read" hidden>
       <button id="btnListen" class="read-speaker" aria-label="Listen again" data-i18n-aria="a_listen"><img src="./src/assets/btn_speaker.webp" alt="" draggable="false" /></button>
       <div class="mic-wrap">
-        <i class="wave l w1"></i><i class="wave l w2"></i><i class="wave l w3"></i>
-        <button id="btnMic" class="mic" aria-label="Say the word" data-i18n-aria="a_say"><img src="./src/assets/btn_mic.webp" alt="" draggable="false" /><svg class="ok" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19.5 7" /></svg><i class="ring"></i></button>
-        <i class="wave r w1"></i><i class="wave r w2"></i><i class="wave r w3"></i>
+        <i class="wave l w1"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 10C22 18 22 82 78 90" /></svg></i><i class="wave l w2"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 10C22 18 22 82 78 90" /></svg></i><i class="wave l w3"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 10C22 18 22 82 78 90" /></svg></i>
+        <button id="btnMic" class="mic" aria-label="Say the word" data-i18n-aria="a_say"><img src="./src/assets/btn_mic.webp" alt="" draggable="false" /><svg class="ok" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19.5 7" /></svg><svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" /></svg></button>
+        <i class="wave r w1"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 10C22 18 22 82 78 90" /></svg></i><i class="wave r w2"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 10C22 18 22 82 78 90" /></svg></i><i class="wave r w3"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 10C22 18 22 82 78 90" /></svg></i>
       </div>
       <button id="btnThumb" class="btn3d round green" hidden aria-label="I said it" data-i18n-aria="a_said"><svg viewBox="0 0 24 24"><path d="M7 10.5V20H4.5v-9.5zM7 10.5l4-7c1.6 0 2.4 1 2.1 2.6L12.6 9h5.2c1.3 0 2.2 1.2 1.9 2.4l-1.6 6.4c-.3 1.3-1.4 2.2-2.7 2.2H7" /></svg></button>
     </div>
@@ -82,7 +82,7 @@
     <!-- title -->
     <div id="title" class="title-screen">
       <div class="title-group">
-        <h1 class="logo"><img src="./src/assets/logo.webp" alt="Magic Jenga" draggable="false" /></h1>
+        <h1 class="logo"><img src="./src/assets/logo.webp" alt="Magic Block" draggable="false" /></h1>
         <button id="btnStart" class="start-btn" aria-label="Start" data-i18n-aria="a_start"><img src="./src/assets/btn_start.webp" alt="START!" draggable="false" /></button>
       </div>
       <div id="pick" class="pick" hidden>

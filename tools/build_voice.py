@@ -72,7 +72,7 @@ T_INS = ['Speak like a cheerful, energetic 7-year-old boy: bright and excited.',
          'Like a cheerful, energetic 7-year-old boy: bright, excited and clear.']
 
 TUTOR = {
-    'hello': 'Hi, friends! Welcome to Magic Jenga!',
+    'hello': 'Hi, friends! Welcome to Magic Block!',
     'pressstart': 'Press start to play!',
     'pick1': 'Player one, pick your animal!',
     'pick2': 'Player two, pick your animal!',
@@ -80,7 +80,7 @@ TUTOR = {
     'a_kitty': 'Kitty!',
     'a_puppy': 'Puppy!',
     'a_panda': 'Panda!',
-    'welcome': "Let's play Magic Jenga!",
+    'welcome': "Let's play Magic Block!",
     'howto1': 'Take turns with your friend.',
     'howto2': 'Pull it out and read the word. Then the block is yours!',
     'howto3': 'Get the most blocks to win!',
@@ -116,7 +116,7 @@ TUTOR = {
 # Korean (core/lang.ts — the EN | 한 toggle next to Settings): every tutor line again, same voice, language 'ko'.
 # A value is the bubble text, or (bubble text, what the voice reads) where they differ: the letter m is read 엠.
 TUTOR_KO = {
-    'hello': '안녕, 친구들! 매직 젠가에 온 걸 환영해!',
+    'hello': '안녕, 친구들! 매직 블록에 온 걸 환영해!',
     'pressstart': '스타트 버튼을 눌러 봐!',
     'pick1': '플레이어 1, 동물 친구를 골라 봐!',
     'pick2': '플레이어 2, 동물 친구를 골라 봐!',
@@ -124,7 +124,7 @@ TUTOR_KO = {
     'a_kitty': '고양이!',
     'a_puppy': '강아지!',
     'a_panda': '판다!',
-    'welcome': '자, 매직 젠가를 시작하자!',
+    'welcome': '자, 매직 블록을 시작하자!',
     'howto1': '친구랑 번갈아 가며 하는 거야.',
     'howto2': '블럭을 빼서 단어를 읽으면, 그 블럭은 네 거야!',
     'howto3': '블럭을 더 많이 모으면 이겨!',

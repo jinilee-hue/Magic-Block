@@ -32,6 +32,7 @@ from scipy import ndimage as ndi
 
 sys.path.insert(0, str(Path(__file__).parent))
 import tutor_eyes  # noqa: E402
+import extend_tutor_weights  # noqa: E402
 
 K = 0.5                                   # weight-map scale
 BLINK = ('teach', 'jump')
@@ -211,8 +212,12 @@ def run(fox_dir: Path, dbg: Path | None = None):
         wts = weights(mk, loc)
         ews, r_top = ear_weights(a, loc)
         free = tail_free(mk, loc, xx, yy)
+        # the weights carried out into the transparent band round the picture (tools/extend_tutor_weights.py): the mesh
+        # points just outside a part move with it, so a wagging tail tip isn't squeezed flat against still points
+        op = extend_tutor_weights.opaque_at(rgba, (wts.shape[1], wts.shape[0]))
+        wts = extend_tutor_weights.extend(wts, op)
         Image.fromarray((wts * 255).round().clip(0, 255).astype(np.uint8), 'RGB').save(fox_dir / f'{name}_w.webp', 'WEBP', lossless=True, method=6)
-        e3 = np.dstack([ews, np.zeros(ews.shape[:2], np.float32)])
+        e3 = extend_tutor_weights.extend(np.dstack([ews, np.zeros(ews.shape[:2], np.float32)]), extend_tutor_weights.opaque_at(rgba, (ews.shape[1], ews.shape[0])))
         Image.fromarray((e3 * 255).round().clip(0, 255).astype(np.uint8), 'RGB').save(fox_dir / f'{name}_e.webp', 'WEBP', lossless=True, method=6)
         R['wmap'], R['emap'], R['wscale'] = f'{name}_w.webp', f'{name}_e.webp', K
         if free is None:

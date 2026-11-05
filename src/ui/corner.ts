@@ -2,7 +2,7 @@
 // "나가기 버튼과 사운드제어 버튼은 인트로와 공통으로 쓰고 설정버튼과 홈버튼은 삭제해줘"): a speaker button that opens a
 // vertical volume slider (top = loud, bottom = silent; a red slash on the speaker at 0; it closes 3.5 s after the last
 // touch or on a tap elsewhere), and the exit button. On the title, exit leaves the game (back to the page that opened
-// it); in a game (or on the result book) it goes back to the title — on a second tap, so a stray tap never ends a game.
+// it); in a game (or on the result book) one tap goes back to the title, the game's first screen.
 import { setVolume, settings, sfx, unlock } from '../core/audio';
 import { stopSpeech } from '../core/speech';
 
@@ -45,18 +45,10 @@ export function cornerControls(o: { leave: () => void }) {
   paint();
 
   const app = $('#app'), exit = $('#btnExit');
-  let armed = 0;
   exit.addEventListener('click', () => {
     sfx('tap');
     const s = app.dataset.screen;
-    if (s === 'game' || s === 'result') {
-      // in a game: the first tap arms it (red, wiggling), a second one within 2.6 s goes back to the title
-      if (performance.now() < armed) { armed = 0; exit.classList.remove('armed'); o.leave(); return; }
-      armed = performance.now() + 2600;
-      exit.classList.remove('armed'); void exit.offsetWidth; exit.classList.add('armed');
-      setTimeout(() => { if (performance.now() >= armed) exit.classList.remove('armed'); }, 2700);
-      return;
-    }
+    if (s === 'game' || s === 'result') { o.leave(); return; }
     stopSpeech();
     // leave the game: back to the page that opened it; a tab of its own closes, or else starts over
     if (history.length > 1) { history.back(); setTimeout(() => location.reload(), 700); }
