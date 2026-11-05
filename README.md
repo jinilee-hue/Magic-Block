@@ -2,7 +2,7 @@
 
 친구와 둘이 하는 파닉스 젠가 (FPR K · 5세). 탑에서 **m으로 시작하는 단어** 블럭을 골라 빼고, 그 단어를 **소리 내어 읽어야** 내 차례가 끝나고 친구 차례로 넘어갑니다. 여우 튜터가 말로 이끌어 줍니다.
 
-- 공개 주소(예정): https://jinilee-hue.github.io/phonics-jenga/
+- 공개 주소: https://jinilee-hue.github.io/Magic-Block/ (repo `jinilee-hue/Magic-Block`, 공개 — main에 push하면 GitHub Actions가 빌드해 Pages에 배포)
 - 로컬 실행: `npm install` 후 `npm run dev` → http://localhost:5195/
 
 ## 게임 규칙
