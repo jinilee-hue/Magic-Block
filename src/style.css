@@ -197,8 +197,8 @@ svg { display: block; }
   background: none; filter: drop-shadow(0 calc(.5 * var(--u)) calc(.8 * var(--u)) rgba(90, 40, 120, .24)); transition: transform .15s; }
 .mic .ok { width: 46%; height: 46%; fill: none; stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; grid-area: 1 / 1;
   opacity: 0; transform: scale(.4); filter: drop-shadow(0 0 calc(.35 * var(--u)) #2a8f4a); transition: opacity .2s, transform .3s; }
-.mic .ring { position: absolute; inset: calc(-1.25 * var(--u)); width: auto; height: auto; overflow: visible; color: #a24aee; opacity: 0; pointer-events: none; }
-.mic .ring circle { fill: none; stroke: currentColor; stroke-width: 6.5; stroke-linecap: round; stroke-dasharray: 22% 78%; }
+.mic .ring { position: absolute; inset: calc(-.9 * var(--u)); width: auto; height: auto; overflow: visible; color: #a24aee; opacity: 0; pointer-events: none; }
+.mic .ring circle { fill: none; stroke: currentColor; stroke-linecap: round; }
 .read.thinking .mic .ring { opacity: 1; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .read.listening .mic { transform: scale(calc(1 + var(--lv) * .08)); }
