@@ -1,5 +1,6 @@
-// DOM layer: player cards, the fox's speech bubble, read-aloud mic, settings, rotate buttons, result book.
-import { settings, setMusic, setSfx, sfx } from '../core/audio';
+// DOM layer: player cards, the fox's speech bubble, read-aloud mic, the picture card, the reset-view button, result book.
+import { sfx } from '../core/audio';
+import { t, lang, onLang, setLang } from '../core/lang';
 import type { Pastel, WordInfo } from '../game/tower';
 import { ANI_ART } from './animals';
 import { FoxSay } from './foxsay';
@@ -20,13 +21,11 @@ export class Hud {
   private thumb = $('#btnThumb');
   private listenBtn = $('#btnListen');
   private picCard = $('#picCard');
-  private cardTimer = 0;
-  private homeArmed = 0;
   onMic: () => void = () => {};
   onListen: () => void = () => {};
   onThumb: () => void = () => {};
-  onHome: () => void = () => {};
-  onRotate: (dir: number) => void = () => {};
+  /** the reset-view button (user: "원위치 버튼만 하나 있으면") */
+  onResetView: () => void = () => {};
   onAgain: () => void = () => {};
   onResultHome: () => void = () => {};
   onWord: (w: string) => void = () => {};
@@ -36,31 +35,14 @@ export class Hud {
     this.listenBtn.addEventListener('click', () => { sfx('tap'); this.onListen(); });
     this.picCard.addEventListener('click', () => { sfx('tap'); this.onListen(); });
     this.thumb.addEventListener('click', () => { sfx('pop'); this.onThumb(); });
-    $('#rotL').addEventListener('click', () => { sfx('tick'); this.onRotate(-1); });
-    $('#rotR').addEventListener('click', () => { sfx('tick'); this.onRotate(1); });
-    const home = $('#btnHome');
-    home.addEventListener('click', () => {
-      sfx('tap');
-      if (performance.now() < this.homeArmed) { this.homeArmed = 0; home.classList.remove('armed'); this.onHome(); return; }
-      this.homeArmed = performance.now() + 2600;
-      home.classList.remove('armed'); void home.offsetWidth; home.classList.add('armed');
-      setTimeout(() => { if (performance.now() >= this.homeArmed) home.classList.remove('armed'); }, 2700);
-    });
-    const panel = $('#settings');
-    $('#btnSettings').addEventListener('click', (e) => { sfx('tap'); panel.hidden = !panel.hidden; e.stopPropagation(); this.syncToggles(); });
-    document.addEventListener('pointerdown', (e) => { if (!panel.hidden && !panel.contains(e.target as Node) && !(e.target as HTMLElement).closest('#btnSettings')) panel.hidden = true; });
-    panel.querySelectorAll<HTMLButtonElement>('.tog').forEach((b) => b.addEventListener('click', () => {
-      const k = b.dataset.k as 'music' | 'sfx'; const on = !(settings[k]);
-      if (k === 'music') setMusic(on); else setSfx(on);
-      this.syncToggles(); sfx('tap');
-    }));
+    $('#btnReset').addEventListener('click', () => { sfx('tick'); this.onResetView(); });
+    // EN | 한: the fox's voice, its bubble and the screen words (core/lang.ts) — in the corner bar
+    const langBtn = $('#btnLang');
+    const syncLang = () => langBtn.setAttribute('aria-pressed', String(lang() === 'ko'));
+    langBtn.addEventListener('click', () => { sfx('tap'); setLang(lang() === 'ko' ? 'en' : 'ko'); });
+    onLang(syncLang); syncLang();
     $('#btnAgain').addEventListener('click', () => { sfx('start'); this.onAgain(); });
     $('#btnResultHome').addEventListener('click', () => { sfx('tap'); this.onResultHome(); });
-    this.syncToggles();
-  }
-
-  private syncToggles() {
-    document.querySelectorAll<HTMLButtonElement>('#settings .tog').forEach((b) => b.setAttribute('aria-pressed', String(settings[b.dataset.k as 'music' | 'sfx'])));
   }
 
   screen(name: 'intro' | 'title' | 'game' | 'result') { this.app.dataset.screen = name; }
@@ -68,10 +50,20 @@ export class Hud {
 
   reset() {
     this.cards.forEach((c) => { c.querySelector('.num')!.textContent = '0'; c.querySelector('.chips')!.innerHTML = ''; });
+    this.cards.forEach((_, p) => this.setStrikes(p, 0));
     $('#result').hidden = true;
     this.showRead(false);
-    this.showCard(null);
+    this.hideCard();
     this.foxSay.clear();
+  }
+
+  /** wrong blocks so far (✕ marks on the player's card; the newest pops in) */
+  setStrikes(p: number, n: number, animate = false) {
+    this.cards[p].querySelectorAll<HTMLElement>('.strikes i').forEach((m, i) => {
+      m.classList.toggle('on', i < n);
+      m.classList.remove('pop');
+      if (animate && i === n - 1) { void m.offsetWidth; m.classList.add('pop'); }
+    });
   }
 
   /** whose turn: their card lights up (the fox calls it, and its bubble keeps the call up — foxTurn) */
@@ -88,15 +80,31 @@ export class Hud {
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
 
-  addWord(p: number, got: Got[], n: number) {
-    const card = this.cards[p];
-    const num = card.querySelector('.num')!; num.textContent = String(n);
-    const sc = card.querySelector('.pscore')!; sc.classList.remove('pop'); void (sc as HTMLElement).offsetWidth; sc.classList.add('pop');
-    const chips = card.querySelector('.chips')!;
+  /** the collected words on a player's card, newest last; `landing` keeps the newest hidden (its block is still flying) */
+  private renderChips(p: number, got: Got[], landing: boolean) {
+    const chips = this.cards[p].querySelector('.chips')!;
     chips.innerHTML = '';
     const show = got.slice(-CHIP_MAX);
     if (got.length > CHIP_MAX) { const more = document.createElement('span'); more.className = 'chip more'; more.textContent = `+${got.length - CHIP_MAX}`; chips.append(more); }
-    show.forEach((g, i) => chips.append(chip(g, i === show.length - 1)));
+    show.forEach((g, i) => { const last = i === show.length - 1, c = chip(g, last && !landing); if (last && landing) c.classList.add('landing'); chips.append(c); });
+  }
+  private setCount(p: number, n: number) {
+    const card = this.cards[p];
+    card.querySelector('.num')!.textContent = String(n);
+    const sc = card.querySelector('.pscore')!; sc.classList.remove('pop'); void (sc as HTMLElement).offsetWidth; sc.classList.add('pop');
+  }
+  addWord(p: number, got: Got[], n: number) { this.setCount(p, n); this.renderChips(p, got, false); }
+  /** where a collected block lands (CSS px): the end of the player's pile, where its chip waits hidden */
+  chipSlot(p: number, got: Got[]) {
+    this.renderChips(p, got, true);
+    const r = this.cards[p].querySelector('.chip.landing')!.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  /** the block got there: its chip drops onto the pile and the count goes up (user: "블럭이 플레이어한테 가서 쌓이면") */
+  land(p: number, n: number) {
+    const c = this.cards[p].querySelector<HTMLElement>('.chip.landing');
+    if (c) { c.classList.remove('landing'); c.style.animation = ''; c.classList.add('drop'); }
+    this.setCount(p, n);
   }
 
   // ── read aloud ─────────────────────────────────────────────────────────────────────────────────────────
@@ -116,6 +124,7 @@ export class Hud {
   pulseListen(on: boolean) { this.listenBtn.classList.toggle('pulse', on); }
 
   swipe(on: boolean) { $('#swipe').classList.toggle('on', on); this.onSwipe(on); }
+  get swipeOn() { return $('#swipe').classList.contains('on'); }
   /** main.ts: the 3D ring of arrows on the table (game/spinhint.ts) */
   onSwipe: (on: boolean) => void = () => {};
 
@@ -126,27 +135,42 @@ export class Hud {
     this.cards.forEach((c, p) => { const im = c.querySelector<HTMLImageElement>('.avatar .ani'); if (im) im.src = ANI_ART[a[p]]; });
   }
 
-  /** the picture card of the word being read, standing just above the presented block (box = its screen rect);
-   *  null = put it away. Tapping it plays the word again. */
-  showCard(url: string | null, box?: { x0: number; x1: number; y0: number }) {
-    const el = this.picCard, img = el.querySelector('img')!;
-    clearTimeout(this.cardTimer);
-    if (!url || !box) {
-      if (el.hidden) return;
-      el.classList.remove('on'); el.classList.add('off');
-      this.cardTimer = window.setTimeout(() => { el.hidden = true; el.classList.remove('off'); }, 400);
-      return;
-    }
-    const h = this.app.clientHeight;
-    const gap = Math.max(8, h * 0.018);
-    const bottom = box.y0 - gap;
-    const top = Math.max(...this.cards.map((e) => e.getBoundingClientRect().bottom)) + gap;
-    const size = Math.max(80, Math.min(h * 0.32, (box.x1 - box.x0) * 0.55, bottom - top));
-    el.style.left = `${(box.x0 + box.x1) / 2}px`; el.style.top = `${bottom}px`;
-    el.style.width = el.style.height = `${size}px`;
+  /** The picture card of the word being read takes the presented block's place — the block turns into it (game.ts):
+   *  the picture over the word, framed in the block's colours, centred on the block between the top bar and the
+   *  mic. prepCard sets it up and loads the picture (call it before the block turns away), cardIn turns it to the
+   *  child, cardOut away again (then the block turns back in its place). Tapping it plays the word again. */
+  prepCard(url: string, word: string, c: Pastel, at: { x: number; y: number }) {
+    const el = this.picCard, img = el.querySelector('img')!, wd = el.querySelector('.pc-word') as HTMLElement;
+    this.hideCard();
+    const W = this.app.clientWidth, H = this.app.clientHeight;
+    const top = H * 0.04;
+    const bottom = H * 0.78;                                 // the mic's row starts at ~81 % of the height
+    const h = Math.max(120, Math.min(bottom - top, H * 0.54, W * 0.72 * 1.24)), w = h / 1.24;
+    const cy = Math.min(Math.max(at.y, top + h / 2), bottom - h / 2);
+    Object.assign(el.style, { left: `${at.x}px`, top: `${cy}px`, width: `${w}px`, height: `${h}px` });
+    el.style.setProperty('--bc', c.base); el.style.setProperty('--tc', c.ink); el.style.setProperty('--sc', c.edge);
+    el.style.setProperty('--wf', `${Math.min(h * 0.12, (w * 0.84) / (0.56 * Math.max(3, word.length)))}px`);
+    wd.textContent = word;
     img.src = url;
-    el.hidden = false; el.classList.remove('off', 'on'); void el.offsetWidth; el.classList.add('on');
+    return img.decode().catch(() => {});
   }
+  async cardIn() {
+    const el = this.picCard;
+    el.hidden = false;
+    await el.animate([
+      { transform: 'perspective(1600px) rotateY(-90deg) scale(.92)' },
+      { transform: 'perspective(1600px) rotateY(10deg) scale(1.03)', offset: 0.72 },
+      { transform: 'perspective(1600px) rotateY(0deg) scale(1)' },
+    ], { duration: 520, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).finished.catch(() => {});
+  }
+  async cardOut() {
+    const el = this.picCard;
+    if (el.hidden) return;
+    await el.animate([{ transform: 'perspective(1600px) rotateY(0deg)' }, { transform: 'perspective(1600px) rotateY(90deg) scale(.94)' }],
+      { duration: 260, easing: 'cubic-bezier(.5,0,.9,.5)', fill: 'forwards' }).finished.catch(() => {});
+    this.hideCard();
+  }
+  hideCard() { const el = this.picCard; el.getAnimations().forEach((a) => a.cancel()); el.hidden = true; }
 
   /** wrong block: its word pops up with the first letter big (the first sound the fox says) */
   letterPop(x: number, y: number, word: string, c: Pastel) {
@@ -163,16 +187,17 @@ export class Hud {
   }
 
   // ── result book ────────────────────────────────────────────────────────────────────────────────────────
-  showResult(players: { got: Got[] }[], winner: number) {
+  showResult(players: { got: Got[]; strikes?: number }[], winner: number) {
     const res = $('#result');
     res.hidden = false;
     res.querySelectorAll<HTMLElement>('.page').forEach((page, p) => {
-      const got = players[p].got;
+      const got = players[p].got, n = Math.min(3, players[p].strikes ?? 0);
       page.classList.toggle('winner', winner === p);
       page.innerHTML = `
         <div class="ava"><img class="ani" src="${ANI_ART[this.animals[p]]}" alt="" draggable="false" />${winner === p ? CROWN : ''}</div>
-        <h2>Player ${p + 1}</h2>
+        <h2>${t('player', { n: p + 1 })}</h2>
         <div class="big"><i class="mini-block" style="--pc: var(--p${p + 1})"></i>${got.length}</div>
+        ${n ? `<span class="strikes" aria-label="wrong blocks">${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(3 - n)}</span>` : ''}
         <div class="words"></div>`;
       const words = page.querySelector('.words')!;
       got.forEach((g, i) => { const c = chip(g, false); c.style.animationDelay = `${0.5 + i * 0.06}s`; c.addEventListener('click', () => this.onWord(g.word.w)); words.append(c); });

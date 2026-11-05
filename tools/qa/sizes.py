@@ -19,7 +19,7 @@ BOXES = '''() => {
   const { tower, stage } = window.__pj;
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   for (const b of tower.inTower()) { const p = stage.project(b.mesh.getWorldPosition(b.mesh.position.clone())); x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
-  return { p1: r('#p1'), p2: r('#p2'), say: r('#foxSay:not([hidden]) .fs-bubble'), home: r('#btnHome'), gear: r('#btnSettings'), fox: r('#fox canvas'), dock: r('#dock'), read: r('#read'), tower: [Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1)] };
+  return { p1: r('#p1'), p2: r('#p2'), say: r('#foxSay:not([hidden]) .fs-bubble'), bar: r('.sysbar'), reset: r('#btnReset'), fox: r('#fox canvas'), dock: r('#dock'), read: r('#read'), tower: [Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1)] };
 }'''
 
 
@@ -49,8 +49,8 @@ async def main():
             await pg.screenshot(path=f'{OUT}/size_{W}x{H}_read.png')
             bx2 = await pg.evaluate(BOXES)
             bad = []
-            for a in ('p1', 'p2', 'say', 'home', 'gear'):
-                for b in ('p1', 'p2', 'say', 'home', 'gear'):
+            for a in ('p1', 'p2', 'say', 'bar'):
+                for b in ('p1', 'p2', 'say', 'bar'):
                     if a < b and overlap(bx[a], bx[b]):
                         bad.append(f'{a}~{b}')
             if overlap(bx['fox'], bx['tower']):

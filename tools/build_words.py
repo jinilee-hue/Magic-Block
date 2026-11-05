@@ -1,11 +1,13 @@
-"""Build src/data/words.json — the 54 Jenga block words, all from FPR K (From Phonics to Reading K).
+"""Build src/data/words.json — the 46 Jenga block words, all from FPR K Unit 1 (Lessons 1-5, pages 9-76).
 
-Source: SAD·FPR 단어 연구 자료집 v1.0 → ~/dev/sadfpr-studio/data/b2_book_FPRK.json (words: lemma → printed/picture pages).
-- M: every lemma in FPR K that starts with m (28), minus picture-description phrases ("man digging"…) and the
-  character names Max · Meg · Mike (user's choice: 28 m-words + 26 other FPR K words = 54 blocks, a real Jenga set).
-  'meet' appears in the book only as 'met', so the block shows 'met'.
-- OTHER: 26 FPR K words that do NOT start with m. Most rhyme with an m-word (pan/man, cap/map, cat/mat …) so a child
-  has to look at the FIRST letter, not the word shape; jam and lamp have an m inside but not at the start.
+Source: SAD·FPR 단어 연구 자료집 v1.0 → ~/dev/sadfpr-studio/data/b2_book_FPRK.json (words: lemma → printed/picture pages;
+rows: lemma → page + lesson; lu: lesson → unit; cards: picture-card pages).
+- Unit 1 = a word on a page of lessons 1-5, or on the Unit 1 picture cards (p387, \"Lesson 1-5\") — user: \"지금 나오는 m
+  단어가 FPR K Unit1에 나오는 단어로 구성된건지 확인해줘\" → only Unit 1.
+- M: every m-word of Unit 1 (20): 17 on the lesson pages + mail, mailbox, mask from the p387 picture cards.
+  The m-words outside Unit 1 (mad, make, maze, met, mess, mix, mom, mud: lessons 11-24) are no longer blocks.
+- OTHER: 26 Unit 1 words that do NOT start with m. Most rhyme with an m-word (pan/man, cap/map, cat/mat …) so a child
+  has to look at the FIRST letter, not the word shape; jam and lemon have an m inside but not at the start.
 
 Run: python3 tools/build_words.py   (prints the table; writes src/data/words.json)
 Only words, Korean glosses and page numbers are written — no textbook sentences (internal material).
@@ -18,27 +20,34 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = pathlib.Path(os.path.expanduser('~/dev/sadfpr-studio/data/b2_book_FPRK.json'))
 B = json.loads(SRC.read_text(encoding='utf-8'))
 W, GM, LP = B['words'], B['gm'], B['lp']
+LU = {int(k): v for k, v in B['lu'].items()}
+UNIT1_ROWS = {r['lemma'] for r in B['rows'] if r.get('lesson') and LU.get(r['lesson']) == 1}
+UNIT1_CARDS = set(B['cards']['387']['cards'])            # "Picture Cards p387 (Lesson 1 … Lesson 5)"
 
-M_WORDS = ['mad', 'mail', 'mailbox', 'make', 'man', 'map', 'mask', 'mat', 'match', 'maze', 'meat', 'met', 'mess',
-           'milk', 'mirror', 'mitt', 'mitten', 'mix', 'mom', 'monkey', 'moon', 'mop', 'mouse', 'mouth', 'mud', 'mug',
-           'mushroom', 'my']
-LEMMA = {'met': 'meet'}                       # block text → lemma in the ledger
-EXCLUDED = {'max': '이름(Max)', 'meg': '이름(Meg)', 'mike': '이름(Mike)', 'man digging': '그림 설명 구절',
-            'man juggling': '그림 설명 구절', 'man with hats': '그림 설명 구절', 'mom with popcorn': '그림 설명 구절'}
+
+def in_unit1(lemma):
+    return lemma in UNIT1_ROWS or lemma in UNIT1_CARDS
+
+
+M_WORDS = ['man', 'map', 'mat', 'match', 'meat', 'milk', 'mirror', 'mitt', 'mitten', 'monkey', 'moon', 'mop', 'mouse',
+           'mouth', 'mug', 'mushroom', 'my',      # on the lesson pages
+           'mail', 'mailbox', 'mask']             # on the Unit 1 picture cards
+LEMMA = {}                                       # block text → lemma in the ledger (none differ in Unit 1)
+EXCLUDED = {}                                    # Unit 1 m-lemmas that are not blocks (none)
 OTHER = [  # rhyme partner in the comment
-    'pan', 'van',      # man
-    'cap', 'nap',      # map
-    'cat', 'hat',      # mat
-    'top', 'hop',      # mop
-    'rug', 'bug',      # mug
-    'sad', 'bad',      # mad
-    'six', 'fix',      # mix
-    'net', 'jet',      # met
-    'cake', 'lake',    # make
-    'nail', 'tail',    # mail
-    'kit', 'fit',      # mitt
-    'sun', 'dog',      # everyday picture words
-    'jam', 'lamp',     # an m inside, not at the start
+    'pan', 'van', 'fan',   # man
+    'cap', 'tap',          # map
+    'cat', 'hat', 'bat',   # mat
+    'hop', 'pop',          # mop
+    'rug',                 # mug
+    'tail',                # mail
+    'turkey',              # monkey
+    'spoon',               # moon
+    'sit',                 # mitt
+    'pie', 'tie',          # my
+    'box',                 # mailbox
+    'sun', 'dog', 'sock', 'six', 'ten', 'bag',   # everyday picture words
+    'jam', 'lemon',        # an m inside, not at the start
 ]
 # read-aloud check (src/core/sttCheck.ts): other spellings the recogniser may write for the same word, and the same
 # word with another first sound — common words only (the check asks: does it start with m, or with one of these?)
@@ -77,17 +86,19 @@ def entry(text, kind):
     return e
 
 
-# every m-lemma in the book is either used or excluded with a reason
-all_m = sorted(k for k in W if k.lower().startswith('m'))
+# every m-lemma of Unit 1 is a block (or excluded with a reason), and every block word is from Unit 1
+all_m = sorted(k for k in W if k.lower().startswith('m') and in_unit1(k) and k.lower() not in {n.lower() for n in B['names']})
 for k in all_m:
     t = next((t for t, l in LEMMA.items() if l == k), k)
-    assert t in M_WORDS or k.lower() in EXCLUDED, f'm-word not handled: {k}'
-assert len(M_WORDS) == 28 and len(set(M_WORDS)) == 28
+    assert t in M_WORDS or k.lower() in EXCLUDED, f'Unit 1 m-word not handled: {k}'
+for t in M_WORDS + OTHER:
+    assert in_unit1(LEMMA.get(t, t)), f'not in FPR K Unit 1: {t}'
+assert len(M_WORDS) == 20 and len(set(M_WORDS)) == 20
 assert len(OTHER) == 26 and len(set(OTHER)) == 26 and not any(w.startswith('m') for w in OTHER)
 
 words = [entry(w, 'm') for w in M_WORDS] + [entry(w, 'other') for w in OTHER]
 out = {
-    'book': 'FPR K (From Phonics to Reading K)',
+    'book': 'FPR K (From Phonics to Reading K) · Unit 1 (Lessons 1-5)',
     'source': 'SAD·FPR 단어 연구 자료집 v1.0 (2026-10-05) · b2_book_FPRK.json',
     'target': 'm',
     'excluded': EXCLUDED,

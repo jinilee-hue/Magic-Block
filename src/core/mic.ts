@@ -93,7 +93,11 @@ export async function openMic(aborted?: () => boolean): Promise<MicOpen> {
   if (fakes.length) return { kind: 'ok', mic: new Mic(ac, null) }; // tests: the queued clips stand in for the microphone
   if (!micSupported()) return { kind: 'denied' };
   // the permission prompt can stay open forever: let the activity give up on it (closed, or no answer for a while)
-  const gum = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+  // no echo cancellation: we never listen while the fox talks (the cue is guarded), and with it Chrome re-routes all
+  // of its own sound through its echo canceller (and macOS toggles the mic's hardware noise reduction) the moment the
+  // mic opens — right after the fox says the word, which could put a hiccup into the voice (user: "튜터가 카드 단어
+  // 읽어보라고 말할때 딱꾹질 같은게 들어갈때가 있어"). Noise suppression and gain control are input-only, kept.
+  const gum = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
   let poll = 0;
   const gaveUp = new Promise<'abort'>((res) => { poll = window.setInterval(() => { if (aborted?.()) res('abort'); }, 200); });
   try {

@@ -2,6 +2,8 @@
 // says it, and the player must read it aloud (on-device speech recognition) before the turn passes. A block that
 // doesn't start with m won't come out: it sticks, the fox says its first sound, and the turn goes to the friend.
 // When every m-block is out the tower falls ("와르르") and the player with more blocks wins.
+// Three wrong blocks in a game (✕ marks on the player's card) and the tower falls on that player: the friend wins
+// (user: "플레이어가 3번 잘못 눌렀을경우는 탑이 무너지게 해줘" — counted per player over the whole game, Jenga rule).
 import { holdMusic, preload, sfx } from '../core/audio';
 import { micBlocked, micSupported, openMic, prepareForStt, type Mic } from '../core/mic';
 import { scoreReading } from '../core/readCheck';
@@ -20,9 +22,13 @@ type Heard = string | null | 'nomic';
 type HearResult = 'ok' | 'miss' | 'silence' | 'nomic' | 'again';
 const GREAT = ['t:great1', 't:great2', 't:great3'];
 const IDLE_HINT_MS = 16000;
+/** no touch for this long in a turn: the arrows around the tower (they show it can be turned) */
+const SPIN_HINT_MS = 7000;
 /** real readings the recogniser didn't take before the fox says "Good try!" and the block is yours anyway */
 const MAX_MISSES = 3;
-/** the m-words still to come on this device: each game takes the next M_PER_GAME, so two games show all 28 */
+/** wrong blocks (not m) a player may pick in one game: the last one brings the tower down */
+const MAX_STRIKES = 3;
+/** the m-words still to come on this device: each game takes the next M_PER_GAME of the 20 Unit 1 m-words */
 const DECK_KEY = 'pj.mdeck.v1';
 /** m-words that have a picture card (public/cards/<word>.webp, from tools/import_cards.py) */
 const CARDS = new Set(cardList as string[]);
@@ -39,7 +45,7 @@ function devlog(o: Record<string, unknown>) {
 }
 
 export class Game {
-  players: { got: Got[] }[] = [{ got: [] }, { got: [] }];
+  players: { got: Got[]; strikes: number }[] = [{ got: [], strikes: 0 }, { got: [], strikes: 0 }];
   turn = 0;
   state: 'off' | 'intro' | 'choose' | 'busy' | 'end' = 'off';
   firstGame = true;
@@ -63,10 +69,11 @@ export class Game {
 
   constructor(private stage: Stage, private tower: Tower, private hud: Hud, private fox: Fox, private confetti: Confetti,
     private words: WordInfo[], private seed?: number) {
-    stage.onTap = (e) => { if (this.state === 'choose') { const b = tower.pick(e.ndc); if (b) void this.choose(b); } };
+    stage.onTap = (e) => { this.idleAt = performance.now(); if (this.state === 'choose') { const b = tower.pick(e.ndc); if (b) void this.choose(b); } };
     stage.onHover = (e) => tower.hover(this.state === 'choose' && e ? tower.pick(e.ndc) : null);
     stage.onUserTurn = () => { hud.swipe(false); this.idleAt = performance.now(); };
-    hud.onRotate = (d) => { stage.turnBy(-d * 45); hud.swipe(false); this.idleAt = performance.now(); };
+    // no left / right buttons (user: "좌우 버튼 필요없고 … 원위치 버튼만 하나"): turning is a drag, this button goes back
+    hud.onResetView = () => { stage.resetView(); hud.swipe(false); this.idleAt = performance.now(); };
     // the mic is already listening: a tap before talking does nothing, a tap after talking says "I'm done"
     hud.onMic = () => { if (this.listening) { if (this.voiceOn) this.stopNow = true; } else if (isTalking()) stopSpeech(); };
     hud.onListen = () => { this.wantReplay = true; if (this.listening) this.listenAbort = true; else stopSpeech(); };
@@ -87,7 +94,7 @@ export class Game {
     this.closeMic();
     holdMusic(false);
     this.hud.showRead(false);
-    this.hud.showCard(null);
+    this.hud.hideCard();
     this.stage.focus(false);
     this.hud.busy(false);
     this.hud.swipe(false);
@@ -99,7 +106,7 @@ export class Game {
 
   /** The words for one tower: M_PER_GAME m-words, the next ones from the deck (take = the game starts and uses them
    *  up; otherwise a preview, e.g. the title tower), and the rest of the LAYERS × 3 blocks from the other words —
-   *  always with the trap words that have an m inside (jam, lamp). */
+   *  always with the trap words that have an m inside (jam, lemon). */
   pickWords(r: () => number, take: boolean): WordInfo[] {
     const ms = this.words.filter((w) => w.m), byW = new Map(ms.map((w) => [w.w, w]));
     let deck: string[] = [];
@@ -108,7 +115,7 @@ export class Game {
     const rest = deck.filter((w) => !pick.includes(w));
     while (pick.length < M_PER_GAME) {
       if (!rest.length) {
-        // a fresh round of all 28 (keep it for the next game too)
+        // a fresh round of all the m-words (keep it for the next game too)
         const fresh = shuffle(ms.map((w) => w.w), r).filter((w) => !pick.includes(w));
         rest.push(...fresh); deck.push(...fresh);
       }
@@ -153,14 +160,14 @@ export class Game {
   async start() {
     this.abort();
     const s = this.session;
-    this.players = [{ got: [] }, { got: [] }]; this.turn = 0; this.greatIdx = 0;
+    this.players = [{ got: [], strikes: 0 }, { got: [], strikes: 0 }]; this.turn = 0; this.greatIdx = 0;
     this.hud.reset(); this.hud.setAnimals(this.animals); this.hud.setTurn(0, false); this.hud.screen('game');
     this.buildTower(true);
     void this.tower.dropIn(() => sfx('tick'));
     this.stage.home();
     this.state = 'intro'; this.hud.busy(true);
     this.log('start');
-    void preload(['t:welcome', 't:howto1', 't:rule', 's:m', 't:howto2', 't:howto3', 't:rotate', 't:turn1', 't:turn2', 't:perfect', 't:sayit', ...GREAT, 't:again', 't:louder', 't:uhoh', 't:startswith']);
+    void preload(['t:welcome', 't:howto1', 't:rule', 's:m', 't:howto2', 't:howto3', 't:howto4', 't:rotate', 't:turn1', 't:turn2', 't:perfect', 't:sayit', ...GREAT, 't:again', 't:louder', 't:uhoh', 't:startswith', 't:strike2', 't:strike3']);
     // the first game gets the whole how-to (user: "게임소개 tts"), later games just the reminder
     const first = this.firstGame;
     this.fox.speakAs('talk'); this.fox.hop();
@@ -171,12 +178,11 @@ export class Game {
     if (!this.alive(s)) return;
     if (first) {
       this.fox.speakAs('talk');
-      await say(['t:howto2', 0.35, 't:howto3']);
+      await say(['t:howto2', 0.35, 't:howto3', 0.35, 't:howto4']);
       if (!this.alive(s)) return;
     }
     if (this.firstGame) {
       this.firstGame = false;
-      this.hud.swipe(true);
       this.stage.turnBy(-40);
       await say(['t:rotate']);
       if (!this.alive(s)) return;
@@ -215,38 +221,58 @@ export class Game {
     void preload([w]);
     sfx('slide');
     this.fox.speakAs('happy'); this.fox.gesture('happy', 1600);
-    void say(['t:perfect']);
+    // "Perfect! Pull it out!" plays to its end: the read prompt waits for it instead of cutting it mid-word (a block
+    // without a picture card, the Korean line: it was still talking when the prompt came)
+    const cheer = say(['t:perfect']);
     await this.tower.pullOut(b);
     if (!this.alive(s)) return;
     sfx('whoosh');
-    // with a picture card the block floats lower and the card stands above it (picture over word, like a flashcard)
     const pic = cardUrl(b.word.w);
     this.stage.focus(true);
-    await this.tower.present(b, pic ? 0.6 : 0.45);
+    await this.tower.present(b, 0.47);
     if (!this.alive(s)) return;
-    if (pic) this.hud.showCard(pic, this.tower.presentedBox(b));
+    if (pic) {
+      // the block spins round and turns into its picture card (user: "블럭이 돌면서 이미지 카드가 나오면")
+      const box = this.tower.presentedBox(b);
+      const ready = this.hud.prepCard(pic, b.word.w, b.color, { x: box.cx, y: (box.y0 + box.y1) / 2 });
+      sfx('whoosh');
+      await this.tower.turnAway(b);
+      await ready;
+      if (!this.alive(s)) return;
+      await this.hud.cardIn();
+      if (!this.alive(s)) return;
+    }
+    await cheer;
+    if (!this.alive(s)) return;
     this.hud.showRead(true); this.hud.micState('idle');
     const read = await this.readLoop(b, s);
     if (!read || !this.alive(s)) return;
-    // read it — the block is yours
+    // read it — the card turns back into the block, and the block flies onto the player's pile (user: "발음하면 이제
+    // 다시 이미지 카드가 돌아서 블럭이 플레이어한테 가서 쌓이면")
     this.hud.micState('done');
     sfx('success');
     const c = this.stage.project(b.mesh.position);
     this.confetti.burst(c.x, c.y, read === 'read' ? 170 : 90);
     this.fox.speakAs('cheer'); this.fox.gesture('cheer', 2600); this.fox.hop();
     const talk = say([read === 'read' ? GREAT[this.greatIdx++ % GREAT.length]! : 't:goodtry']);
-    await wait(700);
+    await wait(pic ? 450 : 700);
     if (!this.alive(s)) return;
-    const tgt = this.hud.cardTarget(this.turn);
+    if (pic) {
+      await this.hud.cardOut();
+      if (!this.alive(s)) return;
+      await this.tower.turnBack(b);
+      if (!this.alive(s)) return;
+      await wait(150);
+    }
+    const me = this.players[this.turn];
+    me.got.push({ word: b.word, color: b.color });
+    const tgt = this.hud.chipSlot(this.turn, me.got);
     sfx('whoosh');
-    this.hud.showCard(null);
     this.stage.focus(false);
     await this.tower.flyTo(b, tgt.x, tgt.y);
     if (!this.alive(s)) return;
     sfx('pop');
-    const me = this.players[this.turn];
-    me.got.push({ word: b.word, color: b.color });
-    this.hud.addWord(this.turn, me.got, me.got.length);
+    this.hud.land(this.turn, me.got.length);
     this.hud.showRead(false);
     this.log(`got ${b.word.w} → P${this.turn + 1} = ${me.got.length}`);
     await talk;
@@ -361,12 +387,40 @@ export class Game {
     const anim = this.tower.stuck(b);
     const box = this.tower.layerScreenBox(b.layer);
     this.hud.letterPop(box.x0, box.y, b.word.w, b.color);
+    // one more ✕ on this player's card
+    const p = this.turn, me = this.players[p];
+    me.strikes++;
+    this.log(`strike ${me.strikes} P${p + 1}`);
+    setTimeout(() => { if (this.alive(s)) { sfx('wrong'); this.hud.setStrikes(p, me.strikes, true); } }, 350);
     await wait(200);
     await say(['t:uhoh', 0.2, `w:${b.word.w}`, 0.35, 't:startswith', 0.12, `s:${b.word.first}`, 0.3, `s:${b.word.first}`]);
     await anim;
     if (!this.alive(s)) return;
+    if (me.strikes >= MAX_STRIKES) { await this.topple(s); return; }
+    if (me.strikes === MAX_STRIKES - 1) {
+      // one more and the tower falls: say so, while the two ✕ marks are up
+      this.fox.speakAs('point');
+      await say(['t:strike2']);
+      if (!this.alive(s)) return;
+    }
     this.turn = 1 - this.turn;
     await this.beginTurn(s);
+  }
+
+  /** the third wrong block: the tower falls on this player and the friend wins (Jenga rule — user's choice) */
+  private async topple(s: number) {
+    this.state = 'end';
+    this.hud.busy(true);
+    this.stage.controls = false;
+    const loser = this.turn;
+    this.log(`3 strikes → P${loser + 1} topples the tower`);
+    this.fox.speakAs('talk');
+    await say(['t:strike3']);
+    if (!this.alive(s)) return;
+    sfx('collapse');
+    await collapse(this.stage, this.tower, 3.4);
+    if (!this.alive(s)) return;
+    await this.result(s, 1 - loser);
   }
 
   private async finish(s: number) {
@@ -383,13 +437,18 @@ export class Game {
     sfx('collapse');
     await collapse(this.stage, this.tower, 3.4);
     if (!this.alive(s)) return;
-    this.confetti.cannons(140);
     const a = this.players[0].got.length, b = this.players[1].got.length;
-    const winner = a > b ? 0 : b > a ? 1 : -1;
-    this.log(`result ${a}:${b}`);
+    await this.result(s, a > b ? 0 : b > a ? 1 : -1);
+  }
+
+  /** the result book after the tower is down (winner -1 = a tie) */
+  private async result(s: number, winner: number) {
+    this.confetti.cannons(140);
+    this.log(`result ${this.players[0].got.length}:${this.players[1].got.length} winner ${winner < 0 ? 'tie' : `P${winner + 1}`}`);
     this.hud.showResult(this.players, winner);
     this.hud.screen('result');
     this.fox.speakAs('cheer'); this.fox.gesture('cheer', 3200); this.fox.hop();
+    if (!this.alive(s)) return;
     await say([winner === 0 ? 't:win1' : winner === 1 ? 't:win2' : 't:tie']);
   }
 
@@ -397,6 +456,9 @@ export class Game {
   private idleCheck() {
     if (this.state !== 'choose' || isTalking()) return;
     const now = performance.now();
+    // nobody has touched anything for a while: the arrows around the tower show it turns (user: "좌우 돌리라는 화살표만
+    // 반응없을때 나오면") — they go at the next drag, tap or reset
+    if (now - this.idleAt > SPIN_HINT_MS && !this.hud.swipeOn) this.hud.swipe(true);
     if (now - this.idleAt < IDLE_HINT_MS) return;
     this.idleAt = now;
     const ms = this.tower.inTower().filter((b) => b.word.m && this.tower.visible(b));

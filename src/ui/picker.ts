@@ -2,6 +2,7 @@
 // picks an animal, then Player 2 (the one already taken is marked P1 and can't be picked), and the game begins.
 // The fox calls each step out; tapping an animal says its name. The art is the user's badges (ui/animals.ts).
 import { sfx } from '../core/audio';
+import { t } from '../core/lang';
 import { say } from '../core/speech';
 import { ANI_ART, type Animal } from './animals';
 import type { Fox } from './fox';
@@ -39,7 +40,7 @@ export class Picker {
   }
 
   private setWho(p: number) {
-    this.who.textContent = `Player ${p + 1}`;
+    this.who.textContent = t('player', { n: p + 1 });
     this.who.classList.toggle('p2', p === 1);
     this.who.classList.remove('bump'); void this.who.offsetWidth; this.who.classList.add('bump');
   }

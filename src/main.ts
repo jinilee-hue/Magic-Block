@@ -1,8 +1,9 @@
 import './style.css';
 import wordData from './data/words.json';
 import { sfx, startMusic, unlock, voiceLevel } from './core/audio';
+import { applyLang, onLang } from './core/lang';
 import { micTest } from './core/mic';
-import { onTalk, said, say } from './core/speech';
+import { isTalking, onTalk, said, say } from './core/speech';
 import { sttPreload, sttState } from './core/stt';
 import { Game } from './game/game';
 import { SpinHint } from './game/spinhint';
@@ -25,6 +26,9 @@ async function loadFonts() {
   const faces = [
     new FontFace('Baloo', `url(${base}Baloo2.woff2) format('woff2')`, { weight: '400 800' }),
     new FontFace('ECP', `url(${base}NotoSans_ECP-Bold.ttf) format('truetype')`, { weight: '700' }),
+    // Korean screen words + the fox's Korean bubble (core/lang.ts): Jua, cut to the syllables the game uses
+    // (tools/make_ko_font.py); Baloo has no Hangul, so the browser takes these glyphs from here
+    new FontFace('Jua', `url(${base}Jua-ko.woff2) format('woff2')`, { weight: '400 900', unicodeRange: 'U+1100-11FF, U+3130-318F, U+AC00-D7A3' }),
   ];
   await Promise.all(faces.map(async (f) => { try { document.fonts.add(await f.load()); } catch (e) { console.warn('font', e); } }));
 }
@@ -56,23 +60,25 @@ function playIntro(hud: Hud, done: () => void) {
 
 async function boot() {
   const intro = hasIntro();
+  applyLang();                     // the language kept on this device (EN | 한 toggle, core/lang.ts)
   await loadFonts();
   const hud = new Hud();
   const stage = new Stage($('#stage'));
   stage.bg = $('.sky'); stage.resize();
   twinkle($('.sky'));
-  cornerControls();
   const tower = new Tower(stage);
   const spin = new SpinHint(stage, $('#swipe'));
   hud.onSwipe = (on) => spin.show(on);
   const fox = new Fox($('#fox'));
-  fox.level = voiceLevel;          // lip sync: the mouth follows the voice
+  fox.level = voiceLevel;          // lip sync fallback for clips without mouth cues (src/data/mouth.json)
   const confetti = new Confetti($<HTMLCanvasElement>('#fx'));
   onTalk((on) => fox.onTalk(on));
   void fox.load();
 
   const seed = params.has('seed') ? Number(params.get('seed')) : undefined;
   const game = new Game(stage, tower, hud, fox, confetti, WORDS, seed);
+  // switching EN | 한 while a player is looking for a block: the fox calls the turn again in the new language
+  onLang(() => { if (game.state === 'choose' && !isTalking()) void say([game.turn ? 't:turn2' : 't:turn1']); });
   game.test.fake = params.has('fake');
   game.forceM = (params.get('m') ?? '').split(',').filter(Boolean);
   game.buildTower(false);
@@ -81,6 +87,8 @@ async function boot() {
   game.onTitle = () => title.enter();
   // START → Player 1 and Player 2 pick their animals → the game (?nopick: straight in, for the QA scripts)
   const picker = new Picker(hud.app, fox);
+  // the corner bar (sound, exit) is on the title and in the game: in a game, exit goes back to the title
+  cornerControls({ leave: () => { picker.close(); hud.hideResult(); game.toTitle(); } });
 
   const go = () => { sfx('start'); void game.start(); };
   const begin = async () => {
@@ -96,7 +104,6 @@ async function boot() {
     go();
   };
   $('#btnStart').addEventListener('click', () => { void begin(); });
-  hud.onHome = () => { picker.close(); game.toTitle(); };
   hud.onAgain = () => { hud.hideResult(); void game.start(); };
   hud.onResultHome = () => { hud.hideResult(); game.toTitle(); };
 

@@ -4,10 +4,15 @@
 // The turn call — that player's animal + "Player 1, your turn!" — stays up while the player looks for a block; every
 // other line shows while it plays and a moment after, then the turn call comes back (or the bubble goes).
 import voiceData from '../data/voice.json';
+import { lang, onLang } from '../core/lang';
 import { isTalking, onLine, onTalk, type Part } from '../core/speech';
 import { ANI_ART } from './animals';
 
-const LINES: Record<string, string> = (voiceData as { lines?: Record<string, string> }).lines ?? {};
+const V = voiceData as { lines?: Record<string, string>; lines_ko?: Record<string, string> };
+const LINES: Record<string, string> = V.lines ?? {};
+/** Korean bubble text of each line (core/lang.ts; the voice plays the matching 'k:' clip) */
+const LINES_KO: Record<string, string> = V.lines_ko ?? {};
+const lineText = (id: string) => (lang() === 'ko' && LINES_KO[id]) || LINES[id];
 const HOLD_MS = 1400;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 /** the voice says "Player one" (so the TTS reads it right); the screen says "Player 1" like the player cards */
@@ -21,7 +26,7 @@ function format(keys: string[]) {
     if (k === prev) continue;
     prev = k;
     const kind = k.slice(0, 2), id = k.slice(2);
-    if (kind === 't:' && LINES[id]) out.push(esc(shown(LINES[id])));
+    if (kind === 't:' && LINES[id]) out.push(esc(shown(lineText(id))));
     else if (kind === 'w:') out.push(`<b class="fs-word">${esc(id)}</b>`);
     else if (kind === 's:') out.push(`<i class="fs-snd">/${esc(id)}/</i>`);
   }
@@ -37,12 +42,16 @@ export class FoxSay {
   private key = '';
   private hideT = 0;
   private offT = 0;
+  /** what the bubble shows now (to re-word it when the language changes) */
+  private shownKeys: string[] = [];
+  private shownP: number | null = null;
 
   constructor(private el: HTMLElement) {
     this.text = el.querySelector('.fs-text') as HTMLElement;
     this.ava = el.querySelector('.fs-ava .ani') as HTMLImageElement;
     onLine((parts) => this.line(parts));
     onTalk((on) => { if (on) clearTimeout(this.hideT); else this.later(); });
+    onLang(() => { if (!this.el.hidden && this.shownKeys.length) this.show(format(this.shownKeys), this.shownP, this.shownKeys); });
   }
 
   /** a turn starts: its call stays up until the player picks (release) */
@@ -58,21 +67,22 @@ export class FoxSay {
     if (!keys.some((k) => k.startsWith('t:') && LINES[k.slice(2)])) return;
     clearTimeout(this.hideT);
     const p = keys.includes('t:turn1') ? 0 : keys.includes('t:turn2') ? 1 : null;
-    this.show(format(keys), p);
+    this.show(format(keys), p, keys);
   }
 
   private later() {
     clearTimeout(this.hideT);
     this.hideT = window.setTimeout(() => {
-      if (this.sticky !== null) this.show(format([`t:turn${this.sticky + 1}`]), this.sticky);
+      if (this.sticky !== null) { const k = [`t:turn${this.sticky + 1}`]; this.show(format(k), this.sticky, k); }
       else this.hide();
     }, HOLD_MS);
   }
 
   /** p = the player a turn call is for (their animal + colour), null = a plain line */
-  private show(html: string, p: number | null) {
+  private show(html: string, p: number | null, keys: string[]) {
     const key = `${p}|${html}`;
     clearTimeout(this.offT);
+    this.shownKeys = keys; this.shownP = p;
     if (key === this.key && !this.el.hidden && !this.el.classList.contains('off')) return;
     this.key = key;
     this.text.innerHTML = html;
@@ -85,6 +95,7 @@ export class FoxSay {
 
   private hide(now = false) {
     this.key = '';
+    this.shownKeys = [];
     if (this.el.hidden) return;
     if (now) { this.el.hidden = true; this.el.classList.remove('off', 'pop'); return; }
     this.el.classList.remove('pop'); this.el.classList.add('off');

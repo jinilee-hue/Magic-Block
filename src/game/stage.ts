@@ -153,6 +153,12 @@ export class Stage {
   }
   turnBy(dAzDeg: number) { const a = (this.goal?.az ?? this.rig.az) + dAzDeg * DEG; this.goal = { az: a, el: this.goal?.el ?? this.rig.el, zoom: this.goal?.zoom ?? this.rig.zoom }; }
   home() { this.turnTo(28 + 90 * Math.round((this.rig.az / DEG - 28) / 90), EL0, 1); }
+  /** back to the view a game starts with (the reset button — user: "원위치 버튼"): first angle, tilt and zoom, the short way */
+  resetView() {
+    const a0 = 28 * DEG, a = this.goal?.az ?? this.rig.az;
+    this.rig.azVel = 0;
+    this.turnTo((a0 + Math.round((a - a0) / (2 * Math.PI)) * 2 * Math.PI) / DEG, EL0, 1);
+  }
   /** stop any turn in progress (the title sets the view itself every frame) */
   stopTurn() { this.goal = null; this.rig.azVel = 0; }
   /** the painted table's own viewing angle (degrees) */

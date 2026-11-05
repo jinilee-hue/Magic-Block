@@ -84,6 +84,7 @@ TUTOR = {
     'howto1': 'Take turns with your friend.',
     'howto2': 'Pull it out and read the word. Then the block is yours!',
     'howto3': 'Get the most blocks to win!',
+    'howto4': 'But pick a wrong block three times, and the tower falls!',
     'rule': 'Find a block that starts with m!',
     'rotate': 'Turn the tower to see all the blocks!',
     'turn1': 'Player one, your turn!',
@@ -108,7 +109,56 @@ TUTOR = {
     'win2': 'Player two wins!',
     'tie': "It's a tie! You both did great!",
     'playagain': "Let's play again!",
+    'strike2': 'Careful! One more wrong block, and the tower falls!',
+    'strike3': 'Oh no! Three wrong blocks. The tower is falling!',
 }
+
+# Korean (core/lang.ts — the EN | 한 toggle next to Settings): every tutor line again, same voice, language 'ko'.
+# A value is the bubble text, or (bubble text, what the voice reads) where they differ: the letter m is read 엠.
+TUTOR_KO = {
+    'hello': '안녕, 친구들! 매직 젠가에 온 걸 환영해!',
+    'pressstart': '스타트 버튼을 눌러 봐!',
+    'pick1': '플레이어 1, 동물 친구를 골라 봐!',
+    'pick2': '플레이어 2, 동물 친구를 골라 봐!',
+    'a_bunny': '토끼!',
+    'a_kitty': '고양이!',
+    'a_puppy': '강아지!',
+    'a_panda': '판다!',
+    'welcome': '자, 매직 젠가를 시작하자!',
+    'howto1': '친구랑 번갈아 가며 하는 거야.',
+    'howto2': '블럭을 빼서 단어를 읽으면, 그 블럭은 네 거야!',
+    'howto3': '블럭을 더 많이 모으면 이겨!',
+    'howto4': '그런데 틀린 블럭을 세 번 고르면, 탑이 와르르 무너져!',
+    'rule': ('m으로 시작하는 블럭을 찾아봐!', '엠으로 시작하는 블럭을 찾아봐!'),
+    'rotate': '탑을 돌려서 블럭을 모두 살펴봐!',
+    'turn1': '플레이어 1, 네 차례야!',
+    'turn2': '플레이어 2, 네 차례야!',
+    'look': ('m을 찾아봐!', '엠을 찾아봐!'),
+    'perfect': '딩동댕! 쏙 빼 봐!',
+    'sayit': '이제 단어를 읽어 봐.',
+    'great1': '대단해! 블럭을 얻었어!',
+    'great2': '정말 잘 읽었어!',
+    'great3': '해냈어! 최고야!',
+    'goodtry': '잘했어! 이 블럭은 네 거야!',
+    'again': '다시 해 보자! 잘 들어 봐.',
+    'louder': '잘 안 들려. 크게 말해 봐!',
+    'tapmic': '마이크를 누르고 말해 봐!',
+    'nomic': '소리 내어 읽어 봐!',
+    'uhoh': '앗!',
+    'startswith': '첫소리는',
+    'notm': ('m이 아니야!', '엠이 아니야!'),
+    'allout': ('와! m 블럭을 모두 뺐어!', '와! 엠 블럭을 모두 뺐어!'),
+    'watch': '이제 탑을 잘 봐!',
+    'win1': '플레이어 1 승리!',
+    'win2': '플레이어 2 승리!',
+    'tie': '비겼어! 둘 다 정말 잘했어!',
+    'playagain': '한 번 더 하자!',
+    'strike2': '조심해! 한 번만 더 틀리면 탑이 무너져!',
+    'strike3': '이런! 세 번 틀렸어. 탑이 무너진다!',
+}
+assert set(TUTOR_KO) == set(TUTOR), f'Korean lines missing/extra: {set(TUTOR) ^ set(TUTOR_KO)}'
+ko_say = lambda v: v[1] if isinstance(v, tuple) else v
+ko_show = lambda v: v[0] if isinstance(v, tuple) else v
 
 WORDS = json.loads((ROOT / 'src/data/words.json').read_text())['words']
 words = [w['w'] for w in WORDS]
@@ -116,12 +166,17 @@ letters = sorted({w[0] for w in words})
 fname = lambda s: re.sub(r'[^a-z0-9]+', '_', s.lower()).strip('_')
 tag = lambda *p: hashlib.md5('|'.join(p).encode()).hexdigest()[:8]
 
-# (key, what to read it as)
-JOBS = [(f'w:{w}', w) for w in words] + [(f't:{k}', t) for k, t in TUTOR.items()]
+# (key, what to read it as) — w: words, t: tutor lines, k: the tutor lines in Korean
+JOBS = [(f'w:{w}', w) for w in words] + [(f't:{k}', t) for k, t in TUTOR.items()] + [(f'k:{k}', ko_say(v)) for k, v in TUTOR_KO.items()]
 
 
 def take_of(key, text, take):
     """input text, instruction and cache file of one take (None = no take this round)"""
+    if key[0] == 'k':
+        if take >= len(T_INS):
+            return None
+        ins = T_INS[take]
+        return text, ins, CACHE / f'k_{fname(key[2:])}_{tag(QWEN_VOICE, ins, text, "ko")}.mp3'
     if key[0] == 'w':
         if take >= len(W_INS):
             # last resort: respellings the TTS may say right ("Maize." is how "maze" sounds)
@@ -168,8 +223,8 @@ async def fetch_edge(todo):
 
 
 def qwen_one(key, inp, ins, dst):
-    body = json.dumps({'model': 'qwen-tts', 'input': inp, 'voice': QWEN_VOICE, 'language': 'en', 'response_format': 'wav',
-                       'instructions': ins}).encode()
+    body = json.dumps({'model': 'qwen-tts', 'input': inp, 'voice': QWEN_VOICE, 'language': 'ko' if key[0] == 'k' else 'en',
+                       'response_format': 'wav', 'instructions': ins}).encode()
     for attempt in range(6):
         try:
             req = urllib.request.Request(QWEN_URL + '/audio/speech', data=body, method='POST',
@@ -198,6 +253,34 @@ def read_back(items):
     if r.returncode or not last:
         print('  read-back failed:', r.stderr[-400:]); return {}
     return {o['file']: (o['ok'], o['text'], o['sound']) for o in json.loads(last[-1])}
+
+
+def read_back_ko(items):
+    """Korean lines: [(file, target, start, dur)] → {file: (ok, heard, seconds)} via a multilingual whisper
+    (tools/qa/ko_check.py, faster-whisper small). Very short lines ("앗!") pass on a sane length alone."""
+    if not items:
+        return {}
+    norm = lambda s: ''.join(ch for ch in s if ch.isalnum())
+    out, todo = {}, []
+    for p, t, s, d in items:
+        if len(norm(t)) <= 2:
+            out[str(p)] = (0.15 < d < 2.0, f'({d:.2f}s)', d)
+        else:
+            todo.append({'file': str(p), 'target': t, 'dur': d})
+    if todo:
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
+            json.dump(todo, f, ensure_ascii=False)
+        uv = os.environ.get('UV', '/Users/jini/.hermes/bin/uv')
+        r = subprocess.run([uv, 'run', '--with', 'faster-whisper', 'python', str(ROOT / 'tools/qa/ko_check.py'), '--json', f.name],
+                           capture_output=True, text=True, cwd=ROOT)
+        res = pathlib.Path(f.name.replace('.json', '_out.json'))
+        if r.returncode or not res.exists():
+            print('  Korean read-back failed:', r.stderr[-400:])
+            return {**out, **{o['file']: (True, '?', o['dur']) for o in todo}}
+        for o in json.loads(res.read_text()):
+            out[o['file']] = (o['sim'] >= 0.75, o['heard'], o['dur'])
+        os.unlink(f.name); res.unlink()
+    return out
 
 
 LEAD, TAIL = .10, .25
@@ -236,6 +319,8 @@ chosen = {}
 if ENGINE == 'edge':
     todo = []
     for key, text in JOBS:
+        if key[0] == 'k':
+            continue                       # the prototype voice is English only: no Korean lines offline
         rate, pitch = (WORD_RATE, WORD_PITCH) if key[0] == 'w' else (TUTOR_RATE, TUTOR_PITCH)
         dst = CACHE / f'{key[0]}_{fname(text)}_{rate}{pitch}.mp3'
         chosen[key] = dst
@@ -245,13 +330,16 @@ if ENGINE == 'edge':
 else:
     if not (QWEN_URL and QWEN_KEY):
         sys.exit('TTS_BASE_URL / LLM_API_KEY not set: run inside `zsh -ic` on the company network (or use --engine edge)')
-    pending, first, verdicts = list(JOBS), {}, {}
+    pending, first, verdicts, gave_up = list(JOBS), {}, {}, []
     tmp = pathlib.Path(tempfile.mkdtemp(prefix='pj_voice_'))
     for take in range(len(W_INS) + 4):
         batch = []
         for key, text in pending:
             got = take_of(key, text, take)
             if got is None:
+                # out of wordings for this one: keep its first take (it never passed the read-back)
+                if key in first:
+                    chosen[key] = first[key]; gave_up.append(key)
                 continue
             inp, ins, dst = got
             if not dst.exists():
@@ -263,10 +351,11 @@ else:
         # judge exactly what the game will play: the trimmed clip from its start offset
         checks = []
         for key, text, dst in batch:
-            cut = tmp / f'{key[0]}_{fname(text)}_{take}.mp3'
+            cut = tmp / f'{key[0]}_{fname(key[2:])}_{take}.mp3'
             start, _, dur = trim(dst, cut)
             checks.append((cut, text, start, dur))
-        heard = read_back(checks)
+        heard = read_back([c for c, (k, *_r) in zip(checks, batch) if k[0] != 'k'])
+        heard.update(read_back_ko([c for c, (k, *_r) in zip(checks, batch) if k[0] == 'k']))
         still = []
         for (key, text, dst), (cut, *_rest) in zip(batch, checks):
             ok, got, snd = heard.get(str(cut), (True, '?', 0))     # no read-back possible: keep the take
@@ -281,8 +370,9 @@ else:
             break
     for key, _ in pending:
         chosen[key] = first[key]
-    if pending:
-        print('never heard right (kept take 1 — check by ear):', [(k, verdicts[k][0]) for k, _ in pending])
+    never = list(dict.fromkeys([k for k, _ in pending] + gave_up))
+    if never:
+        print('never heard right (kept take 1 — check by ear):', [(k, verdicts[k][0]) for k in never])
 print('clips', len(chosen), '· engine', ENGINE)
 
 OUT.mkdir(parents=True, exist_ok=True)
@@ -296,7 +386,8 @@ def place(key, raw, dst, target_db=-17, floor_db=-50):
 
 
 for key, _ in JOBS:
-    place(key, chosen[key], OUT / f'{key[0]}_{fname(key[2:])}.mp3')
+    if key in chosen:
+        place(key, chosen[key], OUT / f'{key[0]}_{fname(key[2:])}.mp3')
 
 # official letter sounds (FPR K) — the clips carry ~0.5 s of silence before the sound; trim + level them too
 fpr = json.loads((PI / 'fpr/manifest.json').read_text())['clips']
@@ -306,8 +397,9 @@ for L in sorted(set(letters) | {'m'}):
 
 voice = {'engine': 'edge', 'voice': VOICE, 'word': [WORD_RATE, WORD_PITCH], 'tutor': [TUTOR_RATE, TUTOR_PITCH]} if ENGINE == 'edge' \
     else {'engine': 'company-tts', 'voice': QWEN_VOICE}
-# 'lines' = what each tutor line says, for the fox's speech bubble (ui/foxsay.ts)
-JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR}, indent=0), encoding='utf-8')
+# 'lines' = what each tutor line says, for the fox's speech bubble (ui/foxsay.ts); 'lines_ko' = the same in Korean
+JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR, 'lines_ko': {k: ko_show(v) for k, v in TUTOR_KO.items()}},
+                               indent=0, ensure_ascii=False), encoding='utf-8')
 d = sorted((v[3], k) for k, v in manifest.items())
 size = sum((OUT / v[0]).stat().st_size for v in manifest.values())
 print(f'{len(manifest)} clips · {size / 1024:.0f} KB · shortest {d[:3]} · longest {d[-3:]}')

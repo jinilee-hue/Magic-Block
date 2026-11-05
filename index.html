@@ -26,93 +26,84 @@
       </div>
     </div>
 
-    <!-- top HUD -->
+    <!-- HUD: logo top-left, player cards down the left and right sides -->
     <header class="hud">
-      <button id="btnHome" class="btn3d sq purple" aria-label="Home">
-        <svg viewBox="0 0 24 24"><path d="M3.5 11.2 12 4l8.5 7.2" /><path d="M5.8 9.6V20h4.4v-5.2h3.6V20h4.4V9.6" /></svg>
-      </button>
       <div id="p1" class="pcard p1" data-p="0">
         <div class="avatar"><img class="ani" src="./src/assets/ani_bunny.webp" alt="" draggable="false" /></div>
-        <div class="pinfo"><b class="pname">Player 1</b><span class="pscore"><i class="mini-block"></i><b class="num">0</b></span></div>
+        <div class="pinfo"><b class="pname" data-i18n="p1">Player 1</b><span class="pscore"><i class="mini-block"></i><b class="num">0</b><span class="strikes" aria-label="wrong blocks" data-i18n-aria="a_strikes"><i></i><i></i><i></i></span></span></div>
         <div class="chips"></div>
       </div>
       <div id="p2" class="pcard p2" data-p="1">
         <div class="avatar"><img class="ani" src="./src/assets/ani_kitty.webp" alt="" draggable="false" /></div>
-        <div class="pinfo"><b class="pname">Player 2</b><span class="pscore"><i class="mini-block"></i><b class="num">0</b></span></div>
+        <div class="pinfo"><b class="pname" data-i18n="p2">Player 2</b><span class="pscore"><i class="mini-block"></i><b class="num">0</b><span class="strikes" aria-label="wrong blocks" data-i18n-aria="a_strikes"><i></i><i></i><i></i></span></span></div>
         <div class="chips"></div>
       </div>
-      <button id="btnSettings" class="btn3d sq purple" aria-label="Settings">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-      </button>
     </header>
 
-    <div id="settings" class="settings" hidden>
-      <button class="tog" data-k="music" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" /><circle cx="6.5" cy="18" r="2.5" /><circle cx="17.5" cy="16" r="2.5" /></svg><span>Music</span></button>
-      <button class="tog" data-k="sfx" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11" /></svg><span>Sounds</span></button>
+    <!-- corner bar (ui/corner.ts), the same on the title and in the game: sound (speaker + volume slider) and exit;
+         EN | 한 (core/lang.ts) shows in the game only -->
+    <div class="sysbar">
+      <button id="btnLang" class="lang-tog" aria-label="Language: English or Korean" data-i18n-aria="a_lang" aria-pressed="false"><span class="lt-en">EN</span><span class="lt-ko">한</span></button>
+      <div id="vol" class="vol">
+        <button id="btnSound" class="img-btn" aria-label="Volume" data-i18n-aria="a_volume" aria-expanded="false" aria-controls="volPanel">
+          <img src="./src/assets/btn_sound.webp" alt="" draggable="false" />
+        </button>
+        <div id="volPanel" class="vol-panel" role="slider" tabindex="0" aria-label="Volume" data-i18n-aria="a_volume" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" hidden>
+          <div class="vol-track"><i class="vol-fill"></i><i class="vol-thumb"></i></div>
+        </div>
+      </div>
+      <button id="btnExit" class="img-btn" aria-label="Exit" data-i18n-aria="a_exit"><img src="./src/assets/btn_out.webp" alt="" draggable="false" /></button>
     </div>
 
     <!-- bottom dock: turn the tower -->
     <div id="dock" class="dock">
-      <button id="rotL" class="btn3d round sky" aria-label="Turn left"><svg viewBox="0 0 24 24"><path d="M8.5 7.5H4.2V3.2" /><path d="M4.6 7.3A8.6 8.6 0 1 1 3.6 13" /></svg></button>
-      <button id="rotR" class="btn3d round sky" aria-label="Turn right"><svg viewBox="0 0 24 24"><path d="M15.5 7.5h4.3V3.2" /><path d="M19.4 7.3A8.6 8.6 0 1 0 20.4 13" /></svg></button>
+      <button id="btnReset" class="btn3d round sky" aria-label="Back to the start view" data-i18n-aria="a_reset"><svg viewBox="0 0 24 24"><path d="M4.6 13.4A7.6 7.6 0 1 0 6.9 6.3" /><path d="M7.4 2.6 6.7 6.5l3.9.8" /><path d="M9.7 9.7h4.6M9.7 12.5h4.6M9.7 15.3h4.6" /></svg></button>
     </div>
     <div id="swipe" class="swipe-hint" aria-hidden="true"><img class="hand" src="./src/assets/hand.webp" alt="" draggable="false" /></div>
 
-    <!-- picture card shown above the pulled block while the child reads the word -->
-    <div id="picCard" class="pic-card" hidden><img alt="" draggable="false" /></div>
+    <!-- picture card: the pulled block turns into it while the child reads the word (picture over the word) -->
+    <div id="picCard" class="pic-card" hidden><img alt="" draggable="false" /><b class="pc-word"></b></div>
 
     <!-- read-aloud controls -->
     <div id="read" class="read" hidden>
-      <button id="btnListen" class="btn3d round blue small" aria-label="Listen again"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11" /></svg></button>
+      <button id="btnListen" class="btn3d round blue small" aria-label="Listen again" data-i18n-aria="a_listen"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11" /></svg></button>
       <div class="mic-wrap">
         <i class="wave l w1"></i><i class="wave l w2"></i><i class="wave l w3"></i>
-        <button id="btnMic" class="mic" aria-label="Say the word"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" /></svg><svg class="ok" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19.5 7" /></svg><i class="ring"></i></button>
+        <button id="btnMic" class="mic" aria-label="Say the word" data-i18n-aria="a_say"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" /></svg><svg class="ok" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19.5 7" /></svg><i class="ring"></i></button>
         <i class="wave r w1"></i><i class="wave r w2"></i><i class="wave r w3"></i>
       </div>
-      <button id="btnThumb" class="btn3d round green" hidden aria-label="I said it"><svg viewBox="0 0 24 24"><path d="M7 10.5V20H4.5v-9.5zM7 10.5l4-7c1.6 0 2.4 1 2.1 2.6L12.6 9h5.2c1.3 0 2.2 1.2 1.9 2.4l-1.6 6.4c-.3 1.3-1.4 2.2-2.7 2.2H7" /></svg></button>
+      <button id="btnThumb" class="btn3d round green" hidden aria-label="I said it" data-i18n-aria="a_said"><svg viewBox="0 0 24 24"><path d="M7 10.5V20H4.5v-9.5zM7 10.5l4-7c1.6 0 2.4 1 2.1 2.6L12.6 9h5.2c1.3 0 2.2 1.2 1.9 2.4l-1.6 6.4c-.3 1.3-1.4 2.2-2.7 2.2H7" /></svg></button>
     </div>
 
     <!-- title -->
     <div id="title" class="title-screen">
       <div class="title-group">
         <h1 class="logo"><img src="./src/assets/logo.webp" alt="Magic Jenga" draggable="false" /></h1>
-        <button id="btnStart" class="start-btn" aria-label="Start"><img src="./src/assets/btn_start.webp" alt="START!" draggable="false" /></button>
+        <button id="btnStart" class="start-btn" aria-label="Start" data-i18n-aria="a_start"><img src="./src/assets/btn_start.webp" alt="START!" draggable="false" /></button>
       </div>
-      <!-- sound (speaker + volume slider) and exit, top right -->
       <div id="pick" class="pick" hidden>
         <div class="pick-card">
-          <button id="pickBack" class="pick-back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" /></svg></button>
+          <button id="pickBack" class="pick-back" aria-label="Back" data-i18n-aria="a_back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" /></svg></button>
           <div class="pick-head"><span id="pickWho" class="pick-who">Player 1</span></div>
           <div class="pick-row">
-            <button class="pick-ani" data-id="bunny"><span class="pa-art"><img class="ani" src="./src/assets/ani_bunny.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b>Bunny</b></button>
-            <button class="pick-ani" data-id="kitty"><span class="pa-art"><img class="ani" src="./src/assets/ani_kitty.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b>Kitty</b></button>
-            <button class="pick-ani" data-id="puppy"><span class="pa-art"><img class="ani" src="./src/assets/ani_puppy.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b>Puppy</b></button>
-            <button class="pick-ani" data-id="panda"><span class="pa-art"><img class="ani" src="./src/assets/ani_panda.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b>Panda</b></button>
+            <button class="pick-ani" data-id="bunny"><span class="pa-art"><img class="ani" src="./src/assets/ani_bunny.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b data-i18n="bunny">Bunny</b></button>
+            <button class="pick-ani" data-id="kitty"><span class="pa-art"><img class="ani" src="./src/assets/ani_kitty.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b data-i18n="kitty">Kitty</b></button>
+            <button class="pick-ani" data-id="puppy"><span class="pa-art"><img class="ani" src="./src/assets/ani_puppy.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b data-i18n="puppy">Puppy</b></button>
+            <button class="pick-ani" data-id="panda"><span class="pa-art"><img class="ani" src="./src/assets/ani_panda.webp" alt="" draggable="false" /><i class="pa-tag"></i></span><b data-i18n="panda">Panda</b></button>
           </div>
           <div class="pick-vs">
-            <div class="pv p1"><span class="pv-ava"><img class="ani" alt="" draggable="false" /><i>?</i></span><b>Player 1</b></div>
+            <div class="pv p1"><span class="pv-ava"><img class="ani" alt="" draggable="false" /><i>?</i></span><b data-i18n="p1">Player 1</b></div>
             <span class="pv-x">VS</span>
-            <div class="pv p2"><span class="pv-ava"><img class="ani" alt="" draggable="false" /><i>?</i></span><b>Player 2</b></div>
+            <div class="pv p2"><span class="pv-ava"><img class="ani" alt="" draggable="false" /><i>?</i></span><b data-i18n="p2">Player 2</b></div>
           </div>
         </div>
-      </div>
-      <div class="sysbar">
-        <div id="vol" class="vol">
-          <button id="btnSound" class="img-btn" aria-label="Volume" aria-expanded="false" aria-controls="volPanel">
-            <img src="./src/assets/btn_sound.webp" alt="" draggable="false" /><i class="mute-badge" aria-hidden="true"></i>
-          </button>
-          <div id="volPanel" class="vol-panel" role="slider" tabindex="0" aria-label="Volume" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" hidden>
-            <div class="vol-track"><i class="vol-fill"></i><i class="vol-thumb"></i></div>
-          </div>
-        </div>
-        <button id="btnExit" class="img-btn" aria-label="Exit"><img src="./src/assets/btn_out.webp" alt="" draggable="false" /></button>
       </div>
     </div>
 
     <!-- intro video -->
     <div id="intro" class="intro">
       <video id="introVideo" playsinline preload="auto"></video>
-      <button id="introSkip" class="intro-skip">SKIP</button>
+      <button id="introSkip" class="intro-skip" data-i18n="skip">SKIP</button>
     </div>
 
     <!-- result book -->
@@ -123,8 +114,8 @@
         <div class="page right" data-p="1"></div>
       </div>
       <div class="result-actions">
-        <button id="btnAgain" class="btn3d pill green"><svg viewBox="0 0 24 24"><path d="M19.4 7.3A8.6 8.6 0 1 0 20.4 13" /><path d="M15.5 7.5h4.3V3.2" /></svg><span>Play Again</span></button>
-        <button id="btnResultHome" class="btn3d pill purple"><svg viewBox="0 0 24 24"><path d="M3.5 11.2 12 4l8.5 7.2" /><path d="M5.8 9.6V20h4.4v-5.2h3.6V20h4.4V9.6" /></svg><span>Home</span></button>
+        <button id="btnAgain" class="btn3d pill green"><svg viewBox="0 0 24 24"><path d="M19.4 7.3A8.6 8.6 0 1 0 20.4 13" /><path d="M15.5 7.5h4.3V3.2" /></svg><span data-i18n="again">Play Again</span></button>
+        <button id="btnResultHome" class="btn3d pill purple"><svg viewBox="0 0 24 24"><path d="M3.5 11.2 12 4l8.5 7.2" /><path d="M5.8 9.6V20h4.4v-5.2h3.6V20h4.4V9.6" /></svg><span data-i18n="home">Home</span></button>
       </div>
     </div>
 

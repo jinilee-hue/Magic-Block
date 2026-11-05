@@ -2,13 +2,23 @@
 // sound effects (like Word Mashup: no files), and a music loop (the intro video's own music) that ducks while
 // someone talks.
 import voiceData from '../data/voice.json';
+import { lang } from './lang';
 
 type Clip = [file: string, start: number, gain: number, dur: number];
 const CLIPS = (voiceData as unknown as { clips: Record<string, Clip> }).clips;
 
+/** The fox's lines exist in English ('t:<line>') and Korean ('k:<line>'): the language setting picks one (core/lang.ts).
+ *  Words ('w:') and letter sounds ('s:') are English either way. Callers always use the 't:' key. */
+export function voiceKey(key: string) {
+  if (lang() === 'ko' && key.startsWith('t:')) { const k = `k:${key.slice(2)}`; if (CLIPS[k]) return k; }
+  return key;
+}
+
 const SETTINGS_KEY = 'pj-settings-v1';
 export const settings: { music: boolean; sfx: boolean; volume: number } = (() => {
-  try { return { music: true, sfx: true, volume: 1, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; } catch { return { music: true, sfx: true, volume: 1 }; }
+  // music / sound-effect switches were in the old Settings panel (removed — user: "설정버튼과 홈버튼은 삭제"): always on
+  // now, also on a device that had switched one off; the volume slider in the corner bar is the sound control
+  try { return { volume: 1, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'), music: true, sfx: true }; } catch { return { music: true, sfx: true, volume: 1 }; }
 })();
 const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* private mode */ } };
 
@@ -29,8 +39,8 @@ const buffers = new Map<string, Promise<AudioBuffer | null>>();
 const base = new URL('./', location.href).href;
 
 export const audioCtx = () => ctx;
-export const hasClip = (key: string) => !!CLIPS[key];
-export const clipDur = (key: string) => CLIPS[key]?.[3] ?? 0;
+export const hasClip = (key: string) => !!CLIPS[voiceKey(key)];
+export const clipDur = (key: string) => CLIPS[voiceKey(key)]?.[3] ?? 0;
 
 /** Create/resume the context. Call from a user gesture (START, SKIP, a tap). */
 export function unlock(): AudioContext {
@@ -61,6 +71,7 @@ async function fetchDecode(url: string): Promise<AudioBuffer | null> {
 }
 
 export function loadClip(key: string): Promise<AudioBuffer | null> {
+  key = voiceKey(key);
   const c = CLIPS[key];
   if (!c) return Promise.resolve(null);
   let p = buffers.get(key);
@@ -71,8 +82,23 @@ export const preload = (keys: string[]) => Promise.all(keys.map(loadClip));
 
 export interface Playing { done: Promise<void>; stop(): void; startAt: number; endAt: number }
 
+/** voice clips scheduled on the voice bus: which one is sounding now, and where in its file (the fox's lip sync) */
+const onAir: { key: string; t0: number; off: number; end: number }[] = [];
+/** the voice clip sounding right now: its key (the language's, e.g. 'k:hello') and the time in its FILE (s) */
+export function voiceNow(): { key: string; t: number } | null {
+  if (!ctx) return null;
+  const now = ctx.currentTime;
+  for (let i = onAir.length - 1; i >= 0; i--) {
+    const c = onAir[i];
+    if (now >= c.end) { onAir.splice(i, 1); continue; }
+    if (now >= c.t0) return { key: c.key, t: c.off + now - c.t0 };
+  }
+  return null;
+}
+
 /** Schedule one clip at context time `when` (0 = now). `done` resolves when it ends or is stopped. */
 export async function playClip(key: string, when = 0, gainMul = 1): Promise<Playing | null> {
+  key = voiceKey(key);
   const info = CLIPS[key];
   const buf = await loadClip(key);
   if (!info || !buf || !ctx) return null;
@@ -82,10 +108,23 @@ export async function playClip(key: string, when = 0, gainMul = 1): Promise<Play
   const t0 = Math.max(ctx.currentTime + 0.01, when || 0);
   const dur = Math.max(0.05, buf.duration - info[1]);
   s.start(t0, info[1]);
+  const air = { key, t0, off: info[1], end: t0 + dur };
+  onAir.push(air);
+  const offAir = () => { const i = onAir.indexOf(air); if (i >= 0) onAir.splice(i, 1); };
   let resolve!: () => void;
   const done = new Promise<void>((r) => { resolve = r; });
-  s.onended = () => { resolve(); try { g.disconnect(); } catch { /* gone */ } };
-  return { done, startAt: t0, endAt: t0 + dur, stop() { try { s.stop(); } catch { /* not started */ } resolve(); } };
+  s.onended = () => { offAir(); resolve(); try { g.disconnect(); } catch { /* gone */ } };
+  // cut short (a new line, a tap): a 40 ms fade, not a hard stop — a voice stopped mid-sound clicks
+  const stop = () => {
+    offAir();
+    try {
+      const n = ctx!.currentTime;
+      g.gain.cancelScheduledValues(n); g.gain.setValueAtTime(g.gain.value, n); g.gain.linearRampToValueAtTime(0, n + 0.04);
+      s.stop(n + 0.05);
+    } catch { /* not started / already stopped */ }
+    resolve();
+  };
+  return { done, startAt: t0, endAt: t0 + dur, stop };
 }
 
 /** Lower the music while a voice plays. */
@@ -175,8 +214,9 @@ export function sfx(name: Sfx) {
     case 'wrong': note(midi(63), t, 0.28, 'triangle', 0.22); note(midi(58), t + 0.2, 0.4, 'triangle', 0.22); break;
     case 'whoosh': { const { f } = noise(t, 0.45, 'bandpass', 600, 0.8, 0.25); f.frequency.exponentialRampToValueAtTime(3200, t + 0.4); break; }
     case 'turn': note(midi(84), t, 0.3, 'sine', 0.16); note(midi(88), t + 0.1, 0.4, 'sine', 0.14); break;
-    // "your turn to talk": a short, soft rising blip, over before the microphone starts judging (guardMs)
-    case 'listen': note(midi(79), t, 0.12, 'sine', 0.16); note(midi(86), t + 0.07, 0.16, 'sine', 0.14); break;
+    // "your turn to talk": ONE soft chime (a faint octave on top), over before the microphone starts judging (guardMs).
+    // It was two quick rising blips right after the fox's word — heard as the fox hiccuping ("딱꾹질 같은게")
+    case 'listen': note(midi(84), t, 0.26, 'sine', 0.13); note(midi(96), t, 0.14, 'sine', 0.025); break;
     case 'start': [72, 76, 79, 84].forEach((m, i) => note(midi(m), t + i * 0.07, 0.35, 'triangle', 0.2)); break;
     case 'collapse': {
       for (let k = 0; k < 30; k++) tok(t + 0.05 + Math.pow(Math.random(), 1.6) * 2.4, 150 + Math.random() * 280, 0.16 + Math.random() * 0.3);

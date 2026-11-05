@@ -371,6 +371,23 @@ export class Tower {
     b.mesh.userData.presented = { pos: goal.pos.clone(), t0: performance.now(), scale: goal.scale };
   }
 
+  /** the presented block spins round on its upright axis — a turn and a quarter, faster and faster, ending edge-on —
+   *  and is hidden there: its picture card turns in from the same edge (game.ts, hud.cardIn) */
+  async turnAway(b: Block) {
+    const q0 = b.mesh.quaternion.clone(), up = new THREE.Vector3(0, 1, 0), r = new THREE.Quaternion();
+    await animate(this.stage, 0.62, (k) => { r.setFromAxisAngle(up, k * Math.PI * 2.5); b.mesh.quaternion.copy(q0).multiply(r); }, ease.in);
+    b.mesh.visible = false;
+    b.mesh.quaternion.copy(q0);
+  }
+  /** the card has turned away: the block shows again, turning in from edge-on to face the child */
+  async turnBack(b: Block) {
+    const q0 = b.mesh.quaternion.clone(), up = new THREE.Vector3(0, 1, 0), r = new THREE.Quaternion();
+    r.setFromAxisAngle(up, -Math.PI / 2); b.mesh.quaternion.copy(q0).multiply(r);
+    b.mesh.visible = true;
+    await animate(this.stage, 0.34, (k) => { r.setFromAxisAngle(up, -Math.PI / 2 * (1 - k)); b.mesh.quaternion.copy(q0).multiply(r); }, ease.out);
+    b.mesh.quaternion.copy(q0);
+  }
+
   /** after a good read: shrink and fly to the player's card (screen px), then vanish */
   async flyTo(b: Block, x: number, y: number) {
     delete b.mesh.userData.presented;

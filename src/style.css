@@ -10,7 +10,7 @@
   --blue: #4a8df8; --blue-edge: #2e66c8;
   --green: #3fc46c; --green-edge: #27974f;
   --pink: #ff7aa8; --pink-edge: #db4f82;
-  --font-ui: 'Baloo', 'Baloo 2', ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --font-ui: 'Baloo', 'Jua', 'Baloo 2', ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif;
   --font-word: 'ECP', 'Baloo', system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
@@ -70,30 +70,51 @@ svg { display: block; }
 .btn3d:focus-visible { outline: calc(.5 * var(--u)) solid rgba(255,255,255,.9); outline-offset: calc(.4 * var(--u)); }
 
 /* ── HUD ─────────────────────────────────────────────── */
-.hud { position: absolute; z-index: 20; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); left: calc(2.4 * var(--u)); right: calc(2.4 * var(--u));
-  display: flex; align-items: flex-start; gap: calc(1.8 * var(--u)); pointer-events: none; transition: opacity .4s, translate .4s; }
+.hud { position: absolute; z-index: 20; inset: 0; pointer-events: none; transition: opacity .4s, translate .4s; }
 .hud > * { pointer-events: auto; }
+/* the game's logo top-left (user: "게임화면 상단 왼쪽에는 로고가 들어갔으면 좋겠어"): the title's art (1200 × 846, no padding) */
+.hud::before { content: ''; position: absolute; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); left: calc(2.4 * var(--u));
+  width: calc(16.3 * var(--u)); height: calc(11.5 * var(--u));
+  background: url('./assets/logo.webp') center / contain no-repeat; filter: drop-shadow(0 calc(.6 * var(--u)) calc(.9 * var(--u)) rgba(120, 70, 40, .25)); pointer-events: none; }
 .app:not([data-screen="game"]) .hud, .app:not([data-screen="game"]) .dock { opacity: 0; translate: 0 calc(-3 * var(--u)); pointer-events: none; }
 .app:not([data-screen="game"]) .hud > * { pointer-events: none; }
-#btnHome.armed { --c: #ff7a6b; --e: #d64f42; animation: wiggle .35s ease-in-out 2; }
 @keyframes wiggle { 0%,100% { rotate: 0deg; } 25% { rotate: -8deg; } 75% { rotate: 8deg; } }
 
 .pcard { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft);
-  position: relative; display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: calc(1.4 * var(--u));
+  position: absolute; bottom: calc(3.2 * var(--u) + env(safe-area-inset-bottom)); display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: calc(1.4 * var(--u));
   padding: calc(1 * var(--u)) calc(2.2 * var(--u)) calc(1 * var(--u)) calc(1 * var(--u)); min-width: calc(30 * var(--u));
   border-radius: calc(3.4 * var(--u)); background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.66));
-  box-shadow: 0 calc(.7 * var(--u)) 0 color-mix(in oklab, var(--pc) 35%, #d9d4ef), 0 calc(1.6 * var(--u)) calc(3 * var(--u)) rgba(70, 50, 120, .18);
+  box-shadow: 0 calc(1.2 * var(--u)) calc(2.2 * var(--u)) rgba(70, 50, 120, .16);
   backdrop-filter: blur(10px) saturate(1.4); -webkit-backdrop-filter: blur(10px) saturate(1.4);
-  transition: transform .35s cubic-bezier(.3,1.6,.5,1), opacity .35s, box-shadow .35s, filter .35s; transform-origin: 50% 0; }
-.pcard.p2 { --pc: var(--p2); --pd: var(--p2-deep); --ps: var(--p2-soft); }
-.pcard .avatar { width: calc(7.6 * var(--u)); height: calc(7.6 * var(--u)); border-radius: 50%; background: var(--ps); display: grid; place-items: center;
-  box-shadow: 0 0 0 calc(.45 * var(--u)) var(--pc); }
+  transition: transform .35s cubic-bezier(.3,1.6,.5,1), opacity .35s, box-shadow .35s, filter .35s; transform-origin: 50% 100%; }
+#p1 { left: calc(2.4 * var(--u)); }
+#p2 { right: calc(2.4 * var(--u)); }
+.pcard.p2 { --pc: var(--p2); --pd: var(--p2-deep); --ps: var(--p2-soft); grid-template-columns: 1fr auto;
+  padding: calc(1 * var(--u)) calc(1 * var(--u)) calc(1 * var(--u)) calc(2.2 * var(--u)); }
+.pcard.p2 .avatar { grid-column: 2; grid-row: 1; }
+.pcard.p2 .pinfo { grid-column: 1; grid-row: 1; align-items: flex-end; text-align: right; }
+.pcard.p2 .pscore { flex-direction: row-reverse; }
+.pcard.p2 .strikes { margin-left: 0; margin-right: calc(.4 * var(--u)); }
+.pcard.p2 .chips { justify-content: flex-end; }
+.pcard .avatar { width: calc(7.6 * var(--u)); height: calc(7.6 * var(--u)); border-radius: 50%; background: none; display: grid; place-items: center; }
 /* the players' animals: the user's round badges (tools/make_animals.py), filling their circle; the player colour rings it */
 .ani { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
 .pinfo { display: flex; flex-direction: column; line-height: 1; gap: calc(.5 * var(--u)); }
 .pname { font-weight: 800; font-size: calc(2.7 * var(--u)); color: var(--pd); letter-spacing: .01em; }
 .pscore { display: inline-flex; align-items: center; gap: calc(.9 * var(--u)); }
 .pscore .num { font-weight: 800; font-size: calc(4.4 * var(--u)); color: var(--ink); min-width: 1.2em; }
+/* wrong blocks this game (3 → the tower falls, game/game.ts): empty slots, then a red disc with a white ✕ */
+.strikes { display: inline-flex; align-items: center; gap: calc(.45 * var(--u)); margin-left: calc(.4 * var(--u)); }
+.strikes i { position: relative; width: calc(2.5 * var(--u)); aspect-ratio: 1; border-radius: 50%; background: rgba(120, 100, 170, .13);
+  box-shadow: inset 0 0 0 calc(.22 * var(--u)) rgba(120, 100, 170, .22); }
+.strikes i.on { background: #ff5d73; box-shadow: 0 calc(.25 * var(--u)) 0 #d63b55; }
+.strikes i.on::before, .strikes i.on::after { content: ""; position: absolute; left: 50%; top: 50%; width: 62%; height: 17%; border-radius: 99px;
+  background: #fff; transform: translate(-50%, -50%) rotate(45deg); }
+.strikes i.on::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.strikes i.pop { animation: strikeIn .6s cubic-bezier(.3,1.8,.5,1); }
+@keyframes strikeIn { 0% { transform: scale(.2) rotate(-90deg); } 45% { transform: scale(1.7) rotate(8deg); } }
+.page .strikes { margin: calc(.4 * var(--u)) 0 0; gap: calc(.8 * var(--u)); }
+.page .strikes i { width: calc(4 * var(--u)); }
 .mini-block { display: inline-block; width: calc(5 * var(--u)); height: calc(2.1 * var(--u)); border-radius: calc(.6 * var(--u));
   background: linear-gradient(180deg, color-mix(in oklab, var(--pc) 40%, #fff), color-mix(in oklab, var(--pc) 70%, #fff));
   box-shadow: 0 calc(.35 * var(--u)) 0 color-mix(in oklab, var(--pc) 75%, #333); }
@@ -104,28 +125,33 @@ svg { display: block; }
   box-shadow: 0 calc(.3 * var(--u)) 0 var(--sc, #ccc); animation: chipIn .5s cubic-bezier(.3,1.7,.5,1) both; }
 .chip.more { font-family: var(--font-ui); font-weight: 800; background: #fff; color: var(--pd); box-shadow: 0 calc(.3 * var(--u)) 0 var(--ps); }
 @keyframes chipIn { from { transform: scale(.2); opacity: 0; } }
+/* a collected block lands on the player's pile: its chip waits hidden (hud.chipSlot) until the block gets there, then drops in (hud.land) */
+.chip.landing { visibility: hidden; animation: none; }
+.chip.drop { animation: chipDrop .5s cubic-bezier(.3,1.5,.5,1) both; }
+@keyframes chipDrop { 0% { transform: translateY(-180%) scale(1.3); opacity: 0; } 40% { opacity: 1; } 70% { transform: translateY(8%) scale(1.08, .9); } }
 .pcard.active { transform: scale(1.06); box-shadow: 0 calc(.7 * var(--u)) 0 var(--pc), 0 0 0 calc(.55 * var(--u)) var(--pc), 0 calc(2 * var(--u)) calc(4 * var(--u)) color-mix(in oklab, var(--pc) 45%, transparent); }
 .pcard.active .avatar { animation: ava 1.6s ease-in-out infinite; }
-.pcard.idle { opacity: .72; filter: saturate(.75); }
+.pcard.idle { opacity: .72; filter: saturate(.75); box-shadow: 0 calc(1.2 * var(--u)) calc(2.2 * var(--u)) rgba(70, 50, 120, .14); }
 @keyframes ava { 0%,100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(calc(-.8 * var(--u))) rotate(-6deg); } 60% { transform: translateY(0) rotate(4deg); } }
 .pcard .pop { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
 @keyframes pop { 30% { transform: scale(1.5); } }
 
-/* the old "Player 1's Turn" banner is gone (the fox calls the turn in its speech bubble): Player 2's card keeps right */
-#p2 { margin-left: auto; }
+/* EN | 한 (core/lang.ts) in the corner bar on the game screen, next to sound and exit: the language in use is the purple chip */
+.lang-tog { flex: none; display: inline-flex; align-items: stretch; gap: calc(.25 * var(--u)); height: calc(7 * var(--u)); padding: calc(.65 * var(--u));
+  border: 0; border-radius: calc(2 * var(--u)); background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.74)); font: inherit; cursor: pointer;
+  box-shadow: 0 calc(.6 * var(--u)) 0 #d6cdf2, 0 calc(1.5 * var(--u)) calc(1.6 * var(--u)) rgba(46, 33, 110, .24);
+  backdrop-filter: blur(10px) saturate(1.4); -webkit-backdrop-filter: blur(10px) saturate(1.4); transition: transform .08s; }
+.lang-tog span { display: grid; place-items: center; min-width: calc(5.3 * var(--u)); padding: 0 calc(.9 * var(--u)); border-radius: calc(1.4 * var(--u));
+  font-weight: 800; font-size: calc(2.7 * var(--u)); line-height: 1; color: #9a8cc9; transition: background .2s, color .2s, box-shadow .2s; }
+.lang-tog .lt-ko { font-size: calc(3 * var(--u)); }
+html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { color: #fff; text-shadow: 0 calc(.2 * var(--u)) 0 rgba(0,0,0,.18);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--purple) 80%, #fff) 0%, var(--purple) 60%); box-shadow: 0 calc(.45 * var(--u)) 0 var(--purple-edge); }
+.lang-tog:active { transform: translateY(calc(.35 * var(--u))); }
+.lang-tog:focus-visible { outline: calc(.5 * var(--u)) solid var(--purple); outline-offset: calc(.3 * var(--u)); }
 
-/* settings */
-.settings { position: absolute; z-index: 25; top: calc(13.4 * var(--u)); right: calc(2.4 * var(--u)); display: flex; flex-direction: column; gap: calc(1.2 * var(--u));
-  padding: calc(1.6 * var(--u)); border-radius: calc(3 * var(--u)); background: rgba(255,255,255,.86); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 calc(1.6 * var(--u)) calc(4 * var(--u)) rgba(70,50,120,.25); animation: drop .25s ease-out; }
 @keyframes drop { from { opacity: 0; transform: translateY(calc(-1.5 * var(--u))); } }
-.tog { display: flex; align-items: center; gap: calc(1.2 * var(--u)); padding: calc(1 * var(--u)) calc(2 * var(--u)) calc(1 * var(--u)) calc(1.2 * var(--u)); border-radius: 999px;
-  font-weight: 800; font-size: calc(3 * var(--u)); background: var(--green); color: #fff; box-shadow: 0 calc(.5 * var(--u)) 0 var(--green-edge); }
-.tog svg { width: calc(4.4 * var(--u)); height: calc(4.4 * var(--u)); fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.tog[aria-pressed="false"] { background: #b9b4c9; box-shadow: 0 calc(.5 * var(--u)) 0 #8f8aa3; }
-.tog[aria-pressed="false"] svg { opacity: .7; }
 
-/* ── bottom dock (turn the tower) ─────────────────────── */
+/* ── bottom dock: one button back to the starting view (user: "원위치 버튼만 하나") — turning is a drag ── */
 .dock { position: absolute; z-index: 20; left: 50%; bottom: calc(3 * var(--u) + env(safe-area-inset-bottom)); translate: -50% 0;
   display: flex; gap: calc(30 * var(--u)); transition: opacity .3s, translate .3s; }
 .app.reading .dock, .app.busy .dock { opacity: 0; pointer-events: none; }
@@ -180,29 +206,28 @@ svg { display: block; }
 @keyframes nudge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 
 /* ── fox tutor ───────────────────────────────────────── */
-.fox { position: absolute; z-index: 12; pointer-events: none; right: calc(3 * var(--u)); bottom: calc(1 * var(--u)); height: calc(60 * var(--u));
+.fox { position: absolute; z-index: 12; pointer-events: none; right: calc(3 * var(--u)); bottom: calc(1 * var(--u)); height: calc(54 * var(--u));
   transform-origin: 50% 100%; transition: opacity .5s, translate .6s cubic-bezier(.3,1.3,.5,1), height .6s cubic-bezier(.3,1.3,.5,1), right .6s ease, bottom .6s ease; }
 .fox canvas { display: block; height: 100%; width: auto; }
 .app[data-screen="intro"] .fox { opacity: 0; translate: 0 calc(10 * var(--u)); }
-.fox.hop { animation: hop .6s cubic-bezier(.3,1.4,.5,1); }
-@keyframes hop { 40% { translate: 0 calc(-3.5 * var(--u)); } }
+/* a happy bounce in place — squash and stretch from the feet, no jump (user: "위아래 점프하는거 말고") */
+.fox.hop { animation: hop .55s ease-out; }
+@keyframes hop { 30% { scale: 1.04 .955; } 62% { scale: .985 1.025; } }
 /* the fox's speech bubble (ui/foxsay.ts): grows out of its head; placed in % of the fox box so it follows every fox size.
    Only on the game screen. The turn call carries that player's animal and colour. */
-.fox-say { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft); position: absolute; left: 0; right: 0; bottom: 92%; height: 0;
-  pointer-events: none; transform-origin: 46% 100%; }
+.fox-say { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft); position: absolute; left: 0; right: 0; bottom: 96.5%; height: 0;
+  pointer-events: none; transform-origin: 36% 100%; }
 .fox-say.p2 { --pc: var(--p2); --pd: var(--p2-deep); --ps: var(--p2-soft); }
 .fox-say[hidden], .app:not([data-screen="game"]) .fox-say { display: none; }
-.fs-bubble { position: absolute; right: 16%; bottom: calc(1.9 * var(--u)); width: max-content; min-width: calc(26 * var(--u)); max-width: calc(42 * var(--u));
+.fs-bubble { position: absolute; right: 26%; bottom: calc(1.9 * var(--u)); width: max-content; min-width: calc(26 * var(--u)); max-width: calc(42 * var(--u));
   display: flex; align-items: center; gap: calc(1.4 * var(--u)); padding: calc(1.5 * var(--u)) calc(2.6 * var(--u)); border-radius: calc(3.4 * var(--u));
-  background: #fff; color: #4a3c78; font-weight: 800; font-size: calc(3.1 * var(--u)); line-height: 1.28; text-wrap: balance;
-  box-shadow: 0 calc(.7 * var(--u)) 0 #e2dcf3, 0 calc(1.6 * var(--u)) calc(3.2 * var(--u)) rgba(90, 70, 160, .22); }
-.fs-tail { position: absolute; left: 43%; bottom: calc(.3 * var(--u)); width: calc(3.8 * var(--u)); height: calc(2.6 * var(--u)); background: #fff;
+  background: #fff; color: #4a3c78; font-weight: 800; font-size: calc(3.1 * var(--u)); line-height: 1.28; text-wrap: balance; }
+.fs-tail { position: absolute; left: 33%; bottom: calc(.3 * var(--u)); width: calc(3.8 * var(--u)); height: calc(2.6 * var(--u)); background: #fff;
   clip-path: polygon(0 0, 100% 0, 38% 100%); }
-.fs-ava { display: none; flex: none; width: calc(6.4 * var(--u)); aspect-ratio: 1; border-radius: 50%; place-items: center; background: var(--ps);
-  box-shadow: 0 0 0 calc(.4 * var(--u)) var(--pc); }
+.fs-ava { display: none; flex: none; width: calc(6.4 * var(--u)); aspect-ratio: 1; border-radius: 50%; place-items: center; }
 .fox-say.turn .fs-ava { display: grid; }
-.fox-say.turn .fs-bubble { color: var(--pd); box-shadow: 0 0 0 calc(.5 * var(--u)) var(--pc), 0 calc(.9 * var(--u)) 0 color-mix(in oklab, var(--pc) 40%, #e2dcf3),
-  0 calc(1.8 * var(--u)) calc(3.4 * var(--u)) rgba(90, 70, 160, .24); }
+.fox-say.turn .fs-bubble { background: var(--pc); color: #fff; text-shadow: 0 calc(.2 * var(--u)) 0 rgba(0, 0, 0, .18); }
+.fox-say.turn .fs-tail { background: var(--pc); }
 .fs-word { font-family: var(--font-word); font-weight: 700; color: #7a5af5; background: #f1ecff; border-radius: calc(.8 * var(--u)); padding: 0 calc(.6 * var(--u)); }
 .fs-snd { font-style: normal; color: #ff5f9e; }
 .fox-say.pop { animation: fsIn .4s cubic-bezier(.3,1.6,.5,1) both; }
@@ -238,7 +263,7 @@ svg { display: block; }
 .start-btn:focus-visible img { filter: drop-shadow(0 0 calc(1 * var(--u)) #fff) drop-shadow(0 0 calc(1 * var(--u)) #fff); }
 @keyframes startIn { from { opacity: 0; transform: translateY(calc(6 * var(--u))) scale(.6); } }
 @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.05; } }
-.app[data-screen="title"] .fox { height: calc(32 * var(--u)); right: 8vw; bottom: calc(5 * var(--u)); }
+.app[data-screen="title"] .fox { height: calc(29 * var(--u)); right: 8vw; bottom: calc(5 * var(--u)); }
 /* character pick (START → Player 1 picks, Player 2 picks → game) — ui/picker.ts */
 .app.picking .title-group { opacity: 0; scale: .9; pointer-events: none; }
 .app.picking .start-btn { pointer-events: none !important; }
@@ -254,16 +279,21 @@ svg { display: block; }
   background: rgba(122, 90, 245, .12); display: grid; place-items: center; }
 .pick-back svg { width: 60%; height: 60%; fill: none; stroke: var(--purple); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .pick-head { display: flex; justify-content: center; margin-bottom: calc(2.4 * var(--u)); }
-.pick-who { --pc: var(--p1); --pd: var(--p1-deep); padding: calc(1 * var(--u)) calc(3.6 * var(--u)); border-radius: 999px; background: var(--pc); color: #fff;
-  font-weight: 800; font-size: calc(4.4 * var(--u)); letter-spacing: .02em; box-shadow: 0 calc(.6 * var(--u)) 0 var(--pd); text-shadow: 0 calc(.2 * var(--u)) 0 rgba(0, 0, 0, .15); }
+.pick-who { --pc: var(--p1); --pd: var(--p1-deep); padding: calc(1.2 * var(--u)) calc(4.6 * var(--u)); border-radius: 999px; background: linear-gradient(180deg, color-mix(in oklab, var(--pc) 72%, #fff) 0%, var(--pc) 58%); color: #fff;
+  font-weight: 800; font-size: calc(5 * var(--u)); letter-spacing: .02em; box-shadow: 0 calc(.7 * var(--u)) 0 var(--pd), 0 calc(1.4 * var(--u)) calc(2 * var(--u)) color-mix(in oklab, var(--pc) 40%, transparent); text-shadow: 0 calc(.2 * var(--u)) 0 rgba(0, 0, 0, .15); }
 .pick-who.p2 { --pc: var(--p2); --pd: var(--p2-deep); }
 .pick-who.bump { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
-.pick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(2.2 * var(--u)); }
+.pick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(3 * var(--u)); }
 .pick-ani { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft); position: relative; display: flex; flex-direction: column; align-items: center; gap: calc(.8 * var(--u));
   padding: calc(1.6 * var(--u)) 0 calc(1.2 * var(--u)); border: 0; border-radius: calc(3.6 * var(--u)); background: transparent; cursor: pointer; transition: transform .15s; font: inherit; }
-.pick-ani .pa-art { position: relative; width: calc(19 * var(--u)); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: #f6eadf;
+.pick-ani .pa-art { position: relative; width: calc(22 * var(--u)); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: #f6eadf;
   box-shadow: 0 calc(.8 * var(--u)) calc(1.6 * var(--u)) rgba(70, 40, 120, .14); transition: box-shadow .2s, background .2s, transform .2s; }
-.pick-ani b { font-weight: 800; font-size: calc(3.8 * var(--u)); color: #4a3c78; }
+.pick-ani b { font-weight: 800; font-size: calc(4 * var(--u)); color: #4a3c78; }
+/* each animal's name in its own colour (the user's mockup) */
+.pick-ani[data-id="bunny"] b { color: #7553b8; }
+.pick-ani[data-id="kitty"] b { color: #ee7650; }
+.pick-ani[data-id="puppy"] b { color: #b3642a; }
+.pick-ani[data-id="panda"] b { color: #4b4372; }
 .pick-ani:hover .pa-art { transform: translateY(calc(-.6 * var(--u))) scale(1.04); }
 .pick-ani:active .pa-art { transform: scale(.94); }
 .pick-ani:focus-visible { outline: calc(.5 * var(--u)) solid var(--purple); outline-offset: calc(.2 * var(--u)); }
@@ -276,52 +306,61 @@ svg { display: block; }
 .pick-ani.chosen .pa-art { animation: chosen .55s cubic-bezier(.3,1.8,.5,1); }
 @keyframes chosen { 40% { transform: scale(1.16) rotate(-6deg); } }
 .pick-vs { display: flex; align-items: center; justify-content: center; gap: calc(3 * var(--u)); margin-top: calc(2.6 * var(--u)); }
-.pv { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft); display: flex; align-items: center; gap: calc(1.2 * var(--u)); padding: calc(.8 * var(--u)) calc(2.4 * var(--u)) calc(.8 * var(--u)) calc(.8 * var(--u));
-  border-radius: 999px; background: var(--ps); box-shadow: inset 0 0 0 calc(.4 * var(--u)) var(--pc); }
+.pv { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft); display: flex; align-items: center; gap: calc(1.2 * var(--u)); padding: calc(.9 * var(--u)) calc(3 * var(--u)) calc(.9 * var(--u)) calc(.9 * var(--u));
+  border-radius: 999px; background: var(--ps); box-shadow: inset 0 0 0 calc(.45 * var(--u)) var(--pc); }
 .pv.p2 { --pc: var(--p2); --pd: var(--p2-deep); --ps: var(--p2-soft); }
-.pv b { font-weight: 800; font-size: calc(3.2 * var(--u)); color: var(--pd); }
-.pv-ava { position: relative; width: calc(7.4 * var(--u)); aspect-ratio: 1; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.pv b { font-weight: 800; font-size: calc(3.5 * var(--u)); color: var(--pd); }
+.pv-ava { position: relative; width: calc(8 * var(--u)); aspect-ratio: 1; border-radius: 50%; background: #fff; display: grid; place-items: center; }
 .pv-ava .ani { display: none; }
 .pv-ava i { font-style: normal; font-weight: 800; font-size: calc(4 * var(--u)); color: color-mix(in oklab, var(--pc) 55%, #fff); }
 .pv.set .pv-ava .ani { display: block; }
 .pv.set .pv-ava i { display: none; }
 .pv.set .pv-ava { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
-.pv-x { font-weight: 800; font-size: calc(3.6 * var(--u)); color: #a596d6; }
+.pv-x { font-weight: 800; font-size: calc(4 * var(--u)); color: #a596d6; }
 @media (max-aspect-ratio: 1/1) {
   .pick-row { grid-template-columns: repeat(2, 1fr); }
   .pick-ani .pa-art { width: calc(22 * var(--u)); }
 }
-/* title corner: sound (speaker + vertical volume slider, top = loud) and exit — ui/corner.ts */
-.sysbar { position: absolute; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); right: calc(2.4 * var(--u)); display: flex; gap: calc(1.6 * var(--u)); align-items: flex-start; }
-.app[data-screen="title"] .sysbar { pointer-events: auto; }
+/* corner bar (ui/corner.ts), the same on the title and in the game (user: "나가기 버튼과 사운드제어 버튼은 인트로와 공통으로"):
+   sound (speaker + vertical volume slider, top = loud) and exit, in the game also EN | 한. Above the title layer and the
+   result book; the game's HUD keeps clear of it (--sys-w = its width, set by corner.ts) */
+.sysbar { position: absolute; z-index: 55; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); right: calc(2.4 * var(--u)); display: flex; gap: calc(1.6 * var(--u)); align-items: center; transition: opacity .4s; }
+.app[data-screen="intro"] .sysbar { opacity: 0; pointer-events: none; }
+.app:not([data-screen="game"]) .sysbar .lang-tog { display: none; }
+/* in a game the exit asks twice: the first tap arms it (it turns red and wiggles), a second one within 2.6 s goes to the title */
+#btnExit.armed { animation: wiggle .35s ease-in-out 2; }
+#btnExit.armed img { filter: hue-rotate(150deg) saturate(1.5); }
+#btnExit.armed::after { content: ''; position: absolute; inset: -9%; border-radius: 30%; border: calc(.5 * var(--u)) solid #ff5a6e; animation: ping 1.2s ease-out infinite; pointer-events: none; }
 .vol { position: relative; }
 /* the user's button art (jenga_btn_sound / jenga_btn_out, v3: yellow square + white speaker, blue square + white door;
    both ~square → 280 px webp, shown 1:1) */
-.img-btn { position: relative; display: block; width: calc(9.6 * var(--u)); aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer;
+.img-btn { position: relative; display: block; width: calc(7.8 * var(--u)); aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer;
   filter: drop-shadow(0 calc(.6 * var(--u)) calc(.8 * var(--u)) rgba(90, 40, 120, .28)); transition: transform .12s, filter .12s; -webkit-tap-highlight-color: transparent; }
 .img-btn img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .img-btn:hover { filter: drop-shadow(0 calc(.6 * var(--u)) calc(.8 * var(--u)) rgba(90, 40, 120, .28)) brightness(1.06); }
 .img-btn:active { transform: translateY(calc(.4 * var(--u))) scale(.94); }
 .img-btn:focus-visible { outline: calc(.5 * var(--u)) solid rgba(255, 255, 255, .95); outline-offset: calc(.3 * var(--u)); border-radius: 26%; }
-/* muted (volume at the bottom): a red no-sound badge on the speaker */
-.mute-badge { position: absolute; right: -6%; bottom: -6%; width: 42%; aspect-ratio: 1; border-radius: 50%; display: none;
-  background: #ff5a6e no-repeat center / 62% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6 6 18' stroke='%23fff' stroke-width='3.6' stroke-linecap='round'/%3E%3C/svg%3E");
-  box-shadow: 0 0 0 calc(.45 * var(--u)) #fff, 0 calc(.3 * var(--u)) calc(.6 * var(--u)) rgba(120, 30, 50, .35); }
-#btnSound.muted .mute-badge { display: block; }
-.vol-panel { position: absolute; top: calc(100% + 1.8 * var(--u)); left: 50%; translate: -50% 0; width: calc(7.4 * var(--u)); height: calc(28 * var(--u));
-  border-radius: 999px; background: linear-gradient(rgba(255, 255, 255, .82), rgba(255, 255, 255, .55)); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
-  box-shadow: 0 calc(.8 * var(--u)) calc(2 * var(--u)) rgba(70, 40, 120, .22), inset 0 1px 0 rgba(255, 255, 255, .9); touch-action: none; cursor: pointer; outline: none; }
+/* muted (volume at the bottom): a red slash across the speaker, not a separate X badge */
+#btnSound.muted::after { content: ''; position: absolute; left: 17%; right: 17%; top: 50%; height: calc(.72 * var(--u));
+  background: #ef4458; border-radius: 99px; box-shadow: 0 0 0 calc(.28 * var(--u)) #fffef6;
+  transform: translateY(-50%) rotate(40deg); pointer-events: none; }
+/* volume slider: a short translucent white panel under the speaker; only the filled bar is yellow.
+   Track ends inset by more than the knob's radius, so the knob sits inside the panel at full and at silent. */
+.vol-panel { position: absolute; top: calc(100% + 1.1 * var(--u)); left: 50%; translate: -50% 0; width: calc(7.8 * var(--u)); height: calc(15 * var(--u));
+  border-radius: calc(2.2 * var(--u)); background: rgba(255, 255, 255, .62);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 calc(.45 * var(--u)) calc(1 * var(--u)) rgba(70, 50, 120, .16); touch-action: none; cursor: pointer; outline: none; }
 .vol-panel[hidden] { display: none; }
-.vol-panel:focus-visible { box-shadow: 0 0 0 calc(.5 * var(--u)) rgba(255, 255, 255, .95), 0 calc(.8 * var(--u)) calc(2 * var(--u)) rgba(70, 40, 120, .22); }
-.vol-track { position: absolute; left: 50%; top: calc(3.2 * var(--u)); bottom: calc(3.2 * var(--u)); width: calc(1.5 * var(--u)); translate: -50% 0; border-radius: 999px; background: rgba(80, 60, 130, .16); }
-.vol-fill { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--v, 1) * 100%); border-radius: inherit; background: linear-gradient(#cda6ff, var(--purple)); }
-.vol-thumb { position: absolute; left: 50%; bottom: calc(var(--v, 1) * 100%); width: calc(4 * var(--u)); height: calc(4 * var(--u)); translate: -50% 50%; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff 0 16%, #dcc6ff 42%, var(--purple) 100%);
-  box-shadow: 0 calc(.4 * var(--u)) calc(.9 * var(--u)) rgba(60, 30, 120, .35), inset 0 calc(-.3 * var(--u)) 0 rgba(0, 0, 0, .12); }
+.vol-panel:focus-visible { box-shadow: 0 0 0 calc(.5 * var(--u)) rgba(255, 255, 255, .95), 0 calc(.45 * var(--u)) calc(1 * var(--u)) rgba(70, 50, 120, .16); }
+.vol-track { position: absolute; left: 50%; top: calc(2.9 * var(--u)); bottom: calc(2.9 * var(--u)); width: calc(1.5 * var(--u)); translate: -50% 0; border-radius: 999px;
+  background: rgba(90, 70, 140, .14); }
+.vol-fill { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--v, 1) * 100%); border-radius: inherit; background: #ffc93c; }
+.vol-thumb { position: absolute; left: 50%; bottom: calc(var(--v, 1) * 100%); width: calc(3.1 * var(--u)); height: calc(3.1 * var(--u)); translate: -50% 50%; border-radius: 50%;
+  background: #fff; box-shadow: 0 calc(.25 * var(--u)) calc(.55 * var(--u)) rgba(70, 50, 120, .28); }
 @media (max-aspect-ratio: 1/1) {
   .logo { width: min(72vw, 42vh); }
   .start-btn { --sb-w: min(34vw, 20vh); }
-  .app[data-screen="title"] .fox { height: calc(26 * var(--u)); right: 3vw; bottom: calc(2 * var(--u)); }
+  .app[data-screen="title"] .fox { height: calc(23 * var(--u)); right: 3vw; bottom: calc(2 * var(--u)); }
 }
 
 /* ── intro video ─────────────────────────────────────── */
@@ -357,14 +396,15 @@ svg { display: block; }
 
 .loading { position: absolute; z-index: 70; right: calc(3 * var(--u)); top: calc(3 * var(--u)); width: calc(5 * var(--u)); height: calc(5 * var(--u)); pointer-events: none; opacity: 0; transition: opacity .3s; }
 
-/* picture card over the presented block (hud.showCard sets left / top = its bottom centre, and the size) */
-.pic-card { position: absolute; z-index: 21; translate: -50% -100%; box-sizing: border-box; padding: 5%; border-radius: 14%; background: #fff; cursor: pointer;
-  box-shadow: 0 calc(.9 * var(--u)) 0 #efd6c4, 0 calc(2.2 * var(--u)) calc(4.4 * var(--u)) rgba(110, 60, 30, .28), inset 0 0 0 calc(.5 * var(--u)) #fff3ea;
-  opacity: 0; transform: scale(.3) rotate(-8deg); transform-origin: 50% 100%; transition: transform .5s cubic-bezier(.3,1.6,.5,1), opacity .25s; }
-.pic-card.on { opacity: 1; transform: rotate(-2deg); }
-.pic-card.off { opacity: 0; transform: scale(.6) translateY(-8%) rotate(4deg); transition: transform .35s ease-in, opacity .3s; }
-.pic-card img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-.pic-card:active { transform: scale(.96) rotate(-2deg); }
+/* picture card: the presented block turns into it (game.ts; hud.cardIn / cardOut turn it on its vertical axis) — the picture
+   over the word, the word on a strip in the block's own colours; left / top = its centre, hud.prepCard sets the size */
+.pic-card { position: absolute; z-index: 21; translate: -50% -50%; box-sizing: border-box; display: flex; flex-direction: column; gap: 3.5%; padding: 6% 6% 5.5%;
+  border-radius: calc(4 * var(--u)); background: #fff; cursor: pointer; backface-visibility: hidden;
+  box-shadow: 0 0 0 calc(.9 * var(--u)) var(--bc, #f6e3cf), 0 calc(1.5 * var(--u)) 0 calc(.9 * var(--u)) var(--sc, #e2c3a6), 0 calc(3.2 * var(--u)) calc(5 * var(--u)) rgba(110, 60, 30, .3); }
+.pic-card img { flex: 1 1 0; min-height: 0; width: 100%; object-fit: contain; pointer-events: none; }
+.pc-word { flex: none; display: block; text-align: center; font-family: var(--font-word); font-weight: 700; font-size: var(--wf, calc(7 * var(--u))); line-height: 1.2;
+  color: var(--tc, #5a3d2b); padding: .04em 0 .1em; border-radius: calc(2.2 * var(--u)); background: var(--bc, #f6e3cf); box-shadow: inset 0 calc(-.55 * var(--u)) 0 var(--sc, #e2c3a6); }
+.pic-card:active { scale: .97; }
 
 .letter-pop { position: absolute; z-index: 24; translate: calc(-100% - 3 * var(--u)) -50%; pointer-events: none; display: flex; align-items: baseline; gap: .02em;
   padding: calc(1.4 * var(--u)) calc(3.4 * var(--u)) calc(1.8 * var(--u)); border-radius: calc(3.4 * var(--u)); background: #fff;
@@ -381,7 +421,7 @@ svg { display: block; }
 /* portrait / narrow: stack the HUD a little */
 @media (max-aspect-ratio: 4/3) {
   :root { --u: min(.82vh, .75vw); }
-  .fox { height: calc(46 * var(--u)); }
+  .fox { height: calc(41 * var(--u)); }
   .chips { max-width: calc(26 * var(--u)); }
 }
 @media (prefers-reduced-motion: reduce) {
