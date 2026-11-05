@@ -14,6 +14,7 @@ import type { Fox } from '../ui/fox';
 import type { Got, Hud } from '../ui/hud';
 import cardList from '../data/cards.json';
 import { rng, shuffle } from './anim';
+import { Cheer } from './cheer';
 import { collapse } from './collapse';
 import type { Stage } from './stage';
 import { LAYERS, M_PER_GAME, TITLE_LAYERS, type Block, type Tower, type WordInfo } from './tower';
@@ -66,6 +67,7 @@ export class Game {
   private thumbResolve: (() => void) | null = null;
   private greatIdx = 0;
   private mic: Mic | null = null;
+  private cheer: Cheer;
 
   constructor(private stage: Stage, private tower: Tower, private hud: Hud, private fox: Fox, private confetti: Confetti,
     private words: WordInfo[], private seed?: number) {
@@ -80,6 +82,7 @@ export class Game {
     hud.onThumb = () => this.thumbResolve?.();
     hud.onWord = (w) => { void say([`w:${w}`]); };
     stage.tick(() => this.idleCheck());
+    this.cheer = new Cheer(stage);
   }
 
   private alive(s: number) { return s === this.session; }
@@ -95,6 +98,7 @@ export class Game {
     holdMusic(false);
     this.hud.showRead(false);
     this.hud.hideCard();
+    this.cheer.clear();
     this.stage.focus(false);
     this.hud.busy(false);
     this.hud.swipe(false);
@@ -223,14 +227,23 @@ export class Game {
     this.fox.speakAs('happy'); this.fox.gesture('happy', 1600);
     // "Perfect! Pull it out!" plays to its end: the read prompt waits for it instead of cutting it mid-word (a block
     // without a picture card, the Korean line: it was still talking when the prompt came)
-    const cheer = say(['t:perfect']);
-    await this.tower.pullOut(b);
+    const perfect = say(['t:perfect']);
+    // golden stars twinkle off its end while it slides out, as on the title (user: "인트로화면처럼 젠가 블럭 뺐을때는 별 파티클")
+    await this.tower.pullOut(b, (x, y) => this.confetti.sparkle(x, y, 2, true));
     if (!this.alive(s)) return;
     sfx('whoosh');
     const pic = cardUrl(b.word.w);
     this.stage.focus(true);
     await this.tower.present(b, 0.47);
     if (!this.alive(s)) return;
+    // it lands in the middle: Word Mashup's result-card pop — candy streaks, spinning stars, candy dots — then a golden
+    // glow and turning rays behind it and its card, and a candy rain (user: "맞는 블럭 젠가를 뺐을때는 wordmashup에
+    // 정답카드 나올때처럼 파티클 넣어줘")
+    {
+      const box = this.tower.presentedBox(b);
+      sfx('burst');
+      this.cheer.pop(box.cx, (box.y0 + box.y1) / 2, pic ? this.hud.cardSize().w : Math.min(box.x1 - box.x0, this.hud.cardSize().w));
+    }
     if (pic) {
       // the block spins round and turns into its picture card (user: "블럭이 돌면서 이미지 카드가 나오면")
       const box = this.tower.presentedBox(b);
@@ -242,7 +255,7 @@ export class Game {
       await this.hud.cardIn();
       if (!this.alive(s)) return;
     }
-    await cheer;
+    await perfect;
     if (!this.alive(s)) return;
     this.hud.showRead(true); this.hud.micState('idle');
     const read = await this.readLoop(b, s);
@@ -257,6 +270,7 @@ export class Game {
     const talk = say([read === 'read' ? GREAT[this.greatIdx++ % GREAT.length]! : 't:goodtry']);
     await wait(pic ? 450 : 700);
     if (!this.alive(s)) return;
+    this.cheer.stop();                     // the glow and the rays go with the card
     if (pic) {
       await this.hud.cardOut();
       if (!this.alive(s)) return;
@@ -443,10 +457,20 @@ export class Game {
 
   /** the result book after the tower is down (winner -1 = a tie) */
   private async result(s: number, winner: number) {
-    this.confetti.cannons(140);
+    this.confetti.cannons(170);
     this.log(`result ${this.players[0].got.length}:${this.players[1].got.length} winner ${winner < 0 ? 'tie' : `P${winner + 1}`}`);
     this.hud.showResult(this.players, winner);
     this.hud.screen('result');
+    if (winner >= 0) {
+      const ava = document.querySelector('.page.winner .ava');
+      window.setTimeout(() => {
+        if (!this.alive(s) || !ava) return;
+        const r = ava.getBoundingClientRect();
+        const x = r.x + r.width / 2, y = r.y + r.height * 0.15;
+        this.confetti.burst(x, y, 80);
+        this.confetti.sparkle(x, y - 8, 18, true);
+      }, 720);
+    }
     this.fox.speakAs('cheer'); this.fox.gesture('cheer', 3200); this.fox.hop();
     if (!this.alive(s)) return;
     await say([winner === 0 ? 't:win1' : winner === 1 ? 't:win2' : 't:tie']);

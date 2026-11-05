@@ -48,6 +48,7 @@ svg { display: block; }
 .stage { position: absolute; inset: 0; z-index: 1; }
 .stage canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
 .fx { position: absolute; inset: 0; z-index: 30; width: 100%; height: 100%; pointer-events: none; }
+.app[data-screen="result"] .fx { z-index: 53; }
 
 /* ── chunky 3D buttons (Word Mashup) ─────────────────── */
 .btn3d { --c: var(--purple); --e: var(--purple-edge); --edge: calc(.75 * var(--u));
@@ -74,7 +75,7 @@ svg { display: block; }
 .hud > * { pointer-events: auto; }
 /* the game's logo top-left (user: "게임화면 상단 왼쪽에는 로고가 들어갔으면 좋겠어"): the title's art (1200 × 846, no padding) */
 .hud::before { content: ''; position: absolute; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); left: calc(2.4 * var(--u));
-  width: calc(16.3 * var(--u)); height: calc(11.5 * var(--u));
+  width: calc(14.67 * var(--u)); height: calc(10.35 * var(--u));   /* 90 % of 16.3 × 11.5 (user: "게임화면에 있는 로고는 지금보다 90% 크기로") */
   background: url('./assets/logo.webp') center / contain no-repeat; filter: drop-shadow(0 calc(.6 * var(--u)) calc(.9 * var(--u)) rgba(120, 70, 40, .25)); pointer-events: none; }
 .app:not([data-screen="game"]) .hud, .app:not([data-screen="game"]) .dock { opacity: 0; translate: 0 calc(-3 * var(--u)); pointer-events: none; }
 .app:not([data-screen="game"]) .hud > * { pointer-events: none; }
@@ -95,7 +96,6 @@ svg { display: block; }
 .pcard.p2 .pinfo { grid-column: 1; grid-row: 1; align-items: flex-end; text-align: right; }
 .pcard.p2 .pscore { flex-direction: row-reverse; }
 .pcard.p2 .strikes { margin-left: 0; margin-right: calc(.4 * var(--u)); }
-.pcard.p2 .chips { justify-content: flex-end; }
 .pcard .avatar { width: calc(7.6 * var(--u)); height: calc(7.6 * var(--u)); border-radius: 50%; background: none; display: grid; place-items: center; }
 /* the players' animals: the user's round badges (tools/make_animals.py), filling their circle; the player colour rings it */
 .ani { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
@@ -118,12 +118,21 @@ svg { display: block; }
 .mini-block { display: inline-block; width: calc(5 * var(--u)); height: calc(2.1 * var(--u)); border-radius: calc(.6 * var(--u));
   background: linear-gradient(180deg, color-mix(in oklab, var(--pc) 40%, #fff), color-mix(in oklab, var(--pc) 70%, #fff));
   box-shadow: 0 calc(.35 * var(--u)) 0 color-mix(in oklab, var(--pc) 75%, #333); }
-.chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: calc(.6 * var(--u)); max-width: calc(34 * var(--u)); margin-top: calc(.6 * var(--u)); }
+/* collected blocks stand beside the player card: Player 1 to the right, Player 2 to the left */
+.pcard .chips { position: absolute; bottom: 0; width: calc(9.6 * var(--u));
+  display: flex; flex-direction: column-reverse; align-items: stretch; gap: calc(.22 * var(--u)); margin: 0; pointer-events: none; }
+#p1 .chips { left: calc(100% + .7 * var(--u)); }
+#p2 .chips { right: calc(100% + .7 * var(--u)); }
 .chips:empty { display: none; }
 .chip { font-family: var(--font-word); font-weight: 700; font-size: calc(2.2 * var(--u)); line-height: 1; padding: calc(.6 * var(--u)) calc(1.1 * var(--u)) calc(.5 * var(--u));
   border-radius: calc(.8 * var(--u)); color: var(--tc, #333); background: var(--bc, #eee);
   box-shadow: 0 calc(.3 * var(--u)) 0 var(--sc, #ccc); animation: chipIn .5s cubic-bezier(.3,1.7,.5,1) both; }
+.pcard .chip { display: grid; place-items: center; height: calc(3.2 * var(--u)); padding: 0 calc(.3 * var(--u)) calc(.12 * var(--u));
+  border-radius: calc(.55 * var(--u)); font-size: calc(1.55 * var(--u)); letter-spacing: -.02em; white-space: nowrap; overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--bc, #eee) 72%, #fff), var(--bc, #eee));
+  box-shadow: inset 0 calc(.22 * var(--u)) 0 rgba(255,255,255,.6), 0 calc(.3 * var(--u)) 0 var(--sc, #ccc); }
 .chip.more { font-family: var(--font-ui); font-weight: 800; background: #fff; color: var(--pd); box-shadow: 0 calc(.3 * var(--u)) 0 var(--ps); }
+.pcard .chip.more { font-size: calc(1.5 * var(--u)); background: rgba(255,255,255,.9); }
 @keyframes chipIn { from { transform: scale(.2); opacity: 0; } }
 /* a collected block lands on the player's pile: its chip waits hidden (hud.chipSlot) until the block gets there, then drops in (hud.land) */
 .chip.landing { visibility: hidden; animation: none; }
@@ -136,24 +145,31 @@ svg { display: block; }
 .pcard .pop { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
 @keyframes pop { 30% { transform: scale(1.5); } }
 
-/* EN | 한 (core/lang.ts) in the corner bar on the game screen, next to sound and exit: the language in use is the purple chip */
-.lang-tog { flex: none; display: inline-flex; align-items: stretch; gap: calc(.25 * var(--u)); height: calc(7 * var(--u)); padding: calc(.65 * var(--u));
-  border: 0; border-radius: calc(2 * var(--u)); background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.74)); font: inherit; cursor: pointer;
-  box-shadow: 0 calc(.6 * var(--u)) 0 #d6cdf2, 0 calc(1.5 * var(--u)) calc(1.6 * var(--u)) rgba(46, 33, 110, .24);
-  backdrop-filter: blur(10px) saturate(1.4); -webkit-backdrop-filter: blur(10px) saturate(1.4); transition: transform .08s; }
-.lang-tog span { display: grid; place-items: center; min-width: calc(5.3 * var(--u)); padding: 0 calc(.9 * var(--u)); border-radius: calc(1.4 * var(--u));
-  font-weight: 800; font-size: calc(2.7 * var(--u)); line-height: 1; color: #9a8cc9; transition: background .2s, color .2s, box-shadow .2s; }
-.lang-tog .lt-ko { font-size: calc(3 * var(--u)); }
-html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { color: #fff; text-shadow: 0 calc(.2 * var(--u)) 0 rgba(0,0,0,.18);
-  background: linear-gradient(180deg, color-mix(in oklab, var(--purple) 80%, #fff) 0%, var(--purple) 60%); box-shadow: 0 calc(.45 * var(--u)) 0 var(--purple-edge); }
-.lang-tog:active { transform: translateY(calc(.35 * var(--u))); }
-.lang-tog:focus-visible { outline: calc(.5 * var(--u)) solid var(--purple); outline-offset: calc(.3 * var(--u)); }
+/* language (core/lang.ts): Phonics Island's two round flags, sized to the corner buttons. The flag in use fills its circle. */
+.lang-tog { position: relative; flex: none; display: flex; align-items: center; gap: calc(.4 * var(--u)); height: calc(7.8 * var(--u)); padding: 0 calc(.4 * var(--u));
+  border: 0; border-radius: 999px; background: rgba(255, 255, 255, .55); cursor: pointer; overflow: hidden;
+  box-shadow: 0 calc(.45 * var(--u)) calc(.8 * var(--u)) rgba(70, 50, 120, .16);
+  backdrop-filter: blur(10px) saturate(1.3); -webkit-backdrop-filter: blur(10px) saturate(1.3); transition: transform .08s; }
+.lang-tog .knob { position: absolute; top: calc(.45 * var(--u)); left: calc(.4 * var(--u)); width: calc(6.9 * var(--u)); height: calc(6.9 * var(--u));
+  border-radius: 50%; background: #fff; box-shadow: 0 calc(.2 * var(--u)) calc(.45 * var(--u)) rgba(70, 50, 120, .18);
+  transition: transform .32s cubic-bezier(.3, 1.5, .5, 1); }
+.lang-tog[data-l="ko"] .knob { transform: translateX(calc(7.3 * var(--u))); }
+.lang-tog .flag { position: relative; z-index: 1; display: grid; place-items: center; width: calc(6.9 * var(--u)); height: calc(6.9 * var(--u)); }
+.lang-tog .flag svg { width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 0 calc(.16 * var(--u)) rgba(0, 0, 0, .1);
+  transition: transform .25s ease, opacity .25s ease, filter .25s ease; }
+.lang-tog .flag:not(.on) svg { transform: scale(.62); opacity: .55; filter: grayscale(.4); }
+.lang-tog:active { transform: scale(.96); }
+.lang-tog:focus-visible { outline: calc(.45 * var(--u)) solid #fff; outline-offset: calc(.25 * var(--u)); }
 
 @keyframes drop { from { opacity: 0; transform: translateY(calc(-1.5 * var(--u))); } }
 
 /* ── bottom dock: one button back to the starting view (user: "원위치 버튼만 하나") — turning is a drag ── */
 .dock { position: absolute; z-index: 20; left: 50%; bottom: calc(3 * var(--u) + env(safe-area-inset-bottom)); translate: -50% 0;
   display: flex; gap: calc(30 * var(--u)); transition: opacity .3s, translate .3s; }
+.art-btn { width: calc(11 * var(--u)); height: calc(11 * var(--u)); padding: 0; border: 0; background: none; cursor: pointer;
+  filter: drop-shadow(0 calc(.45 * var(--u)) calc(.7 * var(--u)) rgba(90, 40, 120, .22)); transition: transform .12s; }
+.art-btn img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.art-btn:active { transform: translateY(calc(.25 * var(--u))) scale(.96); }
 .app.reading .dock, .app.busy .dock { opacity: 0; pointer-events: none; }
 /* "you can turn the tower": Halli Galli's hand (the user's art) drags along the front of a ring of arrows that turns
    around the tower's foot on the table (game/spinhint.ts sets --hx/--hy = the ring's front point) */
@@ -170,28 +186,29 @@ html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { c
   86%, 100% { transform: translate(calc(9 * var(--u)), calc(-3 * var(--u))); opacity: 0; } }
 
 /* ── read aloud: mic with sound waves ─────────────────── */
-.read { position: absolute; z-index: 22; left: 50%; bottom: calc(4 * var(--u) + env(safe-area-inset-bottom)); translate: -50% 0; display: flex; align-items: center; gap: calc(2.4 * var(--u));
+.read { position: absolute; z-index: 22; left: 50%; bottom: calc(4 * var(--u) + env(safe-area-inset-bottom)); translate: calc(-50% - 6.7 * var(--u)) 0; display: flex; align-items: center; gap: calc(2.4 * var(--u));
   animation: rise .4s cubic-bezier(.3,1.5,.5,1); }
 @keyframes rise { from { opacity: 0; transform: translateY(calc(4 * var(--u))) scale(.8); } }
 .mic-wrap { position: relative; display: flex; align-items: center; gap: calc(.9 * var(--u)); --lv: 0; }
-.mic { position: relative; width: calc(15 * var(--u)); height: calc(15 * var(--u)); border-radius: 50%; display: grid; place-items: center;
-  background: radial-gradient(circle at 50% 35%, #fff 0%, #f1f4ff 70%, #dfe6fb 100%);
-  box-shadow: 0 calc(.9 * var(--u)) 0 #c7cfee, 0 calc(2 * var(--u)) calc(4 * var(--u)) rgba(60, 70, 150, .3); transition: transform .15s, background .3s; }
-.mic svg { width: 46%; height: 46%; fill: none; stroke: #3d7be8; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; grid-area: 1 / 1; transition: opacity .2s, transform .3s; }
-.mic svg rect { fill: #cfe0ff; }
-.mic .ok { opacity: 0; transform: scale(.4); stroke: #fff; stroke-width: 3.2; }
-.mic .ring { position: absolute; inset: calc(-.9 * var(--u)); border-radius: 50%; border: calc(.7 * var(--u)) solid transparent; border-top-color: #3d7be8; opacity: 0; }
+.read-speaker { flex: none; width: calc(11 * var(--u)); height: calc(11 * var(--u)); padding: 0; border: 0; background: none;
+  filter: drop-shadow(0 calc(.45 * var(--u)) calc(.7 * var(--u)) rgba(90, 40, 120, .22)); transition: transform .12s; }
+.read-speaker:active, .mic:active { transform: translateY(calc(.25 * var(--u))) scale(.96); }
+.read-speaker img, .mic img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.mic { position: relative; width: calc(16 * var(--u)); height: calc(16 * var(--u)); padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  background: none; filter: drop-shadow(0 calc(.5 * var(--u)) calc(.8 * var(--u)) rgba(90, 40, 120, .24)); transition: transform .15s; }
+.mic .ok { width: 46%; height: 46%; fill: none; stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; grid-area: 1 / 1;
+  opacity: 0; transform: scale(.4); filter: drop-shadow(0 0 calc(.35 * var(--u)) #2a8f4a); transition: opacity .2s, transform .3s; }
+.mic .ring { position: absolute; inset: calc(-.9 * var(--u)); border-radius: 50%; border: calc(.7 * var(--u)) solid transparent; border-top-color: #7a5af5; opacity: 0; }
 .read.thinking .mic .ring { opacity: 1; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.read.listening .mic { transform: scale(calc(1 + var(--lv) * .08)); background: radial-gradient(circle at 50% 35%, #fff 0%, #e9f5ff 60%, #cfe7ff 100%); }
-.read.listening .mic::after { content: ''; position: absolute; inset: calc(-1.2 * var(--u)); border-radius: 50%; border: calc(.6 * var(--u)) solid rgba(61,123,232,.45); animation: ping 1.4s ease-out infinite; }
+.read.listening .mic { transform: scale(calc(1 + var(--lv) * .08)); }
+.read.listening .mic::after { content: ''; position: absolute; inset: calc(-1.2 * var(--u)); border-radius: 50%; border: calc(.6 * var(--u)) solid rgba(122, 90, 245, .45); animation: ping 1.4s ease-out infinite; }
 @keyframes ping { from { transform: scale(.9); opacity: 1; } to { transform: scale(1.35); opacity: 0; } }
-.read.done .mic { background: radial-gradient(circle at 50% 35%, #7ee39e, #3fc46c 70%); box-shadow: 0 calc(.9 * var(--u)) 0 var(--green-edge), 0 calc(2 * var(--u)) calc(4 * var(--u)) rgba(30, 120, 60, .35); }
-.read.done .mic svg:not(.ok) { opacity: 0; transform: scale(.4); }
 .read.done .mic .ok { opacity: 1; transform: scale(1); }
 .read.miss .mic { animation: shake .45s; }
 @keyframes shake { 20%,60% { translate: calc(-1 * var(--u)) 0; } 40%,80% { translate: calc(1 * var(--u)) 0; } }
-.wave { display: block; width: calc(2.4 * var(--u)); border: calc(.75 * var(--u)) solid #4c8ff0; border-radius: 50%; opacity: .2; filter: drop-shadow(0 0 calc(.5 * var(--u)) rgba(255,255,255,.9)); transition: opacity .12s; }
+.wave { display: block; width: calc(2.4 * var(--u)); border: calc(.75 * var(--u)) solid #c084fc; border-radius: 50%; opacity: .2; filter: drop-shadow(0 0 calc(.5 * var(--u)) rgba(255,255,255,.9)); transition: opacity .12s, border-color .2s; }
+.read.saying:not(.listening) .wave { border-color: #f6b423; }
 .wave.l { border-right: 0; border-top-color: transparent; border-bottom-color: transparent; }
 .wave.r { border-left: 0; border-top-color: transparent; border-bottom-color: transparent; }
 .wave.w1 { height: calc(5 * var(--u)); } .wave.w2 { height: calc(7.4 * var(--u)); } .wave.w3 { height: calc(9.8 * var(--u)); }
@@ -208,7 +225,11 @@ html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { c
 /* ── fox tutor ───────────────────────────────────────── */
 .fox { position: absolute; z-index: 12; pointer-events: none; right: calc(3 * var(--u)); bottom: calc(1 * var(--u)); height: calc(54 * var(--u));
   transform-origin: 50% 100%; transition: opacity .5s, translate .6s cubic-bezier(.3,1.3,.5,1), height .6s cubic-bezier(.3,1.3,.5,1), right .6s ease, bottom .6s ease; }
-.fox canvas { display: block; height: 100%; width: auto; }
+/* the box is the fox's frame (fox.json frameW × frameH); the canvas overflows it by fox.ts PAD so the tail, ears and
+   sway never get cut at the frame's edge (set from fox.json at load) */
+.fox { aspect-ratio: var(--fox-ar, 1162 / 1177); }
+.fox canvas { position: absolute; display: block; left: calc(-100% * var(--fox-pl, 0)); top: calc(-100% * var(--fox-pt, 0));
+  width: calc(100% * var(--fox-cw, 1)); height: calc(100% * var(--fox-ch, 1)); }
 .app[data-screen="intro"] .fox { opacity: 0; translate: 0 calc(10 * var(--u)); }
 /* a happy bounce in place — squash and stretch from the feet, no jump (user: "위아래 점프하는거 말고") */
 .fox.hop { animation: hop .55s ease-out; }
@@ -263,24 +284,20 @@ html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { c
 .start-btn:focus-visible img { filter: drop-shadow(0 0 calc(1 * var(--u)) #fff) drop-shadow(0 0 calc(1 * var(--u)) #fff); }
 @keyframes startIn { from { opacity: 0; transform: translateY(calc(6 * var(--u))) scale(.6); } }
 @keyframes breathe { 0%,100% { scale: 1; } 50% { scale: 1.05; } }
-.app[data-screen="title"] .fox { height: calc(29 * var(--u)); right: 8vw; bottom: calc(5 * var(--u)); }
+.app[data-screen="title"] .fox { height: calc(54 * var(--u)); right: calc(3 * var(--u)); bottom: calc(1 * var(--u)); }
 /* character pick (START → Player 1 picks, Player 2 picks → game) — ui/picker.ts */
 .app.picking .title-group { opacity: 0; scale: .9; pointer-events: none; }
 .app.picking .start-btn { pointer-events: none !important; }
 .title-group { transition: opacity .35s, scale .35s; }
 .pick { position: absolute; left: var(--table-x, 50%); top: var(--tower-mid, 50%); translate: -50% -50%; width: min(92vw, calc(118 * var(--u))); pointer-events: auto; }
 .pick[hidden] { display: none; }
-.pick-card { position: relative; padding: calc(3.4 * var(--u)) calc(3.6 * var(--u)) calc(3 * var(--u)); border-radius: calc(5 * var(--u));
+.pick-card { position: relative; padding: calc(5.4 * var(--u)) calc(3.6 * var(--u)) calc(4.8 * var(--u)); border-radius: calc(5 * var(--u));
   background: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .74)); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
   box-shadow: 0 calc(1 * var(--u)) 0 rgba(122, 90, 245, .22), 0 calc(2.4 * var(--u)) calc(5 * var(--u)) rgba(70, 40, 120, .22), inset 0 1px 0 #fff;
   animation: pickIn .45s cubic-bezier(.3,1.5,.5,1) both; }
 @keyframes pickIn { from { opacity: 0; transform: translateY(calc(4 * var(--u))) scale(.9); } }
-.pick-back { position: absolute; left: calc(2 * var(--u)); top: calc(2 * var(--u)); width: calc(6.6 * var(--u)); height: calc(6.6 * var(--u)); border-radius: 50%; border: 0; cursor: pointer;
-  background: rgba(122, 90, 245, .12); display: grid; place-items: center; }
-.pick-back svg { width: 60%; height: 60%; fill: none; stroke: var(--purple); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .pick-head { display: flex; justify-content: center; margin-bottom: calc(2.4 * var(--u)); }
-.pick-who { --pc: var(--p1); --pd: var(--p1-deep); padding: calc(1.2 * var(--u)) calc(4.6 * var(--u)); border-radius: 999px; background: linear-gradient(180deg, color-mix(in oklab, var(--pc) 72%, #fff) 0%, var(--pc) 58%); color: #fff;
-  font-weight: 800; font-size: calc(5 * var(--u)); letter-spacing: .02em; box-shadow: 0 calc(.7 * var(--u)) 0 var(--pd), 0 calc(1.4 * var(--u)) calc(2 * var(--u)) color-mix(in oklab, var(--pc) 40%, transparent); text-shadow: 0 calc(.2 * var(--u)) 0 rgba(0, 0, 0, .15); }
+.pick-who { --pc: var(--p1); --pd: var(--p1-deep); color: var(--pd); font-weight: 800; font-size: calc(5 * var(--u)); letter-spacing: .02em; line-height: 1.1; }
 .pick-who.p2 { --pc: var(--p2); --pd: var(--p2-deep); }
 .pick-who.bump { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
 .pick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(3 * var(--u)); }
@@ -305,20 +322,16 @@ html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { c
 .pick-ani.p1, .pick-ani.p2 { cursor: default; }
 .pick-ani.chosen .pa-art { animation: chosen .55s cubic-bezier(.3,1.8,.5,1); }
 @keyframes chosen { 40% { transform: scale(1.16) rotate(-6deg); } }
-.pick-vs { display: flex; align-items: center; justify-content: center; gap: calc(3 * var(--u)); margin-top: calc(2.6 * var(--u)); }
-.pv { --pc: var(--p1); --pd: var(--p1-deep); --ps: var(--p1-soft); display: flex; align-items: center; gap: calc(1.2 * var(--u)); padding: calc(.9 * var(--u)) calc(3 * var(--u)) calc(.9 * var(--u)) calc(.9 * var(--u));
-  border-radius: 999px; background: var(--ps); box-shadow: inset 0 0 0 calc(.45 * var(--u)) var(--pc); }
-.pv.p2 { --pc: var(--p2); --pd: var(--p2-deep); --ps: var(--p2-soft); }
-.pv b { font-weight: 800; font-size: calc(3.5 * var(--u)); color: var(--pd); }
-.pv-ava { position: relative; width: calc(8 * var(--u)); aspect-ratio: 1; border-radius: 50%; background: #fff; display: grid; place-items: center; }
-.pv-ava .ani { display: none; }
-.pv-ava i { font-style: normal; font-weight: 800; font-size: calc(4 * var(--u)); color: color-mix(in oklab, var(--pc) 55%, #fff); }
-.pv.set .pv-ava .ani { display: block; }
-.pv.set .pv-ava i { display: none; }
-.pv.set .pv-ava { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
-.pv-x { font-weight: 800; font-size: calc(4 * var(--u)); color: #a596d6; }
+/* Reset + Start: room kept from the start (the panel doesn't jump), shown once both have picked */
+.pick-go { display: flex; justify-content: center; gap: calc(4.2 * var(--u)); margin-top: calc(3.4 * var(--u)); visibility: hidden; opacity: 0; transition: opacity .2s; }
+.pick.ready .pick-go { visibility: visible; opacity: 1; }
+.pick.ready .pick-go .box-btn { animation: pop .5s cubic-bezier(.3,1.8,.5,1) backwards; }
+.pick.ready .pick-go .box-btn + .box-btn { animation-delay: .08s; }
+.pick-go .box-btn { min-width: calc(26 * var(--u)); justify-content: center; }
+.pick.ready .pick-who { --pc: var(--purple); --pd: var(--purple-edge); }
 @media (max-aspect-ratio: 1/1) {
   .pick-row { grid-template-columns: repeat(2, 1fr); }
+  .pick-go { margin-top: calc(2.6 * var(--u)); }
   .pick-ani .pa-art { width: calc(22 * var(--u)); }
 }
 /* corner bar (ui/corner.ts), the same on the title and in the game (user: "나가기 버튼과 사운드제어 버튼은 인트로와 공통으로"):
@@ -360,7 +373,7 @@ html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { c
 @media (max-aspect-ratio: 1/1) {
   .logo { width: min(72vw, 42vh); }
   .start-btn { --sb-w: min(34vw, 20vh); }
-  .app[data-screen="title"] .fox { height: calc(23 * var(--u)); right: 3vw; bottom: calc(2 * var(--u)); }
+  .app[data-screen="title"] .fox { height: calc(41 * var(--u)); right: calc(2 * var(--u)); bottom: calc(1 * var(--u)); }
 }
 
 /* ── intro video ─────────────────────────────────────── */
@@ -384,26 +397,47 @@ html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { c
 .book .page.right { --pc: var(--p2); --pd: var(--p2-deep); --ps: var(--p2-soft); border-radius: 0 calc(3.6 * var(--u)) calc(3.6 * var(--u)) 0; box-shadow: inset calc(2.4 * var(--u)) 0 calc(2.4 * var(--u)) calc(-1.2 * var(--u)) rgba(150, 110, 60, .25); }
 .book .spine { width: calc(1.2 * var(--u)); background: linear-gradient(90deg, #e9d9c2, #fff2df, #e9d9c2); }
 .page .ava { width: calc(13 * var(--u)); height: calc(13 * var(--u)); border-radius: 50%; background: var(--ps); box-shadow: 0 0 0 calc(.6 * var(--u)) var(--pc); display: grid; place-items: center; position: relative; }
-.page .crown { position: absolute; top: calc(-6 * var(--u)); left: 50%; width: calc(10 * var(--u)); translate: -50% 0; animation: crown 1.2s cubic-bezier(.3,1.6,.5,1) .5s both; }
-@keyframes crown { from { transform: translateY(calc(-8 * var(--u))) scale(.3) rotate(-30deg); opacity: 0; } }
+.page .crown { position: absolute; top: calc(-7.4 * var(--u)); left: 50%; width: calc(12 * var(--u)); height: auto; translate: -50% 0; pointer-events: none;
+  filter: drop-shadow(0 calc(.55 * var(--u)) calc(.7 * var(--u)) rgba(176, 110, 20, .45)); animation: crown 1.15s cubic-bezier(.3,1.6,.5,1) .35s both; }
+@keyframes crown { 0% { transform: translateY(calc(-7 * var(--u))) scale(.25) rotate(-18deg); opacity: 0; } 62% { transform: translateY(calc(.35 * var(--u))) scale(1.08) rotate(6deg); opacity: 1; } }
 .page h2 { margin: 0; font-weight: 800; font-size: calc(4.4 * var(--u)); color: var(--pd); line-height: 1; }
 .page .big { font-weight: 800; font-size: calc(9 * var(--u)); line-height: .9; color: var(--ink); display: flex; align-items: center; gap: calc(1.4 * var(--u)); }
-.page .big .mini-block { width: calc(8 * var(--u)); height: calc(3.4 * var(--u)); }
+.page .big .mini-block { width: calc(8 * var(--u)); height: calc(3.4 * var(--u)); border-radius: 999px; }
 .page .words { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(1 * var(--u)); margin-top: calc(1 * var(--u)); }
+/* the words as pictures of the game's blocks (ui/blockshot.ts): three to a row, four for 13-14 words */
+.page .words.blocks { gap: calc(.6 * var(--u)) calc(.9 * var(--u)); }
+.page .words .jb { width: calc(15.3 * var(--u)); height: auto; cursor: pointer; user-select: none; -webkit-user-drag: none;
+  filter: drop-shadow(0 calc(.5 * var(--u)) calc(.5 * var(--u)) rgba(120, 80, 60, .22)); animation: chipIn .5s cubic-bezier(.3,1.7,.5,1) both; }
+.page .words.many .jb { width: calc(11.4 * var(--u)); }
+.page .words.many { gap: calc(.4 * var(--u)) calc(.8 * var(--u)); }
 .page .words .chip { font-size: calc(3.2 * var(--u)); padding: calc(.9 * var(--u)) calc(1.6 * var(--u)) calc(.8 * var(--u)); cursor: pointer; }
 .page.winner { background: linear-gradient(180deg, #fffbe9, #fff3cf); }
-.result-actions { display: flex; gap: calc(3 * var(--u)); animation: rise .5s .5s both; }
+.result-actions { display: flex; align-items: center; justify-content: center; gap: calc(4.2 * var(--u)); animation: rise .5s .5s both; }
+.box-btn { --face: #46d27a; --face-deep: #1f9a52; display: inline-flex; align-items: center; gap: calc(1.2 * var(--u));
+  height: calc(7.6 * var(--u)); padding: 0 calc(3.2 * var(--u)) 0 calc(2.4 * var(--u)); border-radius: 999px;
+  color: #fff; font-weight: 800; font-size: calc(3.8 * var(--u)); line-height: 1; letter-spacing: .01em; white-space: nowrap;
+  background: linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 46%), linear-gradient(180deg, var(--face) 0%, var(--face-deep) 100%);
+  box-shadow: 0 0 0 calc(.48 * var(--u)) #ffe7a4, 0 0 0 calc(1.12 * var(--u)) #ff9aa8, 0 calc(.7 * var(--u)) calc(1.4 * var(--u)) rgba(80, 40, 110, .28), inset 0 calc(.32 * var(--u)) 0 rgba(255,255,255,.4);
+  text-shadow: 0 calc(.16 * var(--u)) 0 rgba(0,0,0,.16); transition: transform .12s; }
+.box-btn.home { --face: #8d5cf6; --face-deep: #6234d0; }
+.box-btn.replay { --face: #5eb6f2; --face-deep: #2f86c8; }
+.box-btn svg { width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u)); fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 calc(.12 * var(--u)) 0 rgba(0,0,0,.16)); }
+.box-btn svg.solid { fill: #fff; stroke: #fff; stroke-width: 1.7; }
+.box-btn:active { transform: translateY(calc(.28 * var(--u))) scale(.97); }
 
 .loading { position: absolute; z-index: 70; right: calc(3 * var(--u)); top: calc(3 * var(--u)); width: calc(5 * var(--u)); height: calc(5 * var(--u)); pointer-events: none; opacity: 0; transition: opacity .3s; }
 
 /* picture card: the presented block turns into it (game.ts; hud.cardIn / cardOut turn it on its vertical axis) — the picture
    over the word, the word on a strip in the block's own colours; left / top = its centre, hud.prepCard sets the size */
-.pic-card { position: absolute; z-index: 21; translate: -50% -50%; box-sizing: border-box; display: flex; flex-direction: column; gap: 3.5%; padding: 6% 6% 5.5%;
+.pic-card { position: absolute; z-index: 21; translate: -50% -50%; box-sizing: border-box; display: flex; flex-direction: column; gap: 3.5%;
+  /* padding from the card's OWN width (--cw, hud.prepCard): a % padding is taken from the screen's width — 86 px on a
+     392 px card at 1440 × 900, the picture got 56 % of the card (user: "카드속 이미지들 크기가 제각각인데 잘보이게") */
+  padding: calc(var(--cw, 300px) * .07) calc(var(--cw, 300px) * .07) calc(var(--cw, 300px) * .055);
   border-radius: calc(4 * var(--u)); background: #fff; cursor: pointer; backface-visibility: hidden;
   box-shadow: 0 0 0 calc(.9 * var(--u)) var(--bc, #f6e3cf), 0 calc(1.5 * var(--u)) 0 calc(.9 * var(--u)) var(--sc, #e2c3a6), 0 calc(3.2 * var(--u)) calc(5 * var(--u)) rgba(110, 60, 30, .3); }
 .pic-card img { flex: 1 1 0; min-height: 0; width: 100%; object-fit: contain; pointer-events: none; }
-.pc-word { flex: none; display: block; text-align: center; font-family: var(--font-word); font-weight: 700; font-size: var(--wf, calc(7 * var(--u))); line-height: 1.2;
-  color: var(--tc, #5a3d2b); padding: .04em 0 .1em; border-radius: calc(2.2 * var(--u)); background: var(--bc, #f6e3cf); box-shadow: inset 0 calc(-.55 * var(--u)) 0 var(--sc, #e2c3a6); }
+.pc-word { flex: none; align-self: center; text-align: center; font-family: var(--font-word); font-weight: 700; font-size: var(--wf, calc(7 * var(--u))); line-height: 1.15;
+  color: var(--tc, #5a3d2b); }
 .pic-card:active { scale: .97; }
 
 .letter-pop { position: absolute; z-index: 24; translate: calc(-100% - 3 * var(--u)) -50%; pointer-events: none; display: flex; align-items: baseline; gap: .02em;
@@ -422,7 +456,6 @@ html[data-lang="en"] .lang-tog .lt-en, html[data-lang="ko"] .lang-tog .lt-ko { c
 @media (max-aspect-ratio: 4/3) {
   :root { --u: min(.82vh, .75vw); }
   .fox { height: calc(41 * var(--u)); }
-  .chips { max-width: calc(26 * var(--u)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .orb, .start-btn img, .logo img, .pcard.active .avatar { animation: none !important; }

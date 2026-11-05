@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { animate, ease, shuffle } from './anim';
 import type { Stage } from './stage';
+import { BLOCK_LAYER } from './hintring';
 
 export const L = 3, D = 1;
 /** block thickness (user picked "thicker blocks with 10 layers": 0.75, real Jenga is 0.6). ?bh= overrides it. */
@@ -36,13 +37,28 @@ export const PASTELS: Pastel[] = [
   { name: 'lavender', base: '#cab9f2', ink: '#5539a3', light: '#e7defb', edge: '#ad99e6' },
   { name: 'peach', base: '#ffc8a7', ink: '#a2511f', light: '#ffe3d1', edge: '#f1ab82' },
 ];
-/** emissive (white) at rest: the hover / hint glows add to it */
-const GLOW = 0;
+/** a soft glow of the block's own colours at rest (emissive = white × its map): the hover / hint glows add to it */
+const GLOW = 0.07;
+/** '#rrggbb' a → b by t, as rgb() */
+const mixHex = (a: string, b: string, t: number) => {
+  const c = (h: string, i: number) => parseInt(h.slice(1 + 2 * i, 3 + 2 * i), 16);
+  return `rgb(${[0, 1, 2].map((i) => Math.round(c(a, i) + (c(b, i) - c(a, i)) * t)).join(', ')})`;
+};
+/** a block's material: soft-touch matte like the painted table (a faint satin coat; no sheen — its white rim at grazing
+ *  angles read as a white film on the lower edges), glowing a little in its own colours so its shadow side stays
+ *  colourful (map = emissiveMap) */
+export function blockMaterial(map: THREE.Texture) {
+  return new THREE.MeshPhysicalMaterial({
+    map, emissiveMap: map, emissive: new THREE.Color(0xffffff), emissiveIntensity: GLOW, roughness: 0.62, metalness: 0,
+    clearcoat: 0.08, clearcoatRoughness: 0.6,
+  });
+}
 
-// texture atlas: one canvas per block. LONG = the two long faces, END = the two end faces, PLAIN = top/bottom.
+// texture atlas: one canvas per block. LONG = the two long faces, END = the two end faces, TOP / BOTTOM = the top and
+// the bottom face (flat colours: their own regions, so each matches the edge of the side faces it meets).
 // The canvas height follows the block's thickness so the letters keep their shape (LONG.w : AH = L : H).
 const AW = 1024;
-const LONG = { x: 0, w: 640 }, END = { x: 648, w: 213 }, PLAIN = { x: 870, w: 154 };
+const LONG = { x: 0, w: 640 }, END = { x: 648, w: 213 }, TOP = { x: 870, w: 70 }, BOTTOM = { x: 948, w: 70 };
 const AH = Math.round(LONG.w * H / L);
 
 let sharedGeo: RoundedBoxGeometry | null = null;
@@ -60,8 +76,8 @@ export function blockGeometry() {
       switch (grp.materialIndex) {
         case 0: u = (-z + d / 2) / d; r = END; break;           // +x end (seen from +x, right = -z)
         case 1: u = (z + d / 2) / d; r = END; break;            // -x end
-        case 2: u = (x + L / 2) / L; v = (z + d / 2) / d; r = PLAIN; break;
-        case 3: u = (x + L / 2) / L; v = (-z + d / 2) / d; r = PLAIN; break;
+        case 2: u = (x + L / 2) / L; v = (z + d / 2) / d; r = TOP; break;
+        case 3: u = (x + L / 2) / L; v = (-z + d / 2) / d; r = BOTTOM; break;
         case 4: u = (x + L / 2) / L; r = LONG; break;           // +z long face (right = +x)
         case 5: u = (-x + L / 2) / L; r = LONG; break;          // -z long face
       }
@@ -79,39 +95,41 @@ export function paintBlock(word: string, p: Pastel, k = 1): HTMLCanvasElement {
   const cv = document.createElement('canvas'); cv.width = AW * k; cv.height = AH * k;
   const g = cv.getContext('2d')!;
   g.scale(k, k);
-  g.fillStyle = p.base; g.fillRect(0, 0, AW, AH);
-  // painted-wood grain along the block
-  let seed = 0; for (const ch of word + p.name) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-  const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-  for (let i = 0; i < 26; i++) {
-    const y = rnd() * AH, a = 0.025 + rnd() * 0.035;
-    g.strokeStyle = `rgba(120, 80, 60, ${a})`; g.lineWidth = 0.6 + rnd() * 1.6;
-    g.beginPath(); g.moveTo(0, y);
-    for (let x = 0; x <= AW; x += 64) g.lineTo(x, y + Math.sin(x * 0.01 + i) * (1 + rnd() * 2.2));
-    g.stroke();
-  }
-  // soft roundness: light along the top, a gentle shade toward the bottom of each face (no hard bevel lines)
-  const sh = g.createLinearGradient(0, 0, 0, AH);
-  sh.addColorStop(0, 'rgba(255,255,255,0.30)'); sh.addColorStop(0.3, 'rgba(255,255,255,0.06)'); sh.addColorStop(0.7, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(90,50,40,0.12)');
-  g.fillStyle = sh; g.fillRect(0, 0, PLAIN.x, AH);
-  const text = (x: number, w: number, pad: number, max: number) => {
+  // soft matte pastel like the painted table (user: "테이블 처럼 좀더 소프트한 느낌의 블럭"): the side faces a little lighter
+  // at the top and a little deeper at the bottom — flat over the rounded edges, the change happens on the face — and the
+  // top / bottom faces flat in exactly the colour their side faces meet them with, so the rounded edges carry on without
+  // a band. (Top and bottom once shared one region with the side gradient running across their depth: a dark band along
+  // the top of half the blocks, a white film along their bottom, cracked-looking joints — user: "젠가 밑에가 더 밝은 흰색
+  // 투명하게 들어간거 같은데", "젠가 위에는 또 어두운 색이 들어갔는데", "블럭과 블럭사이 깨져보이는데".)
+  const top = mixHex(p.base, p.light, 0.45), bottom = mixHex(p.base, p.edge, 0.4);
+  const body = g.createLinearGradient(0, 0, 0, AH);
+  body.addColorStop(0, top); body.addColorStop(0.13, top); body.addColorStop(0.42, p.base); body.addColorStop(0.68, p.base);
+  body.addColorStop(0.87, bottom); body.addColorStop(1, bottom);
+  g.fillStyle = body; g.fillRect(0, 0, TOP.x - 4, AH);
+  g.fillStyle = top; g.fillRect(TOP.x - 4, 0, BOTTOM.x - TOP.x, AH);
+  g.fillStyle = bottom; g.fillRect(BOTTOM.x - 4, 0, AW - BOTTOM.x + 4, AH);
+  // the word on the long faces; on the narrow ends only its first letter, big (user: "젠가 블럭에서 넓은 면에만 전체 단어
+  // 스펠링 다 들어가고 좁은 끝 부분에는 단어의 첫번째 스펠링만")
+  const text = (str: string, x: number, w: number, pad: number, max: number) => {
     let size = max;
     g.font = `700 ${size}px ECP, Baloo, sans-serif`;
-    const mw = g.measureText(word).width;
+    const mw = g.measureText(str).width;
     if (mw > w - pad * 2) size = Math.max(18, size * (w - pad * 2) / mw);
     g.font = `700 ${size}px ECP, Baloo, sans-serif`;
-    const m = g.measureText(word);
+    const m = g.measureText(str);
     const asc = m.actualBoundingBoxAscent, desc = m.actualBoundingBoxDescent;
-    // centre the x-height band (not the ink box) so words with and without ascenders sit on one line
+    // a word: centre its x-height band (not the ink box) so words with and without ascenders sit on one line; a single
+    // letter: centre its ink
     const xh = size * 0.53;
-    const by = AH / 2 + xh / 2 + (desc > size * 0.12 && asc < size * 0.62 ? -size * 0.06 : 0);
+    const by = str.length === 1 ? AH / 2 + (asc - desc) / 2
+      : AH / 2 + xh / 2 + (desc > size * 0.12 && asc < size * 0.62 ? -size * 0.06 : 0);
     g.textAlign = 'center'; g.textBaseline = 'alphabetic';
     const cx = x + w / 2;
-    g.fillStyle = p.light; g.globalAlpha = 0.9; g.fillText(word, cx, by + size * 0.035);
-    g.globalAlpha = 1; g.fillStyle = p.ink; g.fillText(word, cx, by);
+    g.fillStyle = p.light; g.globalAlpha = 0.9; g.fillText(str, cx, by + size * 0.035);
+    g.globalAlpha = 1; g.fillStyle = p.ink; g.fillText(str, cx, by);
   };
-  text(LONG.x, LONG.w, 36, AH * 0.61);
-  text(END.x, END.w, 10, AH * 0.5);
+  text(word, LONG.x, LONG.w, 36, AH * 0.61);
+  text(word[0], END.x, END.w, 10, AH * 0.66);
   return cv;
 }
 
@@ -189,12 +207,7 @@ export class Tower {
         const word = plan[layer].includes(slot) ? ms.pop()! : others.pop()!;
         const choices = PASTELS.filter((p) => !used.has(p.name));
         const color = choices[Math.floor(r() * choices.length)]; used.add(color.name);
-        // soft-touch painted wood: a satin coat and a velvety sheen on the rounded edges (not the candy gloss)
-        const mat = new THREE.MeshPhysicalMaterial({
-          map: makeTexture(paintBlock(word.w, color), this.aniso), roughness: 0.5, metalness: 0,
-          clearcoat: 0.35, clearcoatRoughness: 0.32, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xfff1e6),
-        });
-        mat.emissive = new THREE.Color(0xffffff); mat.emissiveIntensity = GLOW;
+        const mat = blockMaterial(makeTexture(paintBlock(word.w, color), this.aniso));
         const mesh = new THREE.Mesh(geo, mat);
         mesh.castShadow = true; mesh.receiveShadow = true;
         const axis: 'x' | 'z' = layer % 2 === 0 ? 'x' : 'z';
@@ -206,6 +219,7 @@ export class Tower {
         const outline = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x8ff0ff, side: THREE.BackSide, transparent: true, opacity: 0, depthWrite: false }));
         outline.scale.set(1 + 0.11 / L, 1 + 0.11 / H, 1 + 0.11 / D); outline.visible = false; outline.renderOrder = 2;
         mesh.add(outline);
+        mesh.layers.enable(BLOCK_LAYER);     // in the hint ring's mask (hintring.ts)
         const b: Block = { id: id++, word, layer, slot, color, axis, mesh, mat, outline, state: 'in', home, homeRotY };
         mesh.userData.block = b;
         this.root.add(mesh);
@@ -280,7 +294,8 @@ export class Tower {
   }
 
   /** Correct block: slides all the way out toward the viewer (0.9 s). */
-  async pullOut(b: Block) {
+  /** onSpark: screen points (CSS px) on the block's leading end, every frame while it slides (the title's sparkles) */
+  async pullOut(b: Block, onSpark?: (x: number, y: number) => void) {
     b.state = 'busy';
     this.hover(null);
     this.glow(b, true);
@@ -289,9 +304,14 @@ export class Tower {
     const from = b.mesh.position.clone();
     const side = new THREE.Vector3(-local.z, 0, local.x);
     this.kick(dir, 0.010);
+    const fwd = local.clone().normalize(), across = side.clone().normalize(), tip = new THREE.Vector3();
     await animate(this.stage, 0.95, (k, t) => {
       const jit = Math.sin(t * 46) * 0.012 * (1 - k);
       b.mesh.position.copy(from).addScaledVector(local, k * (L + 0.35)).addScaledVector(side, jit);
+      if (onSpark && k > 0.08) {
+        tip.copy(b.mesh.position).addScaledVector(fwd, L / 2).addScaledVector(across, D * (Math.random() - 0.5)).setY(b.mesh.position.y + H * (Math.random() - 0.5));
+        const p = this.stage.project(this.root.localToWorld(tip)); onSpark(p.x, p.y);
+      }
       b.mesh.rotation.y = b.homeRotY + Math.sin(t * 31) * 0.012 * (1 - k);
       b.mat.emissiveIntensity = GLOW + 0.12 + 0.08 * Math.sin(t * 9);
       // a squishy wobble as it is grabbed and starts to slide
@@ -354,7 +374,7 @@ export class Tower {
     scene.attach(b.mesh);
     // crisper texture for the close-up
     const hi = makeTexture(paintBlock(b.word.w, b.color, 2), this.aniso);
-    const lo = b.mat.map; b.mat.map = hi; b.mat.needsUpdate = true; lo?.dispose();
+    const lo = b.mat.map; b.mat.map = hi; b.mat.emissiveMap = hi; b.mat.needsUpdate = true; lo?.dispose();
     b.mesh.castShadow = false;
     const p0 = b.mesh.position.clone(), q0 = b.mesh.quaternion.clone(), s0 = b.mesh.scale.x;
     const goal = this.presentPose(screenY);
@@ -403,16 +423,19 @@ export class Tower {
     b.state = 'gone';
   }
 
-  /** sparkle-glow a block for a hint */
+  /** sparkle-glow a block for a hint: a ring round what is visible of it blinks over everything (stage.ring,
+   *  hintring.ts). Its own outline is depth-tested: the blocks touching it hid most of it (user: "힌트 줄때의 선
+   *  깜박이는거는 상위로 올려줘. 젠가 사이에 껴서 보이면 잘 안보여") */
   async hint(b: Block, ms = 2600) {
-    const m = b.outline.material as THREE.MeshBasicMaterial;
-    m.color.setHex(0xffe46b); b.outline.visible = true;
+    const ring = this.stage.ring;
+    ring.target = b.mesh; ring.color.setHex(0xffe46b); ring.opacity = 0;
     await animate(this.stage, ms / 1000, (_k, t) => {
-      if (b.state !== 'in') { b.outline.visible = false; return; }
+      if (b.state !== 'in') { if (ring.target === b.mesh) ring.target = null; return; }
       const a = 0.5 + 0.5 * Math.sin(t * 7);
-      m.opacity = 0.35 + 0.6 * a; b.mat.emissiveIntensity = GLOW + 0.06 + 0.16 * a;
+      ring.opacity = 0.35 + 0.6 * a; b.mat.emissiveIntensity = GLOW + 0.06 + 0.16 * a;
     }, ease.linear);
-    if (b.state === 'in') { b.outline.visible = false; m.opacity = 0; b.mat.emissiveIntensity = GLOW; }
+    if (ring.target === b.mesh) ring.target = null;
+    if (b.state === 'in') b.mat.emissiveIntensity = GLOW;
   }
 
   /** knock the tower: spring wobble around its base, and a soft squash of the whole tower (it's squishy) */
@@ -489,10 +512,7 @@ export class Tower {
       if (!word) return;
       const choices = PASTELS.filter((p) => !used.has(p.name));
       const color = choices[Math.floor(r() * choices.length)]; used.add(color.name);
-      const mat = new THREE.MeshPhysicalMaterial({
-        map: makeTexture(paintBlock(word.w, color), this.aniso), roughness: 0.5, metalness: 0,
-        clearcoat: 0.35, clearcoatRoughness: 0.32, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xfff1e6),
-      });
+      const mat = blockMaterial(makeTexture(paintBlock(word.w, color), this.aniso));
       const mesh = new THREE.Mesh(geo, mat);
       mesh.castShadow = true; mesh.receiveShadow = true;
       const a = (yaw + (r() - 0.5) * 6) * Math.PI / 180;

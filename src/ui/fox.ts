@@ -21,7 +21,7 @@ import mouthCues from '../data/mouth.json';
 import { audioCtx, voiceNow } from '../core/audio';
 
 export type Pose = 'idle' | 'talk' | 'point' | 'happy' | 'say' | 'cheer';
-/** Rhubarb shapes: A closed (m b p) · B a little open, teeth (most consonants) · C open (e, a) · D wide (ah) ·
+/** Rhubarb shapes: A closed (m b p) · B a little open (most consonants) · C open (e, a) · D wide (ah) ·
  *  E rounded (o, er) · F puckered (oo, w) · G f/v (teeth on the lip) · H l (tongue up) · X rest */
 export type Shape = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'X';
 type Pt = [number, number];
@@ -41,29 +41,34 @@ interface Rig {
 }
 interface PoseMeta {
   file: string; x: number; y: number; w: number; h: number; rest: 'art' | Shape; rig: Rig; eyes: [Pt, Pt];
-  mouth: { x: number; y: number; w: number; rot: number; turn: number };
+  mouth: { x: number; y: number; w: number; rot: number; turn: number; art: number };
   muzzle: { sx: number; sy: number; sw: number; sh: number; x: number; y: number };
 }
 interface FoxMeta { frameW: number; frameH: number; anchor: { x: number; y: number }; map: Record<Pose, string>; poses: Record<string, PoseMeta> }
 
 const CUES = mouthCues as unknown as Record<string, [number, string][]>;
 const FADE_MS = 180;
+// room around the frame on the canvas (fractions of the frame): the wagging tail, the flicking ears and the swaying
+// body reach past the frame's edges — teach's tail tip is 20 px from its right edge and was cut off there (user:
+// "튜터꼬리가 짤려"). The .fox box stays the frame; the canvas overflows it (style.css .fox canvas).
+const PAD = { l: 0.06, r: 0.1, t: 0.07, b: 0.02 };
 // no cues for a clip: voice loudness (audio.voiceLevel RMS) → a shape
 const HALF_AT = 0.04, OPEN_AT = 0.125;
 const TAU = Math.PI * 2;
 
-/** a mouth: width (× the pose's mouth width), opening (× width), roundness 0-1, tongue 0-1 (and raised), upper teeth */
-interface MouthP { k: number; open: number; round: number; tongue: number; up: number; teeth: number }
+/** a mouth: width (× the pose's mouth width), opening (× width), roundness 0-1, tongue 0-1 (and raised), smile 0-1
+ *  (corners up). Sizes after the art: its closed mouth (reading pose) is ~0.45 of the drawn width, a short almond. */
+interface MouthP { k: number; open: number; round: number; tongue: number; up: number; smile: number }
 const SHAPES: Record<Shape, MouthP> = {
-  X: { k: 0.72, open: 0, round: 0, tongue: 0, up: 0, teeth: 0 },
-  A: { k: 0.6, open: 0, round: 0, tongue: 0, up: 0, teeth: 0 },
-  B: { k: 0.78, open: 0.2, round: 0.1, tongue: 0, up: 0, teeth: 1 },
-  C: { k: 0.86, open: 0.42, round: 0.2, tongue: 0.8, up: 0, teeth: 0.4 },
-  D: { k: 1, open: 0.64, round: 0.15, tongue: 1, up: 0, teeth: 0.5 },
-  E: { k: 0.68, open: 0.46, round: 0.7, tongue: 0.6, up: 0, teeth: 0 },
-  F: { k: 0.44, open: 0.36, round: 1, tongue: 0.3, up: 0, teeth: 0 },
-  G: { k: 0.76, open: 0.16, round: 0, tongue: 0, up: 0, teeth: 1 },
-  H: { k: 0.82, open: 0.4, round: 0.25, tongue: 0.9, up: 1, teeth: 0.3 },
+  X: { k: 0.47, open: 0, round: 0, tongue: 0, up: 0, smile: 1 },
+  A: { k: 0.5, open: 0, round: 0, tongue: 0, up: 0, smile: 0.45 },
+  B: { k: 0.58, open: 0.13, round: 0.1, tongue: 0, up: 0, smile: 0.6 },
+  C: { k: 0.72, open: 0.34, round: 0.2, tongue: 0.7, up: 0, smile: 0.5 },
+  D: { k: 0.86, open: 0.56, round: 0.15, tongue: 1, up: 0, smile: 0.4 },
+  E: { k: 0.6, open: 0.42, round: 0.7, tongue: 0.6, up: 0, smile: 0.2 },
+  F: { k: 0.4, open: 0.3, round: 1, tongue: 0.3, up: 0, smile: 0 },
+  G: { k: 0.6, open: 0.1, round: 0, tongue: 0, up: 0, smile: 0.5 },
+  H: { k: 0.72, open: 0.36, round: 0.25, tongue: 0.9, up: 1, smile: 0.4 },
 };
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
@@ -73,7 +78,7 @@ const MAX_BONES = 8;
 const VS = `
 precision highp float;
 attribute vec2 aPos; attribute vec2 aUV; attribute vec3 aW; attribute vec2 aE;
-uniform vec2 uFrame;
+uniform vec2 uFrame; uniform vec2 uOff;
 uniform vec4 uA[${MAX_BONES}]; uniform vec4 uB[${MAX_BONES}]; uniform vec4 uC[${MAX_BONES}];
 uniform int uN;
 uniform vec4 uG;   // anchor x, anchor y, height, -
@@ -114,7 +119,7 @@ void main() {
   p.x += uG2.x * uG.z * pow(h, 1.6);
   p = uG.xy + rot(p - uG.xy, uG2.z);
   vUV = aUV;
-  gl_Position = vec4(p.x / uFrame.x * 2.0 - 1.0, 1.0 - p.y / uFrame.y * 2.0, 0.0, 1.0);
+  gl_Position = vec4((p.x + uOff.x) / uFrame.x * 2.0 - 1.0, 1.0 - (p.y + uOff.y) / uFrame.y * 2.0, 0.0, 1.0);
 }`;
 const FS = `
 precision mediump float;
@@ -130,7 +135,8 @@ class Mesh {
   private prog: WebGLProgram;
   private u: Record<string, WebGLUniformLocation | null> = {};
   private aPos: number; private aUV: number; private aW: number; private aE: number;
-  constructor(private gl: WebGLRenderingContext, private W: number, private H: number) {
+  /** W × H canvas px; the frame's origin sits at (ox, oy) on it */
+  constructor(private gl: WebGLRenderingContext, private W: number, private H: number, private ox = 0, private oy = 0) {
     const sh = (type: number, src: string) => {
       const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error('fox shader: ' + gl.getShaderInfoLog(s));
@@ -140,7 +146,7 @@ class Mesh {
     gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('fox program: ' + gl.getProgramInfoLog(p));
     this.prog = p;
-    for (const n of ['uFrame', 'uA', 'uB', 'uC', 'uN', 'uG', 'uG2', 'uTex', 'uAlpha']) this.u[n] = gl.getUniformLocation(p, n);
+    for (const n of ['uFrame', 'uOff', 'uA', 'uB', 'uC', 'uN', 'uG', 'uG2', 'uTex', 'uAlpha']) this.u[n] = gl.getUniformLocation(p, n);
     this.aPos = gl.getAttribLocation(p, 'aPos'); this.aUV = gl.getAttribLocation(p, 'aUV'); this.aW = gl.getAttribLocation(p, 'aW'); this.aE = gl.getAttribLocation(p, 'aE');
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
@@ -183,7 +189,7 @@ class Mesh {
     gl.enableVertexAttribArray(this.aW); gl.vertexAttribPointer(this.aW, 3, gl.FLOAT, false, 36, 16);
     gl.enableVertexAttribArray(this.aE); gl.vertexAttribPointer(this.aE, 2, gl.FLOAT, false, 36, 28);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.idx);
-    gl.uniform2f(this.u.uFrame, this.W, this.H);
+    gl.uniform2f(this.u.uFrame, this.W, this.H); gl.uniform2f(this.u.uOff, this.ox, this.oy);
     gl.uniform4fv(this.u.uA, b.A); gl.uniform4fv(this.u.uB, b.B); gl.uniform4fv(this.u.uC, b.C);
     gl.uniform1i(this.u.uN, b.n);
     gl.uniform4fv(this.u.uG, b.g); gl.uniform4fv(this.u.uG2, b.g2);
@@ -222,6 +228,8 @@ export class Fox {
   private gl: WebGLRenderingContext | null = null;
   private mesh: Mesh | null = null;
   private g2: CanvasRenderingContext2D | null = null;
+  /** where the frame's origin sits on the canvas (PAD) */
+  private off: [number, number] = [0, 0];
   private meta: FoxMeta | null = null;
   private sheets = new Map<string, Sheet>();
   private muzzle: HTMLImageElement | null = null;
@@ -279,9 +287,15 @@ export class Fox {
       ...Object.entries(m.poses).map(async ([k, p]) => { ems[k] = p.rig.emap ? await img(p.rig.emap) : null; }),
       img('muzzle.webp').then((im) => { this.muzzle = im; }),
     ]);
-    this.cv.width = m.frameW; this.cv.height = m.frameH;
+    const ox = Math.round(PAD.l * m.frameW), oy = Math.round(PAD.t * m.frameH);
+    this.off = [ox, oy];
+    this.cv.width = m.frameW + ox + Math.round(PAD.r * m.frameW); this.cv.height = m.frameH + oy + Math.round(PAD.b * m.frameH);
+    const st = this.el.style;
+    st.setProperty('--fox-ar', `${m.frameW} / ${m.frameH}`);
+    st.setProperty('--fox-pl', String(ox / m.frameW)); st.setProperty('--fox-pt', String(oy / m.frameH));
+    st.setProperty('--fox-cw', String(this.cv.width / m.frameW)); st.setProperty('--fox-ch', String(this.cv.height / m.frameH));
     if (this.gl) {
-      try { this.mesh = new Mesh(this.gl, m.frameW, m.frameH); } catch (e) { console.warn(e); this.mesh = null; }
+      try { this.mesh = new Mesh(this.gl, this.cv.width, this.cv.height, ox, oy); } catch (e) { console.warn(e); this.mesh = null; }
     }
     for (const [k, P] of Object.entries(m.poses)) {
       const im = ims[k];
@@ -473,8 +487,10 @@ export class Fox {
     const g = this.g2;
     if (!g) return;
     g.globalAlpha = alpha;
+    g.setTransform(1, 0, 0, 1, this.off[0], this.off[1]);
     g.drawImage(s.im, P.x, P.y);
     if (over) g.drawImage(s.ov, s.ovR[0], s.ovR[1]);
+    g.setTransform(1, 0, 0, 1, 0, 0);
     g.globalAlpha = 1;
   }
 }
@@ -503,50 +519,63 @@ function drawLid(g: CanvasRenderingContext2D, L: Lid, shut: number) {
   g.restore();
 }
 
-/** a cartoon mouth in the art's colours: maroon inside, pink tongue, a dark lip line; closed = a smile line */
+/** a mouth in the art's own look (user: "입주변도 좀 어색한데" — the dark outline and the white teeth bar looked stuck on):
+ *  closed = a short dark almond, fine at the corners, with a faint light upper-lip edge (the reading pose's own closed
+ *  mouth); open = maroon inside, darker under the upper lip, a soft pink tongue, a thin maroon rim — no outline, no teeth */
 function drawMouth(g: CanvasRenderingContext2D, M: PoseMeta['mouth'], m: MouthP) {
-  const w = M.w, hw = (w * m.k) / 2, h = w * m.open;
+  // the laughing poses' own mouths are wide: the drawn one stays near their width (it shrank visibly when they talked)
+  const w = Math.max(M.w, M.art * 0.95), hw = (w * m.k) / 2, h = w * m.open;
   const L = hw * (1 + M.turn * 0.35), R = hw * (1 - M.turn * 0.35);      // far side shorter on a turned head
+  const mid = (R - L) / 2, lift = w * 0.05 * m.smile;                    // smiling corners sit higher
   g.save();
   g.translate(M.x, M.y + w * 0.06); g.rotate((M.rot * Math.PI) / 180);
   g.lineCap = 'round'; g.lineJoin = 'round';
-  if (h < w * 0.05) {
-    // closed: a soft smile line (rest), lips pressed flatter (A)
-    const curve = w * (m.k > 0.66 ? 0.12 : 0.07);
-    g.strokeStyle = 'rgba(74, 36, 30, 0.92)';
-    g.lineWidth = w * 0.055;
-    g.beginPath(); g.moveTo(-L, 0); g.quadraticCurveTo((R - L) / 2, curve * 2, R, 0); g.stroke();
+  if (h < w * 0.04) {
+    // closed: the almond (its lower edge sags more than its upper one: thick in the middle, fine at the ends)
+    const t = w * (0.1 - 0.03 * (1 - m.smile));
+    g.beginPath();
+    g.moveTo(-L, -lift);
+    g.quadraticCurveTo(mid, lift * 1.2 + t, R, -lift);
+    g.quadraticCurveTo(mid, lift * 1.2 - t * 0.25, -L, -lift);
+    g.closePath();
+    const gr = g.createLinearGradient(0, -lift, 0, t * 0.6);
+    gr.addColorStop(0, '#4c0d18'); gr.addColorStop(1, '#7a1c2d');
+    g.fillStyle = gr; g.fill();
+    g.strokeStyle = 'rgba(255, 214, 204, 0.42)'; g.lineWidth = w * 0.012;
+    g.beginPath(); g.moveTo(-L * 0.8, -lift * 0.8 - w * 0.012); g.quadraticCurveTo(mid, lift * 1.2 - t * 0.25 - w * 0.024, R * 0.8, -lift * 0.8 - w * 0.012); g.stroke();
     g.restore();
     return;
   }
   const top = -h * 0.12 * m.round;                                      // rounded mouths arch up a little
   const path = () => {
     g.beginPath();
-    g.moveTo(-L, 0);
-    g.bezierCurveTo(-L * 0.7, top * 2.2 - h * 0.08 * m.round, R * 0.7, top * 2.2 - h * 0.08 * m.round, R, 0);
-    g.bezierCurveTo(R * (0.95 - 0.1 * m.round), h * (0.9 + 0.25 * m.round), -L * (0.95 - 0.1 * m.round), h * (0.9 + 0.25 * m.round), -L, 0);
+    g.moveTo(-L, -lift);
+    g.bezierCurveTo(-L * 0.55, top * 2 - lift * 0.15, R * 0.55, top * 2 - lift * 0.15, R, -lift);          // the upper lip
+    g.bezierCurveTo(R * (0.95 - 0.1 * m.round), h * (0.95 + 0.2 * m.round), -L * (0.95 - 0.1 * m.round), h * (0.95 + 0.2 * m.round), -L, -lift);
     g.closePath();
   };
   path();
   const grad = g.createLinearGradient(0, top, 0, h);
-  grad.addColorStop(0, '#4b0d1a'); grad.addColorStop(1, '#8d2335');
+  grad.addColorStop(0, '#470b16'); grad.addColorStop(0.6, '#7b1b2f'); grad.addColorStop(1, '#962a3e');
   g.fillStyle = grad; g.fill();
   g.save(); path(); g.clip();
   if (m.tongue > 0.05) {
-    const ty = lerp(h * 0.86, h * 0.45, m.up);
-    g.fillStyle = '#f27f93';
-    g.beginPath(); g.ellipse((R - L) * 0.1, ty, Math.max(L, R) * 0.62, h * 0.42 * m.tongue + h * 0.08, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(255, 200, 210, 0.45)';
-    g.beginPath(); g.ellipse((R - L) * 0.1 - hw * 0.12, ty - h * 0.12, hw * 0.22, h * 0.08, 0, 0, Math.PI * 2); g.fill();
+    const ty = lerp(h * 0.9, h * 0.5, m.up), tr = Math.max(L, R) * 0.66, th = h * 0.42 * m.tongue + h * 0.1;
+    const tg = g.createLinearGradient(0, ty - th, 0, ty + th);
+    tg.addColorStop(0, '#f4a2b0'); tg.addColorStop(0.5, '#e57a8d'); tg.addColorStop(1, '#cf5d72');
+    g.fillStyle = tg;
+    g.beginPath(); g.ellipse(mid * 0.4, ty, tr, th, 0, 0, TAU); g.fill();
   }
-  if (m.teeth > 0.05) {
-    g.fillStyle = `rgba(255, 252, 246, ${Math.min(1, m.teeth)})`;
-    g.fillRect(-L, top - h, L + R, h * 1.0 + Math.min(h * 0.32, w * 0.07));
-  }
+  // the shadow under the upper lip
+  const sh = g.createLinearGradient(0, top - lift, 0, top + h * 0.38);
+  sh.addColorStop(0, 'rgba(28, 3, 8, 0.6)'); sh.addColorStop(1, 'rgba(28, 3, 8, 0)');
+  g.fillStyle = sh; g.fillRect(-L - 2, top - lift - h, L + R + 4, h * 1.4 + lift);
   g.restore();
   path();
-  g.strokeStyle = 'rgba(60, 22, 18, 0.9)';
-  g.lineWidth = w * 0.04;
-  g.stroke();
+  g.strokeStyle = 'rgba(74, 15, 27, 0.6)'; g.lineWidth = w * 0.022; g.stroke();
+  // a faint light edge on the upper lip
+  g.strokeStyle = 'rgba(255, 214, 204, 0.38)'; g.lineWidth = w * 0.014;
+  g.beginPath(); g.moveTo(-L * 0.85, -lift * 0.9 - w * 0.016);
+  g.bezierCurveTo(-L * 0.5, top * 2 - lift * 0.15 - w * 0.02, R * 0.5, top * 2 - lift * 0.15 - w * 0.02, R * 0.85, -lift * 0.9 - w * 0.016); g.stroke();
   g.restore();
 }

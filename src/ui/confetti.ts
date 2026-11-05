@@ -3,7 +3,7 @@
 const COLORS = ['#ff6fa3', '#ffd34d', '#5fd6a3', '#59b7f0', '#a98bff', '#ff9a5c', '#ffffff', '#7be0ff'];
 const SPARK = ['#ffe27a', '#fff6c8', '#ffffff', '#ffd1e6', '#ffc94a'];
 
-interface Bit { x: number; y: number; vx: number; vy: number; r: number; vr: number; w: number; h: number; c: string; flip: number; vf: number; life: number; life0: number; shape: 0 | 1 | 2 | 3 }
+interface Bit { x: number; y: number; vx: number; vy: number; r: number; vr: number; w: number; h: number; c: string; flip: number; vf: number; life: number; life0: number; shape: 0 | 1 | 2 | 3 | 4 }
 
 export class Confetti {
   private g: CanvasRenderingContext2D;
@@ -20,7 +20,7 @@ export class Confetti {
     const life = 2.4 + Math.random() * 1.4;
     this.bits.push({ x, y, vx: Math.cos(a) * v * s, vy: Math.sin(a) * v * s, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 14,
       w: (7 + Math.random() * 7) * s, h: (11 + Math.random() * 9) * s, c: COLORS[(Math.random() * COLORS.length) | 0],
-      flip: Math.random() * 6.28, vf: 4 + Math.random() * 8, life, life0: life, shape: (Math.random() < 0.6 ? 0 : Math.random() < 0.5 ? 1 : 2) as 0 | 1 | 2 });
+      flip: Math.random() * 6.28, vf: 4 + Math.random() * 8, life, life0: life, shape: (Math.random() < 0.32 ? 0 : Math.random() < 0.55 ? 1 : Math.random() < 0.45 ? 2 : 4) as 0 | 1 | 2 | 4 });
   }
   /** a pop from a point (CSS px) */
   burst(x: number, y: number, n = 150) {
@@ -42,12 +42,13 @@ export class Confetti {
     }
     this.run();
   }
-  /** twinkling 4-point stars and golden glitter drifting up from a point (CSS px) — the title's sliding block */
-  sparkle(x: number, y: number, n = 2) {
+  /** twinkling 4-point stars and golden glitter drifting up from a point (CSS px) — the title's sliding block (drifting
+   *  right, the way it slides), the game's pulled block (spread: drifting every way) */
+  sparkle(x: number, y: number, n = 2, spread = false) {
     const s = Math.min(this.cv.clientWidth, this.cv.clientHeight) / 720;
     for (let i = 0; i < n; i++) {
       const star = Math.random() < 0.45, life = (star ? 0.7 : 0.9) + Math.random() * 0.7;
-      this.bits.push({ x: x + (Math.random() - 0.3) * 16 * s, y: y + (Math.random() - 0.5) * 16 * s, vx: (14 + Math.random() * 60) * s, vy: (-24 - Math.random() * 60) * s,
+      this.bits.push({ x: x + (Math.random() - 0.3) * 16 * s, y: y + (Math.random() - 0.5) * 16 * s, vx: (spread ? (Math.random() - 0.5) * 150 : 14 + Math.random() * 60) * s, vy: (-24 - Math.random() * 60) * s,
         r: Math.random() * 0.8, vr: (Math.random() - 0.5) * 2, w: (star ? 7 + Math.random() * 9 : 1.6 + Math.random() * 2.2) * s, h: star ? 0 : 1, c: SPARK[(Math.random() * SPARK.length) | 0],
         flip: Math.random() * 6.28, vf: 9 + Math.random() * 7, life, life0: life, shape: 3 });
     }
@@ -82,9 +83,15 @@ export class Confetti {
         b.x += b.vx * dt + Math.sin(b.flip) * 18 * s * dt; b.y += b.vy * dt; b.r += b.vr * dt; b.flip += b.vf * dt;
         g.save(); g.translate(b.x, b.y); g.rotate(b.r); g.scale(1, Math.cos(b.flip));
         g.globalAlpha = Math.min(1, b.life * 2); g.fillStyle = b.c;
-        if (b.shape === 0) g.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
-        else if (b.shape === 1) { g.beginPath(); g.arc(0, 0, b.w * 0.55, 0, 6.283); g.fill(); }
-        else { g.beginPath(); g.moveTo(0, -b.h * 0.6); g.lineTo(b.w * 0.6, b.h * 0.45); g.lineTo(-b.w * 0.6, b.h * 0.45); g.closePath(); g.fill(); }
+        g.shadowColor = 'rgba(70, 40, 110, .28)'; g.shadowBlur = 5 * s; g.shadowOffsetY = 1.5 * s;
+        g.beginPath();
+        if (b.shape === 0) g.roundRect(-b.w / 2, -b.h / 2, b.w, b.h, Math.min(b.w, b.h) * 0.38);
+        else if (b.shape === 1) g.arc(0, 0, b.w * 0.5, 0, 6.283);
+        else if (b.shape === 2) { g.moveTo(0, -b.h * 0.55); g.lineTo(b.w * 0.55, b.h * 0.4); g.lineTo(-b.w * 0.55, b.h * 0.4); }
+        else for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? b.w * 0.22 : b.h * 0.52; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+        g.closePath(); g.fill();
+        g.shadowColor = 'transparent'; g.globalAlpha *= 0.7; g.fillStyle = '#fff';
+        g.beginPath(); g.ellipse(-b.w * 0.12, -b.h * 0.16, b.w * 0.16, b.h * 0.1, -0.5, 0, 6.283); g.fill();
         g.restore();
       }
       if (this.bits.length) this.raf = requestAnimationFrame(step); else { this.raf = 0; g.clearRect(0, 0, W, Hh); }

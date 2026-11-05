@@ -5,17 +5,22 @@ import { audioCtx, duck, hasClip, loadClip, playClip, type Playing } from './aud
 export type Part = string | number;
 type Listener = (talking: boolean) => void;
 type LineListener = (parts: Part[]) => void;
+type TimesListener = (times: { key: string; at: number }[], now: number) => void;
 
 let token = 0;
 let playing: Playing[] = [];
 let talking = false;
 const listeners: Listener[] = [];
 const lineListeners: LineListener[] = [];
+const timesListeners: TimesListener[] = [];
 /** the last lines played (clip keys, for tests via window.__pj.said) */
 export const said: string[] = [];
 export const onTalk = (f: Listener) => { listeners.push(f); };
 /** a line starts playing (the fox's speech bubble shows its words) */
 export const onLine = (f: LineListener) => { lineListeners.push(f); };
+/** a line's clips are scheduled: when each one starts on the audio clock, and the clock now (the bubble shows each
+ *  sentence when the fox starts saying it) */
+export const onLineTimes = (f: TimesListener) => { timesListeners.push(f); };
 export const isTalking = () => talking;
 function emit(on: boolean) { if (talking === on) return; talking = on; duck(on); listeners.forEach((f) => f(on)); }
 
@@ -32,14 +37,17 @@ export async function say(parts: Part[]): Promise<boolean> {
   lineListeners.forEach((f) => f(parts));
   let t = ctx.currentTime + 0.04;
   const mine: Playing[] = [];
+  const times: { key: string; at: number }[] = [];
   for (const p of parts) {
     if (typeof p === 'number') { t += p; continue; }
+    const at = t;
     const pl = await playClip(p, t);
     if (my !== token) { pl?.stop(); mine.forEach((m) => m.stop()); return false; }
     if (!pl) continue;
-    mine.push(pl); t = pl.endAt + 0.07;
+    mine.push(pl); times.push({ key: p, at }); t = pl.endAt + 0.07;
   }
   playing = mine;
+  timesListeners.forEach((f) => f(times, ctx.currentTime));
   emit(true);
   const waitMs = Math.max(0, (t - ctx.currentTime) * 1000);
   await new Promise((r) => setTimeout(r, waitMs));

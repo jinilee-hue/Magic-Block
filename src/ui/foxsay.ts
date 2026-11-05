@@ -3,9 +3,11 @@
 // speaking (voice.json `lines`, written by tools/build_voice.py from the same TUTOR texts the voice was made from).
 // The turn call — that player's animal + "Player 1, your turn!" — stays up while the player looks for a block; every
 // other line shows while it plays and a moment after, then the turn call comes back (or the bubble goes).
+// One sentence at a time (user: "설명 말풍선이 한번에 내용이 너무 많이 나와"): a line of several tutor lines (the how-to's
+// three rules) shows them one after another, each when the fox starts saying it.
 import voiceData from '../data/voice.json';
 import { lang, onLang } from '../core/lang';
-import { isTalking, onLine, onTalk, type Part } from '../core/speech';
+import { isTalking, onLine, onLineTimes, onTalk, type Part } from '../core/speech';
 import { ANI_ART } from './animals';
 
 const V = voiceData as { lines?: Record<string, string>; lines_ko?: Record<string, string> };
@@ -33,6 +35,19 @@ function format(keys: string[]) {
   return out.join(' ');
 }
 
+/** a line's clip keys → its bubbles, one after another: a new bubble at each tutor line that follows a finished sentence
+ *  (. ! ?) — "Uh-oh! jam — It starts with /j/" stays one bubble, the how-to's rules each get their own */
+function segments(keys: string[]) {
+  const segs: string[][] = [];
+  for (const k of keys) {
+    const cur = segs[segs.length - 1], last = cur?.[cur.length - 1];
+    const ended = !!last && last.startsWith('t:') && /[.!?]$/.test(LINES[last.slice(2)] ?? '');
+    if (!cur || (k.startsWith('t:') && LINES[k.slice(2)] && ended)) segs.push([k]);
+    else cur.push(k);
+  }
+  return segs;
+}
+
 export class FoxSay {
   animals: [string, string] = ['bunny', 'kitty'];
   private text: HTMLElement;
@@ -45,13 +60,18 @@ export class FoxSay {
   /** what the bubble shows now (to re-word it when the language changes) */
   private shownKeys: string[] = [];
   private shownP: number | null = null;
+  /** the bubbles of the line being said, and the timers that bring on its later sentences */
+  private segs: string[][] = [];
+  private nextT: number[] = [];
 
   constructor(private el: HTMLElement) {
     this.text = el.querySelector('.fs-text') as HTMLElement;
     this.ava = el.querySelector('.fs-ava .ani') as HTMLImageElement;
     onLine((parts) => this.line(parts));
-    onTalk((on) => { if (on) clearTimeout(this.hideT); else this.later(); });
+    onLineTimes((times, now) => this.times(times, now));
+    onTalk((on) => { if (on) clearTimeout(this.hideT); else { this.cancelNext(); this.later(); } });
     onLang(() => { if (!this.el.hidden && this.shownKeys.length) this.show(format(this.shownKeys), this.shownP, this.shownKeys); });
+    window.addEventListener('resize', () => this.fit());
   }
 
   /** a turn starts: its call stays up until the player picks (release) */
@@ -59,16 +79,38 @@ export class FoxSay {
   /** the player picked a block: the turn call can go */
   release() { this.sticky = null; if (!isTalking()) this.later(); }
   /** new game / back to the title */
-  clear() { this.sticky = null; clearTimeout(this.hideT); this.hide(true); }
+  clear() { this.sticky = null; clearTimeout(this.hideT); this.cancelNext(); this.hide(true); }
 
   private line(parts: Part[]) {
     const keys = parts.filter((x): x is string => typeof x === 'string');
+    this.segs = [];
     // word replays (tapping the card) and other lines without tutor words leave the bubble as it is
     if (!keys.some((k) => k.startsWith('t:') && LINES[k.slice(2)])) return;
     clearTimeout(this.hideT);
+    this.cancelNext();
+    this.segs = segments(keys);
+    this.showSeg(this.segs[0]);
+  }
+
+  private showSeg(keys: string[]) {
     const p = keys.includes('t:turn1') ? 0 : keys.includes('t:turn2') ? 1 : null;
     this.show(format(keys), p, keys);
   }
+
+  /** the line's clips are scheduled: each later sentence takes the bubble when the fox starts saying it */
+  private times(times: { key: string; at: number }[], now: number) {
+    const segs = this.segs;
+    this.segs = [];
+    let i = 0;
+    for (const seg of segs.slice(1)) {
+      while (i < times.length && times[i].key !== seg[0]) i++;
+      if (i >= times.length) break;
+      this.nextT.push(window.setTimeout(() => this.showSeg(seg), Math.max(0, (times[i].at - now) * 1000)));
+      i++;
+    }
+  }
+
+  private cancelNext() { this.nextT.forEach((h) => clearTimeout(h)); this.nextT = []; }
 
   private later() {
     clearTimeout(this.hideT);
@@ -90,7 +132,21 @@ export class FoxSay {
     this.el.classList.toggle('p2', p === 1);
     if (p !== null) this.ava.src = ANI_ART[this.animals[p]];
     this.el.hidden = false;
-    this.el.classList.remove('off', 'pop'); void this.el.offsetWidth; this.el.classList.add('pop');
+    this.el.classList.remove('off', 'pop'); this.fit(); void this.el.offsetWidth; this.el.classList.add('pop');
+  }
+
+  /** the bubble hugs its text: wrapped text keeps its box at the bubble's max width though its lines are shorter ("Get the
+   *  most / blocks to win!" sat on the left with a gap on the right), so the text gets the width of its longest line */
+  private fit() {
+    const t = this.text;
+    t.style.width = '';
+    if (this.el.hidden || !t.offsetWidth) return;
+    const box = t.getBoundingClientRect(), scale = box.width / t.offsetWidth || 1;
+    const r = document.createRange();
+    r.selectNodeContents(t);
+    const rights = [...r.getClientRects()].map((q) => q.right);
+    if (!rights.length) return;
+    t.style.width = `${Math.ceil((Math.max(...rights) - box.left) / scale) + 1}px`;
   }
 
   private hide(now = false) {

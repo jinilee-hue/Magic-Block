@@ -65,6 +65,10 @@ async function boot() {
   const hud = new Hud();
   const stage = new Stage($('#stage'));
   stage.bg = $('.sky'); stage.resize();
+  // the game screen: a closer view and a light on the tower (user: "젠가에 좀 집중이 되게 하고싶어") — on and off with
+  // the screen
+  new MutationObserver(() => stage.setGameView(hud.app.dataset.screen === 'game'))
+    .observe(hud.app, { attributes: true, attributeFilter: ['data-screen'] });
   twinkle($('.sky'));
   const tower = new Tower(stage);
   const spin = new SpinHint(stage, $('#swipe'));

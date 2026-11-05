@@ -1,8 +1,11 @@
 // DOM layer: player cards, the fox's speech bubble, read-aloud mic, the picture card, the reset-view button, result book.
 import { sfx } from '../core/audio';
 import { t, lang, onLang, setLang } from '../core/lang';
+import { onTalk } from '../core/speech';
 import type { Pastel, WordInfo } from '../game/tower';
+import crownUrl from '../assets/crown.webp';
 import { ANI_ART } from './animals';
+import { blockImg } from './blockshot';
 import { FoxSay } from './foxsay';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
@@ -38,9 +41,15 @@ export class Hud {
     $('#btnReset').addEventListener('click', () => { sfx('tick'); this.onResetView(); });
     // EN | 한: the fox's voice, its bubble and the screen words (core/lang.ts) — in the corner bar
     const langBtn = $('#btnLang');
-    const syncLang = () => langBtn.setAttribute('aria-pressed', String(lang() === 'ko'));
+    const syncLang = () => {
+      const ko = lang() === 'ko';
+      langBtn.dataset.l = ko ? 'ko' : 'en';
+      langBtn.setAttribute('aria-pressed', String(ko));
+      langBtn.querySelectorAll<HTMLElement>('.flag').forEach((f) => f.classList.toggle('on', f.dataset.l === langBtn.dataset.l));
+    };
     langBtn.addEventListener('click', () => { sfx('tap'); setLang(lang() === 'ko' ? 'en' : 'ko'); });
     onLang(syncLang); syncLang();
+    onTalk((on) => this.read.classList.toggle('saying', on));
     $('#btnAgain').addEventListener('click', () => { sfx('start'); this.onAgain(); });
     $('#btnResultHome').addEventListener('click', () => { sfx('tap'); this.onResultHome(); });
   }
@@ -80,7 +89,7 @@ export class Hud {
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
 
-  /** the collected words on a player's card, newest last; `landing` keeps the newest hidden (its block is still flying) */
+  /** collected blocks beside the card (Player 1 on the right, Player 2 on the left), oldest at the bottom; `landing` keeps the newest hidden */
   private renderChips(p: number, got: Got[], landing: boolean) {
     const chips = this.cards[p].querySelector('.chips')!;
     chips.innerHTML = '';
@@ -139,15 +148,20 @@ export class Hud {
    *  the picture over the word, framed in the block's colours, centred on the block between the top bar and the
    *  mic. prepCard sets it up and loads the picture (call it before the block turns away), cardIn turns it to the
    *  child, cardOut away again (then the block turns back in its place). Tapping it plays the word again. */
+  /** the picture card's size (CSS px) on this screen */
+  cardSize() {
+    const W = this.app.clientWidth, H = this.app.clientHeight;
+    const top = H * 0.04, bottom = H * 0.78;                 // the mic's row starts at ~81 % of the height
+    const h = Math.max(120, Math.min(bottom - top, H * 0.54, W * 0.72 * 1.24));
+    return { w: h / 1.24, h, top, bottom };
+  }
   prepCard(url: string, word: string, c: Pastel, at: { x: number; y: number }) {
     const el = this.picCard, img = el.querySelector('img')!, wd = el.querySelector('.pc-word') as HTMLElement;
     this.hideCard();
-    const W = this.app.clientWidth, H = this.app.clientHeight;
-    const top = H * 0.04;
-    const bottom = H * 0.78;                                 // the mic's row starts at ~81 % of the height
-    const h = Math.max(120, Math.min(bottom - top, H * 0.54, W * 0.72 * 1.24)), w = h / 1.24;
+    const { w, h, top, bottom } = this.cardSize();
     const cy = Math.min(Math.max(at.y, top + h / 2), bottom - h / 2);
     Object.assign(el.style, { left: `${at.x}px`, top: `${cy}px`, width: `${w}px`, height: `${h}px` });
+    el.style.setProperty('--cw', `${w}px`);     // the card's own width: its padding follows it (style.css .pic-card)
     el.style.setProperty('--bc', c.base); el.style.setProperty('--tc', c.ink); el.style.setProperty('--sc', c.edge);
     el.style.setProperty('--wf', `${Math.min(h * 0.12, (w * 0.84) / (0.56 * Math.max(3, word.length)))}px`);
     wd.textContent = word;
@@ -200,7 +214,13 @@ export class Hud {
         ${n ? `<span class="strikes" aria-label="wrong blocks">${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(3 - n)}</span>` : ''}
         <div class="words"></div>`;
       const words = page.querySelector('.words')!;
-      got.forEach((g, i) => { const c = chip(g, false); c.style.animationDelay = `${0.5 + i * 0.06}s`; c.addEventListener('click', () => this.onWord(g.word.w)); words.append(c); });
+      // the words as the game's own blocks (ui/blockshot.ts; user: "결과 화면에 나오는 단어블럭들도 정말 젠가 블럭형태로
+      // 넣어줘"), three to a row (four, smaller, only for 13-14: 12 still fit the page); a chip if there is no WebGL
+      words.classList.add('blocks'); words.classList.toggle('many', got.length > 12);
+      got.forEach((g, i) => {
+        const c = blockImg(g.word.w, g.color) ?? chip(g, false);
+        c.style.animationDelay = `${0.5 + i * 0.06}s`; c.addEventListener('click', () => this.onWord(g.word.w)); words.append(c);
+      });
     });
   }
   hideResult() { $('#result').hidden = true; }
@@ -214,4 +234,4 @@ function chip(g: Got, fresh: boolean) {
   return c;
 }
 
-const CROWN = `<svg class="crown" viewBox="0 0 64 44"><path d="M6 14 18 26 32 6l14 20 12-12-5 26H11z" fill="#ffd34d" stroke="#e0a21b" stroke-width="3" stroke-linejoin="round"/><circle cx="6" cy="13" r="4" fill="#ff7aa8"/><circle cx="32" cy="5" r="4.4" fill="#59b7f0"/><circle cx="58" cy="13" r="4" fill="#5fd6a3"/><rect x="11" y="34" width="42" height="6" rx="3" fill="#f5b52e"/></svg>`;
+const CROWN = `<img class="crown" src="${crownUrl}" alt="" draggable="false" />`;

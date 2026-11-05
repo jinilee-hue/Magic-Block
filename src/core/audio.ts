@@ -193,7 +193,7 @@ function tok(t: number, freq: number, vol: number) {
   noise(t, 0.05, 'bandpass', freq * 6, 2.5, vol * 0.6);
 }
 
-export type Sfx = 'tap' | 'slide' | 'knock' | 'pop' | 'success' | 'wrong' | 'whoosh' | 'turn' | 'collapse' | 'start' | 'tick' | 'listen';
+export type Sfx = 'tap' | 'slide' | 'knock' | 'pop' | 'success' | 'wrong' | 'whoosh' | 'turn' | 'collapse' | 'start' | 'tick' | 'listen' | 'burst';
 export function sfx(name: Sfx) {
   if (!ctx || !settings.sfx) return;
   const t = ctx.currentTime + 0.005;
@@ -218,6 +218,8 @@ export function sfx(name: Sfx) {
     // It was two quick rising blips right after the fox's word — heard as the fox hiccuping ("딱꾹질 같은게")
     case 'listen': note(midi(84), t, 0.26, 'sine', 0.13); note(midi(96), t, 0.14, 'sine', 0.025); break;
     case 'start': [72, 76, 79, 84].forEach((m, i) => note(midi(m), t + i * 0.07, 0.35, 'triangle', 0.2)); break;
+    // the right block's pop (Word Mashup's playBurst): a quick twinkle up A5 D6 G6 C7 over a soft low body
+    case 'burst': [880, 1174.66, 1567.98, 2093.0].forEach((f, i) => note(f, t + i * 0.035, 0.18, 'triangle', 0.11)); note(659.25, t, 0.1, 'sine', 0.06); break;
     case 'collapse': {
       for (let k = 0; k < 30; k++) tok(t + 0.05 + Math.pow(Math.random(), 1.6) * 2.4, 150 + Math.random() * 280, 0.16 + Math.random() * 0.3);
       const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(40, t + 1.2);

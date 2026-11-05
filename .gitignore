@@ -5,3 +5,8 @@ dist
 .vite
 __pycache__
 .qa/
+
+# 교재 쪽 화면이 들어간 증빙 파일 — 내부 증빙용, 외부 공유 금지 (tools/word_sources.py --pdf)
+docs/word_sources.xlsx
+# Office lock files (~$이름.xlsx: 엑셀로 열어 둔 동안 생김, 사용자 이름이 들어 있음)
+~$*

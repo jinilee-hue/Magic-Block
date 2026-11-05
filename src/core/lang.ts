@@ -17,6 +17,7 @@ const UI: Record<Lang, Record<string, string>> = {
     a_back: 'Back', a_exit: 'Exit', a_home: 'Home', a_said: 'I said it', a_listen: 'Listen again', a_say: 'Say the word',
     a_settings: 'Settings', a_start: 'Start', a_left: 'Turn left', a_right: 'Turn right', a_volume: 'Volume', a_reset: 'Back to the start view',
     a_strikes: 'Wrong blocks', a_lang: 'Language: English or Korean',
+    pick_reset: 'Pick Again', pick_start: 'Start Game', ready: 'Ready?',
   },
   ko: {
     p1: '플레이어 1', p2: '플레이어 2', player: '플레이어 {n}',
@@ -25,6 +26,7 @@ const UI: Record<Lang, Record<string, string>> = {
     a_back: '뒤로', a_exit: '나가기', a_home: '처음으로', a_said: '다 읽었어요', a_listen: '다시 듣기', a_say: '단어 읽기',
     a_settings: '설정', a_start: '시작', a_left: '왼쪽으로 돌리기', a_right: '오른쪽으로 돌리기', a_volume: '소리 크기', a_reset: '처음 방향으로',
     a_strikes: '틀린 블럭', a_lang: '언어: 영어 또는 한국어',
+    pick_reset: '다시 선택', pick_start: '게임시작', ready: '준비됐니?',
   },
 };
 
