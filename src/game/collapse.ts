@@ -1,10 +1,19 @@
-// The big finish: once every m-block is out, the tower comes down for real (cannon-es rigid bodies), "와르르".
+// The tower comes down for real (cannon-es rigid bodies), "와르르": at the end once every m-block is out, or on a
+// player's 3rd wrong block.
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import type { Stage } from './stage';
 import { L, H, D, type Tower } from './tower';
 
-export function collapse(stage: Stage, tower: Tower, seconds = 4.2): Promise<void> {
+/** how fast a toppled tower starts turning over its foot's edge (rad/s): a full 10-layer tower needs about 0.85 to pass
+ *  its balance point as one rigid piece — more here, as the layers sliding on each other eat some of it */
+const TIP_SPIN = 1.3;
+
+/** how: 'push' — the ending (every m-block out, the tower full of holes): the upper part gets a shove that grows with
+ *  height. 'tip' — a player's 3rd wrong block, often with the tower still nearly full (user: "3번 틀렸는데도 블럭이
+ *  무너지지 않는 경우도 있어"): the shove left it standing — friction between the layers soaked it up, 4 of 30 blocks
+ *  fell — so the whole tower turns over its foot's edge as one piece and breaks up when it hits the table. */
+export function collapse(stage: Stage, tower: Tower, seconds = 4.2, how: 'push' | 'tip' = 'push'): Promise<void> {
   const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -26, 0) });
   world.broadphase = new CANNON.SAPBroadphase(world);
   world.allowSleep = true;
@@ -36,14 +45,29 @@ export function collapse(stage: Stage, tower: Tower, seconds = 4.2): Promise<voi
     pairs.push([b.mesh, body]);
     b.state = 'gone';
   }
-  // the push: the upper part leans over, everything above ~1/3 gets a shove that grows with height
   const side = Math.random() < 0.5 ? 1 : -1;
-  for (const [, body] of pairs) {
-    const y = body.position.y;
-    if (y > 3) {
-      const k = (y - 3) / 8;
-      body.velocity.set(right.x * side * k * 5.5 + (Math.random() - 0.5) * 0.6, 0.4 * k, right.z * side * k * 5.5 + (Math.random() - 0.5) * 0.6);
-      body.angularVelocity.set((Math.random() - 0.5) * 2.5 * k, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2.5 * k);
+  if (how === 'tip') {
+    // a rigid turn about the foot's edge on the side it falls to, v = ω × (p − pivot): the top goes along `fall`, the far
+    // side of the foot lifts, and the layers don't shear — so friction can't stop it
+    const fall = right.clone().multiplyScalar(side);
+    const pivot = fall.clone().multiplyScalar(L / 2);
+    const spin = new THREE.Vector3(fall.z, 0, -fall.x).multiplyScalar(TIP_SPIN * (0.92 + Math.random() * 0.16));
+    const r = new THREE.Vector3(), v = new THREE.Vector3();
+    for (const [, body] of pairs) {
+      r.set(body.position.x - pivot.x, body.position.y, body.position.z - pivot.z);
+      v.crossVectors(spin, r);
+      body.velocity.set(v.x + (Math.random() - 0.5) * 0.3, v.y, v.z + (Math.random() - 0.5) * 0.3);
+      body.angularVelocity.set(spin.x + (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4, spin.z + (Math.random() - 0.5) * 0.4);
+    }
+  } else {
+    // the push: the upper part leans over, everything above ~1/3 gets a shove that grows with height
+    for (const [, body] of pairs) {
+      const y = body.position.y;
+      if (y > 3) {
+        const k = (y - 3) / 8;
+        body.velocity.set(right.x * side * k * 5.5 + (Math.random() - 0.5) * 0.6, 0.4 * k, right.z * side * k * 5.5 + (Math.random() - 0.5) * 0.6);
+        body.angularVelocity.set((Math.random() - 0.5) * 2.5 * k, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2.5 * k);
+      }
     }
   }
   return new Promise((res) => {

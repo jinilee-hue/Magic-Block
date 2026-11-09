@@ -432,7 +432,8 @@ export class Game {
     await say(['t:strike3']);
     if (!this.alive(s)) return;
     sfx('collapse');
-    await collapse(this.stage, this.tower, 3.4);
+    // the whole tower tips over: the ending's shove (push) left a nearly full tower standing
+    await collapse(this.stage, this.tower, 3.4, 'tip');
     if (!this.alive(s)) return;
     await this.result(s, 1 - loser);
   }
