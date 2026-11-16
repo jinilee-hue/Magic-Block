@@ -114,7 +114,9 @@ svg { display: block; }
 @keyframes strikeIn { 0% { transform: scale(.2) rotate(-90deg); } 45% { transform: scale(1.7) rotate(8deg); } }
 .page .strikes { margin: calc(.4 * var(--u)) 0 0; gap: calc(.8 * var(--u)); }
 .page .strikes i { width: calc(4 * var(--u)); }
-.mini-block { display: inline-block; width: calc(5 * var(--u)); height: calc(2.1 * var(--u)); border-radius: calc(.6 * var(--u));
+/* the score bar beside each player's count: fully round ends (user: "플레이어들 박스안에 그래프바 양옆에 라운드 동그랗게"),
+   same pill as the result book's big one */
+.mini-block { display: inline-block; width: calc(5 * var(--u)); height: calc(2.1 * var(--u)); border-radius: 999px;
   background: linear-gradient(180deg, color-mix(in oklab, var(--pc) 40%, #fff), color-mix(in oklab, var(--pc) 70%, #fff));
   box-shadow: 0 calc(.35 * var(--u)) 0 color-mix(in oklab, var(--pc) 75%, #333); }
 /* collected blocks stand beside the player card: Player 1 to the right, Player 2 to the left */
