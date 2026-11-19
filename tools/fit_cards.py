@@ -7,8 +7,8 @@ allows — but no bigger than one common visual size (√(width × height) ≤ T
 don't tower over the thin ones.
 
 usage: /Users/jini/.hermes/bin/uv run --with pillow --with numpy python tools/fit_cards.py   (import_cards.py runs it too)
-Source = the lesson pack's picture (Phonics/공통자료/FP.K.U1L1-lesson-pack = the representative images, phonics-kit rule
-2026-11-19) for the words it has, else Phonics Island's cards2 original (mitten), else a hand-added 512² card here
+Source = the common picture (phonics-kit rule 2026-11-19: the lesson pack's image, else 공통이미지자료/FPR K_U1,2 대표이미지 —
+all 19 incl. mitten), else Phonics Island's cards2 original, else a hand-added 512² card here
 (fitted once: a fitted card is 512 × 532, so a re-run leaves it as it is). moon keeps the pack's square night sky.
 """
 import pathlib
@@ -26,8 +26,9 @@ PACK = lessonpack.load(lessonpack.pack_dir('FP.K.U1L1'))['words']
 
 
 def source(word: str) -> pathlib.Path:
-    e = PACK.get(word)
-    return pathlib.Path(e['image']) if e and e['image'] else PI / f'{word}.webp'
+    # the common picture (lesson pack, else 공통이미지자료/FPR K_U1,2 대표이미지 — mitten), else Phonics Island's card
+    pic = lessonpack.picture(word)
+    return pathlib.Path(pic) if pic else PI / f'{word}.webp'
 # the card's picture box (hud.prepCard + style.css .pic-card): a w × 1.24w card, padding 7 % of its width (5.5 % below),
 # gap 3.5 % of the inner height, the word's line 1.15 × 0.12 h → a box 0.86w wide, 0.905w tall
 BOX_W, BOX_H = 0.86, 0.905

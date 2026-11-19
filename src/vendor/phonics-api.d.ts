@@ -2,7 +2,7 @@
 export {};
 declare global {
   type PhonicsStatus = 'on' | 'nokey' | 'off' | 'down' | 'unknown';
-  interface PhonicsJudge { verdict: 'ok' | 'wrong' | 'unclear' | 'silence'; heard: string; best: string | null; d: Record<string, number> }
+  interface PhonicsJudge { verdict: 'ok' | 'wrong' | 'unclear' | 'silence'; heard: string; best: string | null; d: Record<string, number>; rel: number }
   interface PhonicsCall<T = any> { ok: boolean; status?: number; reason?: string; detail?: string; data?: T; ms?: number } // eslint-disable-line @typescript-eslint/no-explicit-any
   interface PhonicsAnalyze { detected_phonemes: string[]; expected_phonemes: string[]; confidence?: number; [k: string]: unknown }
   interface PhonicsAPIType {

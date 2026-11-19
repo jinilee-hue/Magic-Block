@@ -163,16 +163,20 @@
   // a different vowel changes the word (meat / mop) more than a misheard end consonant (map / "mak"): 1.3
   const sub = (a, b) => a === b ? 0 : NEAR.has(a + ' ' + b) ? 0.4 : VOWELS.has(a) && VOWELS.has(b) ? 1.3 : 1;
   const LEAD = 0.5, TAIL = 0.25, TAIL_VOWEL = 0.1;   // extra sounds around the word ("the moon", Korean "mug-uh") cost little; before it a bit more (banana ⊃ "nan")
-  /** weighted edit distance of the expected word inside what was heard */
+  /** weighted edit distance of the expected word inside what was heard. Sounds before it cost LEAD each — except the
+   *  word's own first sound said again ("/m/ /m/ monkey", "eh eh egg": the phonics chant), which costs CHANT */
+  const CHANT = 0.1;
   PA.distance = function (heard, exp) {
     const n = heard.length, m = exp.length;
     const tail = new Array(n + 1).fill(0);
     for (let i = n - 1; i >= 0; i--) tail[i] = tail[i + 1] + (VOWELS.has(heard[i]) ? TAIL_VOWEL : TAIL);
+    const lead = new Array(n + 1).fill(0);
+    for (let i = 1; i <= n; i++) lead[i] = lead[i - 1] + (m && sub(heard[i - 1], exp[0]) < 1 ? CHANT : LEAD);
     let prev = new Array(m + 1);
     for (let j = 0; j <= m; j++) prev[j] = j;
     let best = prev[m] + tail[0];
     for (let i = 1; i <= n; i++) {
-      const cur = new Array(m + 1); cur[0] = i * LEAD;
+      const cur = new Array(m + 1); cur[0] = lead[i];
       for (let j = 1; j <= m; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + sub(heard[i - 1], exp[j - 1]));
       prev = cur;
       best = Math.min(best, cur[m] + tail[i]);
@@ -181,7 +185,7 @@
   };
   /**
    * data = an analyze() result; target = the word asked for; words = the other words on screen; table = {word: [phonemes]}.
-   * -> {verdict: 'ok' | 'wrong' | 'unclear' | 'silence', heard, best, d}
+   * -> {verdict: 'ok' | 'wrong' | 'unclear' | 'silence', heard, best, d, rel}
    *   ok      = within ~1 sound per 3 of the target, and no other word on screen is clearly closer (by 0.6+).
    *             Lenient on purpose: ih/iy, a misheard end consonant and a Korean end vowel still pass.
    *   wrong   = another word on screen was heard (almost) exactly and clearly closer than the target
@@ -189,7 +193,7 @@
    */
   PA.judge = function (data, target, words, table) {
     const heard = PA.norm(data && data.detected_phonemes);
-    const res = { verdict: 'unclear', heard: heard.join(' '), best: null, d: {} };
+    const res = { verdict: 'unclear', heard: heard.join(' '), best: null, d: {}, rel: Infinity };
     if (!heard.length) { res.verdict = 'silence'; return res; }
     const cand = [...new Set([target, ...(words || [])])].filter(w => table[w] && table[w].length);
     for (const w of cand) res.d[w] = PA.distance(heard, PA.norm(table[w]));
@@ -198,6 +202,7 @@
     res.best = dt <= dr ? target : rival;
     if (dt == null || (data.confidence != null && data.confidence < 0.4)) return res;
     const len = PA.norm(table[target]).length || 1;
+    res.rel = Math.round(dt / len * 100) / 100;   // how far from the target, per sound (a game may call ≤ 0.7 "a try at it")
     if (dt / len <= 0.4 && dt - dr < 0.6) res.verdict = 'ok';
     else if (dr <= 0.5 && dt - dr >= 0.6) res.verdict = 'wrong';
     return res;
