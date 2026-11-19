@@ -5,6 +5,7 @@
 // it); in a game (or on the result book) one tap goes back to the title, the game's first screen.
 import { setVolume, settings, sfx, unlock } from '../core/audio';
 import { stopSpeech } from '../core/speech';
+import '../vendor/phonics-api.js';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 
@@ -54,6 +55,13 @@ export function cornerControls(o: { leave: () => void }) {
     if (history.length > 1) { history.back(); setTimeout(() => location.reload(), 700); }
     else { window.close(); setTimeout(() => location.reload(), 300); }
   });
+
+  // phonics-api key (title only): a teacher enters it once per device; the dot shows who judges the readings
+  const key = $<HTMLButtonElement>('#btnKey'), PA = window.PhonicsAPI;
+  const showApi = () => { key.dataset.api = PA.status(); };
+  window.addEventListener('phonicsapi:status', showApi);
+  key.addEventListener('click', async (e) => { e.stopPropagation(); unlock(); sfx('tap'); await PA.keyDialog(); showApi(); });
+  void PA.init().then(showApi);
 
   // the game's HUD keeps clear of the bar (it gets wider when EN | 한 shows in the game): CSS --sys-w
   const bar = $('.sysbar');

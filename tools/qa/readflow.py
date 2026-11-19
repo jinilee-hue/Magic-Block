@@ -1,8 +1,11 @@
 """Read-aloud check in the real game (headless Chrome, never the user's browser): the microphone is fed with voice
-clips (micTest.feed → the same voice detector, resampling and on-device recogniser as a real child), one turn each.
-usage: uv run --with playwright python tools/qa/readflow.py [base] [clip_dir]
+clips (micTest.feed → the same voice detector and resampling as a real child), one turn each.
+usage: uv run --with playwright python tools/qa/readflow.py [api|device] [base]
+  api (default): the phonics-api key (~/.config/phonics-api/key, never printed) goes into this browser's localStorage
+  → the company server judges; device: no key → the on-device whisper judges.
+Clips: phonics-api TTS (cached in phonics-kit/cache/qa/readflow/); Korean voices reading Hangul = a Korean accent.
 Cases: Korean-accented / child readings that must pass, the wrong first sound, silence, and 3 non-readings
-("Good try!" ends the turn). Prints the game log + how long each check took in the browser.
+("Good try!" ends the turn). Prints the game log + each check from the dev log.
 """
 import asyncio
 import json
@@ -12,16 +15,31 @@ import urllib.parse
 
 from playwright.async_api import async_playwright
 
-BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:5195/'
-RAW = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else '/Users/jini/.hermes/cache/scratch/jenga/sttset/raw')
-CASES = [  # (target, [clips fed in order: file name in RAW or None = silence], expected end of the turn)
-    # the last clip of a 'read' case is the fox's own clear reading: a fallback so the turn always ends
-    ('map', ['en-US-AnaNeural_-10%_cap.mp3', 'ko-KR-SunHiNeural_+0%_맵.mp3', 'en-US-AnaNeural_-10%_map.mp3'], 'read'),
-    ('mug', ['en-US-AnaNeural_-10%_mug.mp3'], 'read'),
-    ('milk', [None, 'ko-KR-InJoonNeural_+0%_밀크.mp3', 'en-US-AnaNeural_-10%_milk.mp3'], 'read'),
-    ('mitten', ['en-US-AnaNeural_-10%_kitten.mp3', 'en-US-GuyNeural_+0%_kitten.mp3', 'ko-KR-SunHiNeural_+0%_키튼.mp3'], 'tried'),
-    ('mouse', ['en-US-GuyNeural_+0%_house.mp3', 'en-GB-MaisieNeural_-5%_mouse.mp3', 'en-US-AnaNeural_-10%_mouse.mp3'], 'read'),
+MODE = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in ('api', 'device') else 'api'
+BASE = next((a for a in sys.argv[1:] if a.startswith('http')), 'http://127.0.0.1:5195/')
+KIT = pathlib.Path.home() / 'Documents/Jini/2026/Phonics/phonics-kit'
+sys.path.insert(0, str(KIT / 'tools'))
+import papi  # noqa: E402
+
+RAW = KIT / 'cache' / 'qa' / 'readflow'
+RAW.mkdir(parents=True, exist_ok=True)
+KEY = (pathlib.Path.home() / '.config/phonics-api/key').read_text().strip() if MODE == 'api' else ''
+CASES = [  # (target, [clips fed in order: (voice, text) or None = silence], expected end of the turn)
+    # the last clip of a 'read' case is a clear adult reading: a fallback so the turn always ends
+    ('map', [('en-US-AnaNeural', 'cap'), ('en-US-AnaNeural', 'map'), ('en-US-GuyNeural', 'map')], 'read'),
+    ('mug', [('ko-KR-SunHiNeural', '머그'), ('en-US-GuyNeural', 'mug')], 'read'),
+    ('milk', [None, ('ko-KR-InJoonNeural', '밀크'), ('en-US-GuyNeural', 'milk')], 'read'),
+    ('mitten', [('en-US-AnaNeural', 'kitten'), ('en-US-GuyNeural', 'kitten'), ('ko-KR-SunHiNeural', '키튼')], 'tried'),
+    ('mouse', [('en-US-GuyNeural', 'house'), ('en-GB-MaisieNeural', 'mouse'), ('en-US-GuyNeural', 'mouse')], 'read'),
 ]
+
+
+def clip_name(c):
+    voice, text = c
+    f = RAW / f'{voice}_{text}.wav'
+    if not f.exists():
+        f.write_bytes(papi.tts(text, voice))
+    return f.name
 
 
 async def main():
@@ -36,8 +54,9 @@ async def main():
 
         async def clip(route):
             name = urllib.parse.unquote(route.request.url.split('/qa-clip/')[1])
-            await route.fulfill(body=(RAW / name).read_bytes(), content_type='audio/mpeg')
+            await route.fulfill(body=(RAW / name).read_bytes(), content_type='audio/wav')
         await pg.route('**/qa-clip/**', clip)
+        await pg.add_init_script("localStorage.%s" % (f"setItem('phonics_api_key', {json.dumps(KEY)})" if KEY else "removeItem('phonics_api_key')"))
         await pg.goto(f'{BASE}?nointro&nopick&seed=5&m=' + ','.join(t for t, _, _ in CASES), wait_until='load')
         for _ in range(90):
             await pg.wait_for_timeout(1000)
@@ -50,10 +69,10 @@ async def main():
         await pg.evaluate('document.querySelector("#btnStart").click()')
         await pg.wait_for_function('window.__pj.game.state === "choose"', timeout=90000)
         st = await pg.evaluate('''async () => { for (let i = 0; i < 240 && window.__pj.sttState() === 'loading'; i++) await new Promise(r => setTimeout(r, 500)); return window.__pj.sttState(); }''')
-        print('recogniser:', st)
+        print('recogniser:', st, '| phonics-api:', await pg.evaluate('window.PhonicsAPI.status()'), f'({MODE})')
         for target, clips, want in CASES:
             await pg.wait_for_function('window.__pj.game.state === "choose"', timeout=120000)
-            feeds = json.dumps([None if c is None else f'./qa-clip/{urllib.parse.quote(c)}' for c in clips])
+            feeds = json.dumps([None if c is None else f'./qa-clip/{urllib.parse.quote(clip_name(c))}' for c in clips])
             n = await pg.evaluate('window.__pj.game.test.log.length')
             await pg.evaluate(f'''(() => {{ const pj = window.__pj; for (const u of {feeds}) pj.micTest.feed(u, 500);
               pj.game.choose(pj.tower.byWord('{target}')); }})()''')
@@ -73,7 +92,10 @@ async def main():
     for raw in logs:
         try:
             d = json.loads(raw)
-            print(f"  {d.get('target'):8s} {d.get('result'):7s} heard={d.get('text', '')!r:14} sT={d.get('sT')} gap={d.get('gap')} rgap={d.get('rgap')} rival={d.get('rival')} pNo={d.get('pNo')} {d.get('ms')} ms {d.get('why', '')}")
+            if d.get('by') == 'phonics-api':
+                print(f"  {d.get('target'):8s} {d.get('result'):7s} phonics-api heard [{d.get('heard')}] {d.get('ms')} ms d={d.get('d')}")
+            else:
+                print(f"  {d.get('target'):8s} {d.get('result'):7s} heard={d.get('text', '')!r:14} sT={d.get('sT')} gap={d.get('gap')} rgap={d.get('rgap')} rival={d.get('rival')} pNo={d.get('pNo')} {d.get('ms')} ms {d.get('why', '')}")
         except Exception:
             pass
     print('console:', errors if errors else 'clean')

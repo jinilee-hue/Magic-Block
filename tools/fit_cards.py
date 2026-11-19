@@ -7,10 +7,12 @@ allows — but no bigger than one common visual size (√(width × height) ≤ T
 don't tower over the thin ones.
 
 usage: /Users/jini/.hermes/bin/uv run --with pillow --with numpy python tools/fit_cards.py   (import_cards.py runs it too)
-Source = Phonics Island's cards2 originals when there, else a hand-added 512² card here (fitted once: a fitted card is
-512 × 532, so a re-run leaves it as it is).
+Source = the lesson pack's picture (Phonics/공통자료/FP.K.U1L1-lesson-pack = the representative images, phonics-kit rule
+2026-11-19) for the words it has, else Phonics Island's cards2 original (mitten), else a hand-added 512² card here
+(fitted once: a fitted card is 512 × 532, so a re-run leaves it as it is). moon keeps the pack's square night sky.
 """
 import pathlib
+import sys
 
 import numpy as np
 from PIL import Image
@@ -18,6 +20,14 @@ from PIL import Image
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PI = pathlib.Path.home() / 'Documents/Jini/2026/Phonics/Phonics_island/phonics-island-3d/public/cards2'
 OUT = ROOT / 'public' / 'cards'
+sys.path.insert(0, str(pathlib.Path.home() / 'Documents/Jini/2026/Phonics/phonics-kit/tools'))
+import lessonpack  # noqa: E402
+PACK = lessonpack.load(lessonpack.pack_dir('FP.K.U1L1'))['words']
+
+
+def source(word: str) -> pathlib.Path:
+    e = PACK.get(word)
+    return pathlib.Path(e['image']) if e and e['image'] else PI / f'{word}.webp'
 # the card's picture box (hud.prepCard + style.css .pic-card): a w × 1.24w card, padding 7 % of its width (5.5 % below),
 # gap 3.5 % of the inner height, the word's line 1.15 × 0.12 h → a box 0.86w wide, 0.905w tall
 BOX_W, BOX_H = 0.86, 0.905
@@ -55,7 +65,7 @@ def shown(im: Image.Image):
 def fit_all():
     rows = []
     for dst in sorted(OUT.glob('*.webp')):
-        src = PI / dst.name
+        src = source(dst.stem)
         if src.exists():
             im = Image.open(src)
         elif Image.open(dst).size == (512, 512):

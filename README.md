@@ -56,17 +56,25 @@
 
 ## 만든 방법
 - three.js(WebGL) 탑, 마지막 붕괴는 cannon-es 물리.
-- 음성 인식: 기기 안에서만 처리(whisper-tiny.en, transformers.js). 아이 목소리는 어디로도 보내지 않습니다. 마이크가 없으면 👍 버튼으로 확인.
-- 목소리: 단어·튜터 대사(영어·한국어 각 39줄) = 사내 TTS(Qwen3-TTS `aiden`, 7살 남자아이 말투 — Phonics Island와 같은 목소리) / 첫소리 = FPR K 공식 녹음.
-  만들 때 whisper로 다시 들어 보고, 단어로 안 들리면 말투 지시를 바꿔 다시 만듭니다(`tools/build_voice.py`).
-- 그림 카드: FPR K 공식 그림(Phonics Island에서 가져온 512px webp) → `public/cards/`. `tools/fit_cards.py`가 그림마다 테두리 여백을 걷어 카드의 그림 칸 모양(512×539)에 맞춰 넣음 — 칸이 허락하는 만큼 크게, 단 둥글고 꽉 찬 그림이 가는 그림보다 너무 커 보이지 않게 같은 '보이는 크기'(√(가로×세로) ≤ 카드 폭의 0.76)로 맞춤(납작한 map·mat, 가는 man·mop은 칸 끝까지). 카드 안쪽 여백은 카드 자기 폭의 7%(예전 % 여백은 화면 폭 기준이라 넓은 화면에서 그림 칸이 카드 폭의 56%로 줄었음). Unit 1 m단어 20개 중 19개(mailbox 없음 — `public/cards/mailbox.webp`로 넣고 `tools/import_cards.py`를 다시 돌리면 나옵니다).
+- 읽기 판정(파닉스 공통 규칙, 2026-11-19 — `../phonics-kit`): 첫 화면 오른쪽 위 열쇠 버튼에 phonics-api 키를 넣은 기기에서는
+  회사 서버(`/v1/speech/analyze`, 사내 Wav2Vec2 — 녹음은 저장하지 않음)가 들은 소리열을 단어와 그 라임 단어(첫소리만 다른 단어,
+  b로 시작하는 것은 빼고)와 비교해 판정합니다(`src/core/apiCheck.ts`). 점: 초록 = 서버, 회색 = 기기 안.
+  키가 없거나 오프라인·혼잡·6초 초과면 기기 안 whisper-tiny.en(transformers.js)이 판정 — 이때 목소리는 기기 밖으로 나가지 않습니다.
+  키는 코드·저장소에 넣지 않습니다(공개 repo). 마이크가 없으면 👍 버튼으로 확인.
+- 목소리: 튜터 대사(영어·한국어 각 39줄) = 사내 TTS(Qwen3-TTS `aiden`, 7살 남자아이 말투 — Phonics Island와 같은 목소리).
+  단어와 /m/ = lesson pack FP.K.U1L1의 음성(`tools/pack_voice.py`; m-단어 18개 + ten), pack에 없는 단어(mitten, mailbox, 다른 레슨)만 aiden,
+  다른 첫소리 = FPR K 공식 녹음. TTS는 만들 때 whisper로 다시 들어 보고, 단어로 안 들리면 말투 지시를 바꿔 다시 만듭니다(`tools/build_voice.py`).
+- 그림 카드: lesson pack FP.K.U1L1 그림(= 대표이미지, 18개 — moon은 원본의 남색 사각 하늘 그대로), pack에 없는 mitten은 FPR K 공식 그림(Phonics Island 512px webp) → `public/cards/`. `tools/fit_cards.py`가 그림마다 테두리 여백을 걷어 카드의 그림 칸 모양(512×539)에 맞춰 넣음 — 칸이 허락하는 만큼 크게, 단 둥글고 꽉 찬 그림이 가는 그림보다 너무 커 보이지 않게 같은 '보이는 크기'(√(가로×세로) ≤ 카드 폭의 0.76)로 맞춤(납작한 map·mat, 가는 man·mop은 칸 끝까지). 카드 안쪽 여백은 카드 자기 폭의 7%(예전 % 여백은 화면 폭 기준이라 넓은 화면에서 그림 칸이 카드 폭의 56%로 줄었음). Unit 1 m단어 20개 중 19개(mailbox 없음 — `public/cards/mailbox.webp`로 넣고 `tools/import_cards.py`를 다시 돌리면 나옵니다).
 - 여우: `tools/build_tutor.py`(포즈 자르기 · 배경 지우기 · 4배 확대) → `tools/build_tutor_assemble.py`(포즈 프레임, 입을 지운 muzzle, 뼈대 점) → `tools/build_tutor_rig.py`(부위 가중치, 눈꺼풀) → `public/fox/`.
 
 ## 도구
 | 파일 | 하는 일 |
 |---|---|
 | `tools/build_words.py` | 단어 목록 만들기 (Unit 1) |
-| `tools/build_voice.py` | 단어·튜터 음성(사내 TTS, 사내망에서), 공식 첫소리 복사 → `public/voice/`, `src/data/voice.json` |
+| `tools/build_voice.py` | 단어·튜터 음성(사내 TTS, 사내망에서), 공식 첫소리 복사 → `public/voice/`, `src/data/voice.json`; 끝에 `pack_voice.py` |
+| `tools/pack_voice.py` | lesson pack의 단어 음성·/m/로 덮어쓰기(사내 TTS 없이 단독 실행 가능) → 이어서 `build_mouth_cues.py` |
+| `tools/build_phonemes.py` | phonics-api 판정용 기대 소리열(단어 + 라임 단어, 서버 G2P) → `src/data/phonemes.json` |
+| `tools/make_key_btn.py` | 열쇠 버튼 그림(나가기 버튼 바탕을 분홍으로 + 흰 열쇠) → `src/assets/btn_key.webp` |
 | `tools/build_mouth_cues.py` | 음성 클립마다 입 모양 시간표(Rhubarb) → `src/data/mouth.json` |
 | `tools/build_tutor.py`, `tools/build_tutor_assemble.py` | 여우 포즈 그림 만들기 → `public/fox/` |
 | `tools/build_tutor_rig.py`, `tools/tutor_eyes.py` | 여우 부위 가중치·눈꺼풀 → `public/fox/*_w.webp`, `*_e.webp`, `fox.json` |

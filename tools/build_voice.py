@@ -5,6 +5,8 @@
   → public/voice/t_<key>.mp3, w_<word>.mp3
 - First sounds: OFFICIAL FPR K letter-sound recordings copied from Phonics Island (public/fpr) → public/voice/s_<x>.mp3
   (TTS can't say a lone phoneme like /m/ reliably; the textbook recordings can.)
+- Words the lesson pack FP.K.U1L1 has (and /m/): the pack's own audio instead (tools/pack_voice.py, run at the end;
+  phonics-kit rule 2026-11-19) — the company TTS reads only the words the pack lacks (mitten, mailbox, the other lessons).
 - The company TTS is unreliable on ONE word: a take can come back as "Ahh... meat.", "A mess.", a 7-second drawl, or
   "hat" without its h. Each take is read back with whisper-base.en (tools/qa/voice_check.ts) and retaken with the next
   instruction wording until it's heard as the word (the server caches identical requests, so a retake must change the
@@ -403,3 +405,9 @@ JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR, 'lin
 d = sorted((v[3], k) for k, v in manifest.items())
 size = sum((OUT / v[0]).stat().st_size for v in manifest.values())
 print(f'{len(manifest)} clips · {size / 1024:.0f} KB · shortest {d[:3]} · longest {d[-3:]}')
+
+# the lesson pack's word clips and /m/ over the TTS ones (phonics-kit rule)
+sys.path.insert(0, str(ROOT / 'tools'))
+import pack_voice  # noqa: E402
+
+pack_voice.apply()

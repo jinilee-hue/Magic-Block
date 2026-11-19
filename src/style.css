@@ -352,6 +352,12 @@ svg { display: block; }
 .sysbar { position: absolute; z-index: 55; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); right: calc(2.4 * var(--u)); display: flex; gap: calc(1.6 * var(--u)); align-items: center; transition: opacity .4s; }
 .app[data-screen="intro"] .sysbar { opacity: 0; pointer-events: none; }
 .app:not([data-screen="game"]) .sysbar .lang-tog { display: none; }
+/* phonics-api key (title only, tools/make_key_btn.py art): a teacher enters it once per device; the dot = green when the
+   company server judges the readings, grey when the on-device whisper does (no key / offline) */
+.app:not([data-screen="title"]) .sysbar #btnKey { display: none; }
+#btnKey .dot { position: absolute; right: 1%; top: 1%; width: 24%; aspect-ratio: 1; border-radius: 50%; background: #b9b2c9;
+  box-shadow: 0 0 0 calc(.32 * var(--u)) #fffef6; pointer-events: none; transition: background .2s; }
+#btnKey[data-api="on"] .dot { background: #34c98a; }
 .vol { position: relative; }
 /* the user's button art (jenga_btn_sound / jenga_btn_out, v3: yellow square + white speaker, blue square + white door;
    both ~square → 280 px webp, shown 1:1) */

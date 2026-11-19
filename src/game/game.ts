@@ -9,6 +9,7 @@ import { micBlocked, micSupported, openMic, prepareForStt, type Mic } from '../c
 import { scoreReading } from '../core/readCheck';
 import { isTalking, say, stopSpeech, wait } from '../core/speech';
 import { check, sttState, sttWhenReady } from '../core/stt';
+import { apiCheck } from '../core/apiCheck';
 import type { Confetti } from '../ui/confetti';
 import type { Fox } from '../ui/fox';
 import type { Got, Hud } from '../ui/hud';
@@ -386,9 +387,18 @@ export class Game {
     if (r.kind === 'aborted') { this.hud.micState('idle'); if (this.wantReplay) { this.wantReplay = false; return 'again'; } return 'silence'; }
     if (r.kind === 'silence') { this.hud.micState('idle'); devlog({ target, result: 'silence', lv: r.lv }); return 'silence'; }
     this.hud.micState('thinking');
+    const pcm16 = await prepareForStt(r.pcm, r.sr);
+    // the company phonics-api first (a key on this device), the on-device whisper when it can't answer
+    const api = await apiCheck(pcm16, word);
+    if (api) {
+      this.lastHeard = api.heard;
+      devlog({ target, by: 'phonics-api', result: api.verdict, heard: api.heard, d: api.d, ms: api.ms, voicedMs: r.voicedMs, lv: r.lv });
+      if (api.verdict === 'silence') { this.hud.micState('idle'); return 'silence'; }   // no speech sound in it: never a pass
+      return api.verdict === 'ok' ? 'ok' : 'miss';
+    }
     if (sttState() === 'loading') await sttWhenReady(8000);
     if (sttState() !== 'ready') { devlog({ target, result: 'ok', why: `recogniser ${sttState()}` }); return 'ok'; } // a clear voice was heard
-    const out = await check(await prepareForStt(r.pcm, r.sr), target, word.alts ?? [], word.rivals ?? []);
+    const out = await check(pcm16, target, word.alts ?? [], word.rivals ?? []);
     if (!out) { devlog({ target, result: 'ok', why: 'check failed' }); return 'ok'; }
     this.lastHeard = out.text;
     devlog({ target, result: out.ok ? 'ok' : 'miss', text: out.text, exact: out.exact, sT: out.sT, gap: out.gap, rgap: out.rgap, rival: out.rival, pNo: out.pNo, ms: out.ms, voicedMs: r.voicedMs, lv: r.lv });
