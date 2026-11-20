@@ -499,3 +499,7 @@ svg { display: block; }
 .lang-tog .flag { position: relative; z-index: 1; display: grid; place-items: center; width: calc(.84 * var(--hb)); height: calc(.84 * var(--hb)); }
 .lang-tog .flag svg { width: 86%; height: 86%; border-radius: 50%; box-shadow: none; filter: none; transition: transform .25s ease, opacity .25s ease, filter .25s ease; }
 .lang-tog .flag:not(.on) svg { transform: scale(.68); opacity: .6; filter: grayscale(.3); }
+
+/* the language is chosen on the intro (title) screen only, in every phonics game (user 2026-11-20: "국기선택은 인트로에만 넣어") */
+.app[data-screen="title"] .sysbar .lang-tog { display: flex; }
+.app:not([data-screen="title"]) .sysbar .lang-tog { display: none; }
