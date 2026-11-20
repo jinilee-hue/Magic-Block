@@ -1,5 +1,11 @@
 """Pre-made voice clips (no device speechSynthesis: the voice must be the same on every device).
 
+2026-11-20 (user: "Ava Multilingual · aiden 높이·빠르기 이걸로 통일"): the default engine is now `phonics-api` — tutor lines,
+Korean lines and the words the official recordings lack in ONE voice for all the phonics games: Azure Ava Multilingual
+through the company phonics-api, shaped to the old 'aiden' pitch/pace (phonics-kit tools/tts_voice.tutor; no retakes —
+Azure says what it is given). Run: /Users/jini/.local/bin/uv run --with numpy python tools/build_voice.py
+`--engine qwen` = the previous company-TTS boy voice ('aiden', below), `--engine edge` = the old offline prototype.
+
 - Tutor lines + word clips: the company TTS (Qwen3-TTS, OpenAI-style /audio/speech), preset 'aiden' with a cheerful
   7-year-old-boy instruction — the one tutor voice the user picked for Phonics Island, used for everything the fox says.
   → public/voice/t_<key>.mp3, w_<word>.mp3
@@ -38,7 +44,7 @@ OUT = ROOT / 'public' / 'voice'
 JSON_OUT = ROOT / 'src' / 'data' / 'voice.json'
 PI = pathlib.Path.home() / 'Documents/Jini/2026/Phonics/Phonics_island/phonics-island-3d/public'
 SR = 24000
-ENGINE = sys.argv[sys.argv.index('--engine') + 1] if '--engine' in sys.argv else 'qwen'
+ENGINE = sys.argv[sys.argv.index('--engine') + 1] if '--engine' in sys.argv else 'phonics-api'
 CACHE = pathlib.Path.home() / '.cache' / 'phonics-jenga' / ('voice' if ENGINE == 'edge' else 'voice_qwen')
 # read-back model: whisper-base.en if it has been downloaded (much better on single words), else the game's tiny.en
 CHECK_MODELS = pathlib.Path.home() / '.cache' / 'phonics-jenga' / 'models'
@@ -318,7 +324,23 @@ def trim(raw, dst, target_db=-17, floor_db=-50):
 
 CACHE.mkdir(parents=True, exist_ok=True)
 chosen = {}
-if ENGINE == 'edge':
+if ENGINE == 'phonics-api':
+    # the unified tutor voice of the phonics games (user 2026-11-20): Azure Ava Multilingual through the company
+    # phonics-api, shaped to the old 'aiden' pitch + pace (phonics-kit tools/tts_voice.tutor) — English and Korean in one
+    # voice; the words the lesson pack has are replaced by its recordings below (pack_voice), letter sounds stay official
+    sys.path.insert(0, str(pathlib.Path.home() / 'Documents/Jini/2026/Phonics/phonics-kit/tools'))
+    import tts_voice  # noqa: E402
+    import tutor_takes  # noqa: E402  — every take read back (whisper small), retaken with another wording until heard right
+    # the words the lesson pack has get its recordings below (pack_voice): no TTS take needed for them
+    import lessonpack  # noqa: E402
+    PACKED = set(lessonpack.load(lessonpack.pack_dir('FP.K.U1L1'))['words'])
+    jobs = [(key, text, 'ko' if key[0] == 'k' else 'en') for key, text in JOBS if not (key[0] == 'w' and text in PACKED)]
+    chosen, never = tutor_takes.best(jobs)
+    for key, text in JOBS:                 # pack words: a placeholder take, replaced by pack_voice at the end
+        chosen.setdefault(key, tts_voice.tutor(f'{text.capitalize()}.', 'en'))
+    if never:
+        print('never heard right (kept take 1 — check by ear):', never)
+elif ENGINE == 'edge':
     todo = []
     for key, text in JOBS:
         if key[0] == 'k':
@@ -398,6 +420,7 @@ for L in sorted(set(letters) | {'m'}):
     place(f's:{L}', src, OUT / f's_{L}.mp3', target_db=-18, floor_db=-40)
 
 voice = {'engine': 'edge', 'voice': VOICE, 'word': [WORD_RATE, WORD_PITCH], 'tutor': [TUTOR_RATE, TUTOR_PITCH]} if ENGINE == 'edge' \
+    else {'engine': 'phonics-api', 'voice': tts_voice.TUTOR_VOICE, 'shape': tts_voice.TUTOR_SHAPE} if ENGINE == 'phonics-api' \
     else {'engine': 'company-tts', 'voice': QWEN_VOICE}
 # 'lines' = what each tutor line says, for the fox's speech bubble (ui/foxsay.ts); 'lines_ko' = the same in Korean
 JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR, 'lines_ko': {k: ko_show(v) for k, v in TUTOR_KO.items()}},
