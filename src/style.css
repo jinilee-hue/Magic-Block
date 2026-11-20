@@ -503,3 +503,7 @@ svg { display: block; }
 /* the language is chosen on the intro (title) screen only, in every phonics game (user 2026-11-20: "국기선택은 인트로에만 넣어") */
 .app[data-screen="title"] .sysbar .lang-tog { display: flex; }
 .app:not([data-screen="title"]) .sysbar .lang-tog { display: none; }
+
+/* the key button on the top left like the other phonics games (user 2026-11-20: "매직블럭의 키 넣는 버튼은 왼쪽에 넣어줘") */
+.sysbar.sysbar-left { right: auto; left: calc(2.4 * var(--u)); }
+@media (min-aspect-ratio: 4/3) { .sysbar.sysbar-left { right: auto; left: calc(3 * var(--tu) + env(safe-area-inset-left)); } }
