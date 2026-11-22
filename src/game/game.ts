@@ -13,7 +13,7 @@ import { isTalking, say, stopSpeech, wait, type Part } from '../core/speech';
 import { check, sttState, sttWhenReady } from '../core/stt';
 import { apiCheck } from '../core/apiCheck';
 import '../vendor/phonics-progress.js';
-import { albumAdd, starsFor } from '../ui/album';
+import { earn, starsFor } from '../ui/rewards';
 import type { Confetti } from '../ui/confetti';
 import type { Fox } from '../ui/fox';
 import type { Got, Hud } from '../ui/hud';
@@ -336,7 +336,7 @@ export class Game {
     }
     const me = this.players[this.turn];
     me.got.push({ word: b.word, color: b.color });
-    albumAdd(b.word.w);                    // its picture card goes into MY CARDS (kept if the block is lost later)
+    earn();                                // one block in the wallet for the animal shop (kept if the block is lost later)
     const tgt = this.hud.chipSlot(this.turn, me.got);
     sfx('whoosh');
     this.stage.focus(false);

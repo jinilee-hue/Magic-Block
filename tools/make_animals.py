@@ -1,12 +1,15 @@
-"""The four player animals from the user's art (~/Downloads/jenga_<animal>.png, opened by exact name only):
+"""The player animals from the user's art (~/Downloads/jenga_<animal>.png, opened by exact name only):
 round badges (cream 3D ring, plush animal inside) → src/assets/ani_<animal>.webp, 512 px, transparent outside the ring.
+The shop's four (koala, penguin, hamster, lion) came as finished webp with a ~19 px margin round the ring: with no
+Downloads file, the asset itself is re-fitted (ring to the square's edges, like the first four).
 
 Some come without transparency (kitty was RGB on white): the ring is a circle touching the square, so the cut is a
 circle fitted to the badge's own outline (least squares on the edge of the not-white area), drawn anti-aliased.
 
-    uv run --with pillow --with numpy --with scipy python tools/make_animals.py
+    uv run --with pillow --with numpy --with scipy python tools/make_animals.py [animal ...]
 """
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -15,7 +18,7 @@ from scipy import ndimage as ndi
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = Path(os.path.expanduser('~/Downloads'))
-ANIMALS = ('bunny', 'kitty', 'puppy', 'panda')
+ANIMALS = ('bunny', 'kitty', 'puppy', 'panda', 'koala', 'penguin', 'hamster', 'lion')
 SIZE = 512
 
 
@@ -44,8 +47,10 @@ def circle_alpha(h, w, cx, cy, r, ss=4):
 
 def main():
     out_dir = ROOT / 'src' / 'assets'
-    for n in ANIMALS:
-        im = Image.open(SRC / f'jenga_{n}.png')
+    for n in sys.argv[1:] or ANIMALS:
+        src = SRC / f'jenga_{n}.png'
+        im = Image.open(src if src.exists() else out_dir / f'ani_{n}.webp')
+        im.load()
         rgba = np.asarray(im.convert('RGBA')).astype(np.float32)
         h, w = rgba.shape[:2]
         if im.mode == 'RGBA' and (rgba[..., 3] < 8).mean() > 0.1:

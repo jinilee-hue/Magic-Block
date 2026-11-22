@@ -16,7 +16,7 @@ import { Title } from './ui/title';
 import { Picker } from './ui/picker';
 import { twinkle } from './ui/twinkle';
 import { cornerControls } from './ui/corner';
-import { Album } from './ui/album';
+import { Shop } from './ui/shop';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const params = new URLSearchParams(location.search);
@@ -92,8 +92,11 @@ async function boot() {
   game.onTitle = () => title.enter();
   // START → Player 1 and Player 2 pick their animals → the game (?nopick: straight in, for the QA scripts)
   const picker = new Picker(hud.app, fox);
-  // MY CARDS: the title's album button opens the cards collected on this device (ui/album.ts)
-  const album = new Album(fox);
+  // the animal shop: the title's paw button (or a locked animal in the picker) opens it; the blocks read right buy
+  // new animals (ui/shop.ts, ui/rewards.ts)
+  const shop = new Shop(hud.app, fox);
+  picker.onLocked = (a) => shop.show(a);
+  shop.onChange = () => picker.refresh();
   // the corner bar (sound, exit) is on the title and in the game: in a game, exit goes back to the title
   cornerControls({ leave: () => { picker.close(); hud.hideResult(); game.toTitle(); } });
 
@@ -145,7 +148,7 @@ async function boot() {
   if (await intro) playIntro(hud, toTitle); else toTitle();
 
   // test / debug hooks
-  Object.assign(window, { __pj: { game, tower, stage, hud, fox, confetti, say, said, sttState, begin, micTest, voiceLevel, album } });
+  Object.assign(window, { __pj: { game, tower, stage, hud, fox, confetti, say, said, sttState, begin, micTest, voiceLevel, shop } });
 }
 
 void boot();

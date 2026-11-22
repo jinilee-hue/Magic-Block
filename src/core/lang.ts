@@ -14,6 +14,7 @@ const subs: ((l: Lang) => void)[] = [];
 const UI: Record<string, string> = {
   p1: 'Player 1', p2: 'Player 2', player: 'Player {n}',
   bunny: 'Bunny', kitty: 'Kitty', puppy: 'Puppy', panda: 'Panda',
+  koala: 'Koala', penguin: 'Penguin', hamster: 'Hamster', lion: 'Lion', animals: 'ANIMALS', a_animals: 'Animals', a_close: 'Close',
   again: 'Play Again', home: 'Home', music: 'Music', sounds: 'Sounds', skip: 'SKIP',
   a_back: 'Back', a_exit: 'Exit', a_home: 'Home', a_listen: 'Listen again', a_say: 'Say the word',
   a_settings: 'Settings', a_start: 'Start', a_left: 'Turn left', a_right: 'Turn right', a_volume: 'Volume', a_reset: 'Back to the start view',

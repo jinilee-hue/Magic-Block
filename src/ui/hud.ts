@@ -5,7 +5,7 @@ import { onTalk } from '../core/speech';
 import type { Pastel, WordInfo } from '../game/tower';
 import crownUrl from '../assets/crown.webp';
 import handUrl from '../assets/hand.webp';
-import { starsFor } from './album';
+import { starsFor } from './rewards';
 import { ANI_ART } from './animals';
 import { blockImg } from './blockshot';
 import { FoxSay } from './foxsay';

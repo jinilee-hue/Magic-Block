@@ -1,10 +1,8 @@
-"""The card album button in the user's corner-button style (src/assets/btn_album.webp), made like btn_key
+"""The animal shop button in the user's corner-button style (src/assets/btn_animals.webp), made like btn_key
 (tools/make_key_btn.py): the exit button's blue rounded square (jenga_btn_out) with its white door painted out,
-turned lavender, with two white picture cards drawn on it (the back one an outline, the front one solid with a
-star cut out of it).
-usage: uv run --with pillow --with numpy python tools/make_album_btn.py
+turned lavender, with a white paw print drawn on it (it was the MY CARDS album's two picture cards).
+usage: uv run --with pillow --with numpy python tools/make_animals_btn.py
 """
-import math
 import pathlib
 
 import numpy as np
@@ -37,47 +35,24 @@ hsv[..., 1] = np.clip(hsv[..., 1] * 0.95, 0, 255)
 btn = Image.fromarray(hsv.astype(np.uint8), 'HSV').convert('RGB').convert('RGBA')
 btn.putalpha(face.getchannel('A'))
 
-# the icon, drawn 4x and scaled down: two picture cards, the back one tilted left, the front one tilted right
+# the icon, drawn 4x and scaled down: a paw print — a round-cornered main pad and four toe beans fanned over it
 S = 4
-CW, CH, R = 0.34 * W * S, 0.44 * H * S, 0.07 * W * S
-sw = round(0.062 * W * S)
 
 
-def card(cx, cy, deg, fill, grow=0.0):
-    """a rounded card's mask (filled, or an outline when fill is False), turned by deg about its centre"""
+def bean(cx, cy, rx, ry, deg):
+    """an ellipse's mask, turned by deg about its centre (fractions of the button)"""
     m = Image.new('L', (W * S, H * S), 0)
-    d = ImageDraw.Draw(m)
-    w, h = CW / 2 + grow, CH / 2 + grow
-    box = (cx - w, cy - h, cx + w, cy + h)
-    if fill:
-        d.rounded_rectangle(box, radius=R + grow, fill=255)
-    else:
-        d.rounded_rectangle(box, radius=R, outline=255, width=sw)
-    return m.rotate(deg, resample=Image.Resampling.BICUBIC, center=(cx, cy))
+    x, y, a_, b_ = cx * W * S, cy * H * S, rx * W * S, ry * H * S
+    ImageDraw.Draw(m).ellipse((x - a_, y - b_, x + a_, y + b_), fill=255)
+    return m.rotate(deg, resample=Image.Resampling.BICUBIC, center=(x, y))
 
 
-def star(cx, cy, r_out, r_in, round_w):
-    m = Image.new('L', (W * S, H * S), 0)
-    d = ImageDraw.Draw(m)
-    pts = []
-    for k in range(10):
-        r = r_out if k % 2 == 0 else r_in
-        ang = math.radians(-90 + 36 * k)
-        pts.append((cx + r * math.cos(ang), cy + r * math.sin(ang)))
-    d.polygon(pts, fill=255)
-    d.line(pts + [pts[0]], fill=255, width=round(round_w), joint='curve')
-    for p in pts[::2]:
-        d.ellipse((p[0] - round_w / 2, p[1] - round_w / 2, p[0] + round_w / 2, p[1] + round_w / 2), fill=255)
-    return m
-
-
-bx, by, fx, fy = 0.41 * W * S, 0.47 * H * S, 0.585 * W * S, 0.535 * H * S
-back = card(bx, by, 13, False)
-front = card(fx, fy, -9, True)
-gap = card(fx, fy, -9, True, grow=0.045 * W * S)      # a gap round the front card where the back card's outline stops
-icon_m = ImageChops.subtract(back, gap)
-icon_m = ImageChops.lighter(icon_m, front)
-icon_m = ImageChops.subtract(icon_m, star(fx, fy - 0.01 * H * S, 0.105 * W * S, 0.05 * W * S, 0.03 * W * S))
+# main pad: a wide oval with two lobes below (a soft heart upside down)
+icon_m = bean(0.5, 0.6, 0.165, 0.125, 0)
+icon_m = ImageChops.lighter(icon_m, bean(0.435, 0.665, 0.105, 0.095, 0))
+icon_m = ImageChops.lighter(icon_m, bean(0.565, 0.665, 0.105, 0.095, 0))
+for cx, cy, deg in ((0.3, 0.435, 28), (0.415, 0.325, 10), (0.585, 0.325, -10), (0.7, 0.435, -28)):
+    icon_m = ImageChops.lighter(icon_m, bean(cx, cy, 0.06, 0.077, deg))
 k = icon_m.resize((W, H), Image.Resampling.LANCZOS)
 
 shade = Image.new('RGBA', (W, H), (70, 40, 140, 0))
@@ -88,5 +63,5 @@ g = np.linspace(255, 242, H)[:, None].repeat(W, 1)
 white = Image.merge('RGBA', [Image.fromarray((g * .985).astype(np.uint8)), Image.fromarray((g * .97).astype(np.uint8)),
                              Image.fromarray(g.astype(np.uint8)), k])
 btn.alpha_composite(white)
-btn.save(ROOT / 'src/assets/btn_album.webp', 'WEBP', quality=92, method=6)
-print('btn_album.webp', btn.size, 'icon box', (x0, y0, x1, y1))
+btn.save(ROOT / 'src/assets/btn_animals.webp', 'WEBP', quality=92, method=6)
+print('btn_animals.webp', btn.size, 'icon box', (x0, y0, x1, y1))
