@@ -4,6 +4,7 @@ import { t, lang, onLang, setLang } from '../core/lang';
 import { onTalk } from '../core/speech';
 import type { Pastel, WordInfo } from '../game/tower';
 import crownUrl from '../assets/crown.webp';
+import handUrl from '../assets/hand.webp';
 import { ANI_ART } from './animals';
 import { blockImg } from './blockshot';
 import { FoxSay } from './foxsay';
@@ -21,12 +22,16 @@ export class Hud {
   readonly foxSay = new FoxSay($('#foxSay'));
   private read = $('#read');
   private mic = $('#btnMic');
-  private thumb = $('#btnThumb');
+  private jumpBtn = $('#btnJump');
+  private howBtn = $('#btnHowSkip');
   private listenBtn = $('#btnListen');
   private picCard = $('#picCard');
   onMic: () => void = () => {};
   onListen: () => void = () => {};
-  onThumb: () => void = () => {};
+  /** the jump button: skip saying this word (no block for it) */
+  onJump: () => void = () => {};
+  /** SKIP while the fox explains the game */
+  onHowSkip: () => void = () => {};
   /** the reset-view button (user: "원위치 버튼만 하나 있으면") */
   onResetView: () => void = () => {};
   onAgain: () => void = () => {};
@@ -37,7 +42,8 @@ export class Hud {
     this.mic.addEventListener('click', () => this.onMic());
     this.listenBtn.addEventListener('click', () => { sfx('tap'); this.onListen(); });
     this.picCard.addEventListener('click', () => { sfx('tap'); this.onListen(); });
-    this.thumb.addEventListener('click', () => { sfx('pop'); this.onThumb(); });
+    this.jumpBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onJump(); });
+    this.howBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onHowSkip(); });
     $('#btnReset').addEventListener('click', () => { sfx('tick'); this.onResetView(); });
     // EN | 한: the fox's voice, its bubble and the screen words (core/lang.ts) — in the corner bar
     const langBtn = $('#btnLang');
@@ -121,7 +127,6 @@ export class Hud {
     this.read.hidden = !on;
     this.app.classList.toggle('reading', on);
     if (!on) this.read.className = 'read';
-    this.thumb.hidden = true; this.mic.hidden = false;
     this.listenBtn.classList.remove('pulse');
   }
   micState(s: 'idle' | 'listening' | 'thinking' | 'done' | 'miss') {
@@ -129,7 +134,36 @@ export class Hud {
     if (s !== 'idle') { void this.read.offsetWidth; this.read.classList.add(s); }
   }
   micLevel(v: number) { (this.read.querySelector('.mic-wrap') as HTMLElement).style.setProperty('--lv', v.toFixed(3)); }
-  noMic(on: boolean) { this.thumb.hidden = !on; this.mic.hidden = on; }
+  /** the jump button is up for the whole say turn (phonics-kit rule 2026-11-22) */
+  canJump(on: boolean) { this.read.classList.toggle('can-skip', on); }
+  get jumpOn() { return !this.read.hidden && this.read.classList.contains('can-skip'); }
+  /** "Want to skip? Tap the jump button!": the hand comes up and taps the jump button twice, the button hops each time
+   *  (Phonics Match's guide). stop() takes it away at once (the button was tapped, the turn ended). */
+  jumpGuide(ms = 2400) {
+    const btn = this.jumpBtn, r = btn.getBoundingClientRect(), a = this.app.getBoundingClientRect();
+    const h = document.createElement('img');
+    h.className = 'jump-hand'; h.src = handUrl; h.alt = ''; h.draggable = false;
+    // the fingertip on the button, a little below its centre
+    h.style.left = `${r.left - a.left + r.width * 0.52}px`; h.style.top = `${r.top - a.top + r.height * 0.62}px`;
+    this.app.append(h);
+    const dx = r.width * 0.75, dy = r.width * 1.35;
+    const at = (x: number, y: number, sc = 1) => `translate(${x}px, ${y}px) scale(${sc})`;
+    const anim = h.animate([
+      { transform: at(dx, dy, 1.05), opacity: 0, offset: 0 },
+      { transform: at(0, 0), opacity: 1, offset: 0.24 },
+      { transform: at(0, 0, 0.86), offset: 0.34 },
+      { transform: at(0, 0), offset: 0.46 },
+      { transform: at(0, 0, 0.86), offset: 0.56 },
+      { transform: at(0, 0), opacity: 1, offset: 0.74 },
+      { transform: at(dx * 0.8, dy * 0.8, 1.05), opacity: 0, offset: 1 },
+    ], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
+    const hop = () => { btn.classList.remove('poke'); void btn.offsetWidth; btn.classList.add('poke'); sfx('tap'); };
+    const t1 = window.setTimeout(hop, ms * 0.34), t2 = window.setTimeout(hop, ms * 0.56);
+    const stop = () => { clearTimeout(t1); clearTimeout(t2); anim.cancel(); h.remove(); btn.classList.remove('poke'); };
+    return { done: anim.finished.then(() => undefined, () => undefined), stop };
+  }
+  /** SKIP while the fox explains the game (bottom centre) */
+  howSkip(on: boolean) { this.howBtn.classList.toggle('on', on); }
   pulseListen(on: boolean) { this.listenBtn.classList.toggle('pulse', on); }
 
   swipe(on: boolean) { $('#swipe').classList.toggle('on', on); this.onSwipe(on); }

@@ -423,6 +423,20 @@ export class Tower {
     b.state = 'gone';
   }
 
+  /** the word was not read (jump, two wrong tries, silence, no way to judge it — phonics-kit rule 2026-11-22): nobody
+   *  gets the block. It puffs up a little and shrinks away where it floats. */
+  async vanish(b: Block) {
+    delete b.mesh.userData.presented;
+    const p0 = b.mesh.position.clone(), s0 = b.mesh.scale.x;
+    await animate(this.stage, 0.5, (k) => {
+      const g = k < 0.25 ? 1 + 0.08 * (k / 0.25) : 1.08 * (1 - ease.in((k - 0.25) / 0.75));
+      b.mesh.scale.setScalar(s0 * g);
+      b.mesh.position.copy(p0).y += 0.5 * k;
+    }, ease.linear);
+    b.mesh.visible = false;
+    b.state = 'gone';
+  }
+
   /** sparkle-glow a block for a hint: a ring round what is visible of it blinks over everything (stage.ring,
    *  hintring.ts). Its own outline is depth-tested: the blocks touching it hid most of it (user: "힌트 줄때의 선
    *  깜박이는거는 상위로 올려줘. 젠가 사이에 껴서 보이면 잘 안보여") */

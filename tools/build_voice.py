@@ -103,7 +103,7 @@ TUTOR = {
     'great1': 'Awesome! You got the block!',
     'great2': 'Great reading!',
     'great3': 'Yes! You did it!',
-    'goodtry': 'Good try! This block is yours!',
+    'goodtry': 'Good try!',             # two wrong tries: the turn goes on WITHOUT the block (phonics-kit rule 2026-11-22)
     'again': 'Try again! Listen.',
     'louder': "I can't hear you. Say it loud!",
     'tapmic': 'Tap the mic and say it!',
@@ -119,6 +119,7 @@ TUTOR = {
     'playagain': "Let's play again!",
     'strike2': 'Careful! One more wrong block, and the tower falls!',
     'strike3': 'Oh no! Three wrong blocks. The tower is falling!',
+    'jump': 'Want to skip? Tap the jump button!',   # the jump button's guide (phonics-kit rule 2026-11-22, Phonics Match's line)
 }
 
 # Korean (core/lang.ts — the EN | 한 toggle next to Settings): every tutor line again, same voice, language 'ko'.
@@ -147,7 +148,7 @@ TUTOR_KO = {
     'great1': '대단해! 블럭을 얻었어!',
     'great2': '정말 잘 읽었어!',
     'great3': '해냈어! 최고야!',
-    'goodtry': '잘했어! 이 블럭은 네 거야!',
+    'goodtry': '좋아, 잘했어!',
     'again': '다시 해 보자! 잘 들어 봐.',
     'louder': '잘 안 들려. 크게 말해 봐!',
     'tapmic': '마이크를 누르고 말해 봐!',
@@ -163,6 +164,7 @@ TUTOR_KO = {
     'playagain': '한 번 더 하자!',
     'strike2': '조심해! 한 번만 더 틀리면 탑이 무너져!',
     'strike3': '이런! 세 번 틀렸어. 탑이 무너진다!',
+    'jump': '넘어가고 싶으면 점프 버튼을 눌러!',
 }
 assert set(TUTOR_KO) == set(TUTOR), f'Korean lines missing/extra: {set(TUTOR) ^ set(TUTOR_KO)}'
 ko_say = lambda v: v[1] if isinstance(v, tuple) else v

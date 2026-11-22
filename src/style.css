@@ -187,7 +187,8 @@ svg { display: block; }
   86%, 100% { transform: translate(calc(9 * var(--u)), calc(-3 * var(--u))); opacity: 0; } }
 
 /* ── read aloud: mic with sound waves ─────────────────── */
-.read { position: absolute; z-index: 22; left: 50%; bottom: calc(4 * var(--u) + env(safe-area-inset-bottom)); translate: calc(-50% - 6.7 * var(--u)) 0; display: flex; align-items: center; gap: calc(2.4 * var(--u));
+/* speaker · mic · jump: the jump button on the right balances the speaker, so the mic sits on the centre line */
+.read { position: absolute; z-index: 22; left: 50%; bottom: calc(4 * var(--u) + env(safe-area-inset-bottom)); translate: -50% 0; display: flex; align-items: center; gap: calc(2.4 * var(--u));
   animation: rise .4s cubic-bezier(.3,1.5,.5,1); }
 @keyframes rise { from { opacity: 0; transform: translateY(calc(4 * var(--u))) scale(.8); } }
 .mic-wrap { position: relative; display: flex; align-items: center; gap: calc(.9 * var(--u)); --lv: 0; }
@@ -223,6 +224,33 @@ svg { display: block; }
 .mic-wrap .mic { order: 4; }
 .mic-wrap .wave.r.w1 { order: 5; } .mic-wrap .wave.r.w2 { order: 6; } .mic-wrap .wave.r.w3 { order: 7; }
 #btnListen.pulse { animation: nudge 1.2s ease-in-out infinite; }
+/* the jump button (phonics-kit rule 2026-11-22 — Phonics Match's: green, a white jumping child): skip this word, no
+   block for it. It keeps its place in the row while hidden (the mic stays centred), jumps in when the say turn starts and
+   hops when the guide's hand taps it (.poke, game.ts jumpGuide). opacity / scale / translate for in, out and the hops,
+   so :active's transform press still works */
+.jump-btn { flex: none; position: relative; width: calc(10.4 * var(--u)); height: calc(10.4 * var(--u)); padding: 0; border-radius: 50%; display: grid; place-items: center;
+  background: linear-gradient(180deg, #a6ea6f, #4fbf43);
+  box-shadow: inset 0 calc(-.9 * var(--u)) 0 #339132, inset 0 calc(.7 * var(--u)) calc(.7 * var(--u)) rgba(255, 255, 255, .45), 0 calc(1 * var(--u)) calc(1.6 * var(--u)) rgba(60, 40, 50, .25);
+  opacity: 0; scale: .4; pointer-events: none; transition: opacity .2s, scale .3s cubic-bezier(.2, 1.6, .4, 1), transform .12s ease; }
+.jump-btn:active { transform: scale(.92); }
+.jump-btn svg { width: 62%; height: 62%; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 calc(.28 * var(--u)) 0 rgba(0, 0, 0, .15)); }
+.jump-btn svg circle { fill: #fff; stroke: none; }
+.read.can-skip .jump-btn { opacity: 1; scale: 1; pointer-events: auto; animation: jump-in .62s cubic-bezier(.3, .7, .4, 1) both; }
+.read.can-skip .jump-btn.poke { animation: jump-in .62s cubic-bezier(.3, .7, .4, 1) both, jump-hop .52s ease-out; }
+@keyframes jump-in { 0% { opacity: 0; translate: 0 calc(5.6 * var(--u)); scale: .5; } 18% { opacity: 1; translate: 0 calc(2.4 * var(--u)); scale: 1.08 .9; }
+  50% { translate: 0 calc(-3.7 * var(--u)); scale: .94 1.07; } 78% { translate: 0 0; scale: 1.1 .9; } 100% { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes jump-hop { 0% { translate: 0 0; scale: 1; } 18% { translate: 0 calc(.47 * var(--u)); scale: 1.1 .9; } 50% { translate: 0 calc(-3.4 * var(--u)); scale: .94 1.07; }
+  80% { translate: 0 0; scale: 1.1 .9; } 100% { translate: 0 0; scale: 1; } }
+/* portrait / square: the row with the jump button was wider than the gap between the players' cards in the bottom
+   corners — tighter gaps and two sound waves a side instead of three keep it clear of both cards */
+@media (max-aspect-ratio: 1/1) {
+  .read { gap: calc(1.4 * var(--u)); }
+  .mic-wrap { gap: calc(.6 * var(--u)); }
+  .mic-wrap .wave.w3 { display: none; }
+}
+/* the guide's hand (the swipe hint's art, fingertip at 37.8 % / 0.6 %) taps the jump button twice (hud.jumpGuide) */
+.jump-hand { position: absolute; z-index: 23; width: calc(9 * var(--u)); height: auto; translate: -37.8% -0.6%; transform-origin: 37.8% 0.6%; pointer-events: none;
+  opacity: 0; filter: drop-shadow(0 calc(.8 * var(--u)) calc(.7 * var(--u)) rgba(70, 40, 120, .32)); }
 @keyframes nudge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 
 /* ── fox tutor ───────────────────────────────────────── */
@@ -398,6 +426,12 @@ svg { display: block; }
   font-weight: 800; font-size: calc(3 * var(--u)); letter-spacing: .14em; color: #fff; background: rgba(255,255,255,.22); border: calc(.3 * var(--u)) solid rgba(255,255,255,.75);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); text-shadow: 0 1px 3px rgba(0,0,0,.25); opacity: 0; transition: opacity .4s; }
 .intro.skippable .intro-skip { opacity: 1; }
+/* the same SKIP on the game screen while the fox explains (phonics-kit rule 2026-11-22): bottom centre, where the
+   reset button is during a turn (the dock is away while the fox explains) */
+.how-skip { position: absolute; z-index: 22; right: auto; left: 50%; bottom: calc(4 * var(--u) + env(safe-area-inset-bottom)); translate: -50% 0;
+  pointer-events: none; visibility: hidden; transition: opacity .3s, visibility 0s .3s; }
+.app[data-screen="game"] .how-skip.on { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .3s; }
+.how-skip:active { scale: .94; }
 
 /* ── result book ─────────────────────────────────────── */
 .result { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(4 * var(--u));

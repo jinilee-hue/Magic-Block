@@ -429,8 +429,8 @@
 "t:goodtry": [
 "t_goodtry.mp3",
 0.0,
-0.761,
-2.568
+0.705,
+0.96
 ],
 "t:again": [
 "t_again.mp3",
@@ -521,6 +521,12 @@
 0.02,
 0.854,
 4.156
+],
+"t:jump": [
+"t_jump.mp3",
+0.0,
+1.044,
+2.568
 ],
 "k:hello": [
 "k_hello.mp3",
@@ -663,8 +669,8 @@
 "k:goodtry": [
 "k_goodtry.mp3",
 0.0,
-1.264,
-2.328
+0.924,
+1.632
 ],
 "k:again": [
 "k_again.mp3",
@@ -755,6 +761,12 @@
 0.02,
 1.257,
 3.388
+],
+"k:jump": [
+"k_jump.mp3",
+0.02,
+1.254,
+2.284
 ],
 "s:b": [
 "s_b.mp3",
@@ -859,7 +871,7 @@
 "great1": "Awesome! You got the block!",
 "great2": "Great reading!",
 "great3": "Yes! You did it!",
-"goodtry": "Good try! This block is yours!",
+"goodtry": "Good try!",
 "again": "Try again! Listen.",
 "louder": "I can't hear you. Say it loud!",
 "tapmic": "Tap the mic and say it!",
@@ -874,7 +886,8 @@
 "tie": "It's a tie! You both did great!",
 "playagain": "Let's play again!",
 "strike2": "Careful! One more wrong block, and the tower falls!",
-"strike3": "Oh no! Three wrong blocks. The tower is falling!"
+"strike3": "Oh no! Three wrong blocks. The tower is falling!",
+"jump": "Want to skip? Tap the jump button!"
 },
 "lines_ko": {
 "hello": "안녕, 친구들! 매직 블록에 온 걸 환영해!",
@@ -900,7 +913,7 @@
 "great1": "대단해! 블럭을 얻었어!",
 "great2": "정말 잘 읽었어!",
 "great3": "해냈어! 최고야!",
-"goodtry": "잘했어! 이 블럭은 네 거야!",
+"goodtry": "좋아, 잘했어!",
 "again": "다시 해 보자! 잘 들어 봐.",
 "louder": "잘 안 들려. 크게 말해 봐!",
 "tapmic": "마이크를 누르고 말해 봐!",
@@ -915,7 +928,8 @@
 "tie": "비겼어! 둘 다 정말 잘했어!",
 "playagain": "한 번 더 하자!",
 "strike2": "조심해! 한 번만 더 틀리면 탑이 무너져!",
-"strike3": "이런! 세 번 틀렸어. 탑이 무너진다!"
+"strike3": "이런! 세 번 틀렸어. 탑이 무너진다!",
+"jump": "넘어가고 싶으면 점프 버튼을 눌러!"
 },
 "pack": {
 "tb_id": "FP.K.U1L1",

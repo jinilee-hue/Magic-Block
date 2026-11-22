@@ -4,8 +4,8 @@ usage: uv run --with playwright python tools/qa/readflow.py [api|device] [base]
   api (default): the phonics-api key (~/.config/phonics-api/key, never printed) goes into this browser's localStorage
   → the company server judges; device: no key → the on-device whisper judges.
 Clips: phonics-api TTS (cached in phonics-kit/cache/qa/readflow/); Korean voices reading Hangul = a Korean accent.
-Cases: Korean-accented / child readings that must pass, the wrong first sound, silence, and 3 non-readings
-("Good try!" ends the turn). Prints the game log + each check from the dev log.
+Cases: Korean-accented / child readings that must pass, the wrong first sound, silence, and non-readings (the 2nd
+wrong try → "Good try!", the turn ends without the block). Prints the game log + each check from the dev log.
 """
 import asyncio
 import json
@@ -77,9 +77,9 @@ async def main():
             await pg.evaluate(f'''(() => {{ const pj = window.__pj; for (const u of {feeds}) pj.micTest.feed(u, 500);
               pj.game.choose(pj.tower.byWord('{target}')); }})()''')
             try:
-                await pg.wait_for_function(f'window.__pj.game.test.log.slice({n}).some(l => l.includes("got {target}"))', timeout=90000)
+                await pg.wait_for_function(f'window.__pj.game.test.log.slice({n}).some(l => l.includes("got {target}") || l.includes("no block {target}"))', timeout=90000)
             except Exception:
-                st = await pg.evaluate('({ state: window.__pj.game.state, read: document.querySelector("#read").className, thumb: !document.querySelector("#btnThumb").hidden, stt: window.__pj.sttState() })')
+                st = await pg.evaluate('({ state: window.__pj.game.state, read: document.querySelector("#read").className, stt: window.__pj.sttState() })')
                 print(f'{target}: STUCK', st, await pg.evaluate(f'window.__pj.game.test.log.slice({n})'))
                 break
             lines = await pg.evaluate(f'window.__pj.game.test.log.slice({n})')
