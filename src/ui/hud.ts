@@ -122,6 +122,28 @@ export class Hud {
     this.setCount(p, n);
   }
 
+  /** a wrong block costs the newest collected block (game.ts wrong): its chip flies up off the pile and fades, "−1" pops
+   *  over the count, the count drops. got = the pile without it */
+  lose(p: number, got: Got[]) {
+    const card = this.cards[p], old = card.querySelector<HTMLElement>('.chips .chip:last-child');
+    const num = card.querySelector<HTMLElement>('.num')!;
+    num.textContent = String(got.length);
+    num.classList.remove('drop'); void num.offsetWidth; num.classList.add('drop');
+    const m = document.createElement('b');
+    m.className = 'minus'; m.textContent = '−1';
+    m.style.left = `${num.offsetLeft + num.offsetWidth / 2}px`;
+    card.querySelector('.pscore')!.append(m);
+    setTimeout(() => m.remove(), 1700);
+    const done = () => { this.renderChips(p, got, false); card.querySelectorAll<HTMLElement>('.chip').forEach((c) => { c.style.animation = 'none'; }); };
+    if (!old) { done(); return; }
+    old.style.animation = 'none';
+    void old.animate([
+      { transform: 'none', opacity: 1 },
+      { transform: 'translateY(-40%) scale(1.15)', opacity: 1, offset: 0.3 },
+      { transform: `translate(${p ? -60 : 60}%, -320%) scale(.7) rotate(${p ? -14 : 14}deg)`, opacity: 0 },
+    ], { duration: 800, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }).finished.then(done, done);
+  }
+
   // ── read aloud ─────────────────────────────────────────────────────────────────────────────────────────
   showRead(on: boolean) {
     this.read.hidden = !on;

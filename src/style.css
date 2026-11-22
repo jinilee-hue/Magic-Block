@@ -100,8 +100,15 @@ svg { display: block; }
 .ani { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
 .pinfo { display: flex; flex-direction: column; line-height: 1; gap: calc(.5 * var(--u)); }
 .pname { font-weight: 800; font-size: calc(2.7 * var(--u)); color: var(--pd); letter-spacing: .01em; }
-.pscore { display: inline-flex; align-items: center; gap: calc(.9 * var(--u)); }
+.pscore { position: relative; display: inline-flex; align-items: center; gap: calc(.9 * var(--u)); }
 .pscore .num { font-weight: 800; font-size: calc(4.4 * var(--u)); color: var(--ink); min-width: 1.2em; }
+/* a wrong block costs a collected block (hud.lose): the count shakes, "−1" in the player's colour rises over it */
+.pscore .num.drop { animation: shake .5s ease-out; }
+.pscore .minus { position: absolute; bottom: 100%; padding: calc(.2 * var(--u)) calc(1.3 * var(--u)) 0; border-radius: 999px; background: var(--pc); color: #fff;
+  font-weight: 800; font-size: calc(3.4 * var(--u)); line-height: 1.1; white-space: nowrap; pointer-events: none;
+  box-shadow: 0 calc(.35 * var(--u)) 0 var(--pd); animation: minusUp 1.6s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes minusUp { 0% { opacity: 0; transform: translate(-50%, 40%) scale(.3); } 18% { opacity: 1; transform: translate(-50%, -10%) scale(1.15); }
+  70% { opacity: 1; transform: translate(-50%, -40%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -120%) scale(.9); } }
 /* wrong blocks this game (3 → the tower falls, game/game.ts): empty slots, then a red disc with a white ✕ */
 .strikes { display: inline-flex; align-items: center; gap: calc(.45 * var(--u)); margin-left: calc(.4 * var(--u)); }
 .strikes i { position: relative; width: calc(2.5 * var(--u)); aspect-ratio: 1; border-radius: 50%; background: rgba(120, 100, 170, .13);

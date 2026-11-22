@@ -9,13 +9,21 @@
 - 단어(2026-11-22 사용자: 레슨팩으로 구성, 다른 단어엔 m을 섞지 않음): m단어 = lesson pack FP.K.U1L1의 18개(mail man map mask mat match meat mice milk mirror mitt monkey moon mop mouse mouth mug mushroom), 다른 단어 = **m이 어디에도 없는** 단어 26개 — 레슨팩의 m 없는 단어 9개(lid egg doll heart gate fox gift kite ten, 음성도 레슨팩) + m단어와 운이 같은 Unit 1 단어 15개(pan/man, cap/map, cat/mat …) + sun, dog(`tools/build_words.py` → `src/data/words.json`).
 - 한 판 30블럭(10층×3) = m단어 14개 + 다른 단어 16개. m단어는 기기마다 섞어 둔 순서에서 판마다 다음 14개를 씁니다 → 연달아 두 판이면 18개가 다 나옵니다.
 - m블럭을 고르면: 블럭이 빠지며 끝에서 금빛 별이 반짝임(첫 화면 반짝임과 같은 것) → 크게 떠오름 → 블럭이 돌면서 그림 카드로 바뀌고, 그 뒤로 Word Mashup 정답 카드처럼 사탕색 줄기·도는 별·반짝이가 터짐(`src/game/cheer.ts`) → 여우가 "Now say the word." 하고 단어를 읽어 줌 → 아이가 따라 읽음(마이크) → 맞으면 카드가 다시 블럭으로 돌아 내 플레이어 카드로 날아가 쌓임 → 친구 차례. 그림 카드를 누르면 다시 들려줍니다.
-- 못 읽으면 여우가 다시 들려주고 다시 듣습니다. 진짜로 읽은 시도가 3번 안 통하면 "Good try!"로 블럭을 줍니다(무음은 통과 안 됨).
+- 블럭은 맞게 읽었다고 판정된 때만 내 것이 됩니다. 그 밖(JUMP, 틀린 시도 2번, 침묵, 판정 불가)은 아무도 못 갖고, 카드가 블럭으로 돌아간 뒤 그 자리에서 작아지며 사라지고 친구 차례(아래 '설명 SKIP · 말하기 차례').
 - m이 아닌 블럭을 고르면: 안 빠지고 흔들림 → 여우가 그 단어의 첫소리를 알려 줌(FPR K 공식 낱소리 녹음) → 실수 1번(플레이어 카드에 ✕) → 친구 차례. **한 사람이 3번 틀리면 탑이 무너지고, 무너뜨린 사람이 집니다.**
 - m블럭을 다 빼면 탑이 와르르 무너지고, 더 많이 모은 사람이 이깁니다.
 - 탑은 드래그로 360° 돌리고 조금 기울일 수 있고, 두 손가락(또는 휠)로 가까이 볼 수 있습니다(방 그림도 같이 커짐).
   - 버튼은 아래 가운데 **원위치** 하나뿐(좌우 돌리기 버튼 없음).
   - 한동안 아무도 탑을 안 만지면: 테이블 위 탑 둘레에 흰 화살표 고리가 돌고, 할리갈리 손가락이 고리 앞을 따라 끌어 보여 줌(`src/game/spinhint.ts`). 첫 판 안내 때도 나옴.
   - 한동안 아무도 블럭을 안 고르면: 여우가 가리키며 화면 가운데에 가까운 m블럭 하나에 노란 고리가 깜박임. 고리는 블럭에서 **보이는 부분** 둘레를 다른 블럭들 위에 그려서, 블럭 사이에 낀 블럭도 잘 보임(`src/game/hintring.ts`).
+- 판이 끝나면(결과 화면) 파닉스 공통 진도 `phonics.progress`에 기록만 남김(`src/vendor/phonics-progress.js` = phonics-kit 사본, 레벨 없음): `PhonicsProgress.played('magic-block', { words, unread, misses, p1, p2, winner, toppled, time })`. 중간에 나간 판은 기록하지 않음.
+
+## 설명 SKIP · 말하기 차례 (phonics-kit 공통 규칙, 2026-11-22)
+- 설명 SKIP: 판 시작 때 여우가 게임을 설명하는 동안 아래 가운데에 SKIP. 누르면 여우 말이 바로 끊기고 첫 차례가 시작됨.
+- JUMP: 말하기 차례마다 읽기 칸에 '점프하는 아이' 버튼. 누르면 그 단어를 건너뜀 — 블럭 없음. 예전 👍(판정 없이 블럭을 주던 버튼)을 대신함. 판마다 첫 침묵 때 한 번 손가락이 버튼을 두 번 톡 치며 "Want to skip? Tap the jump button!".
+- 틀린 시도 2번: "Good try!" — 블럭 없음.
+- 침묵: 여우가 "I can't hear you. Say it loud!" 하고 한 번 더 읽어 주고 다시 기다림. 또 조용하면(대략 20초) 블럭 없이 넘어감.
+- 판정할 수 없을 때(phonics-api 키 없음·서버 실패 + 기기 안 인식기 없음, 또는 마이크 없음·거부): 여우가 단어를 읽어 주고 블럭 없이 넘어감. 소리만 났다고 통과시키지 않음.
 
 ## 화면
 - 배경: `jenga_bg`(사용자 그림, 분홍 테이블)를 필터 없이 `src/assets/bg.webp`로 씀. 탑은 그림 속 둥근 테이블 위에 서도록 카메라를 맞춤(`stage.ts`의 `BG` 좌표 — 그림을 바꾸면 테이블 중심·반지름을 다시 재야 함).
@@ -24,14 +32,14 @@
 - 게임 화면은 탑에 집중되게(`stage.ts` `setGameView`): 첫 화면보다 조금 가까이 봐서 탑이 큼(넓은 화면 약 14%, 그 사이 비율은 절반, 세로 화면은 그대로 — 더 멀리 보면 그림이 끝남). 위·앞에서 탑을 비추는 조명, 테이블 위 빛 웅덩이, 위에서 내려오는 은은한 빛줄기. 빛은 밝게 더하기만 함(방을 어둡게 하면 칙칙해 보여서 뺌).
 - 첫 화면(인트로): 탑(11층 — 게임보다 1층 많음, 화면 위로 넘치면 조금 줄임) 위 가운데에 로고(`jenga_logo` → `src/assets/logo.webp`)와 START(`jenga_btn_start` → `src/assets/btn_start.webp`).
   - 탑 앞면 긴 블럭마다 m단어. 몇 초마다 m블럭 하나가 반짝이며 반쯤 빠졌다 들어감. 테이블 위에 블럭 4개가 떨어져 있음. 여우는 오른쪽에서 손을 흔듦.
-- 오른쪽 위 버튼(첫 화면·게임·결과 화면 공통, `src/ui/corner.ts`): 소리 버튼(누르면 버튼과 같은 노란색 세로 볼륨 막대, 위 = 크게, 맨 아래 = 소리 끔 → 버튼에 빨간 X) · 나가기 버튼. 게임 화면에서는 그 앞에 EN|한 토글. 홈·설정 버튼은 없음.
-  - 나가기: 첫 화면에서는 게임을 닫음(게임을 연 이전 페이지로). 게임·결과 화면에서는 한 번 누르면 빨갛게 흔들리고, 2.6초 안에 한 번 더 누르면 첫 화면으로(실수로 나가지 않게).
+- 오른쪽 위 버튼(첫 화면·게임·결과 화면 공통, `src/ui/corner.ts`): 소리 버튼(누르면 버튼과 같은 노란색 세로 볼륨 막대, 위 = 크게, 맨 아래 = 소리 끔 → 버튼에 빨간 X) · 나가기 버튼. 첫 화면에서만 그 앞에 EN|한 토글, 왼쪽 위에 phonics-api 열쇠 버튼. 홈·설정 버튼은 없음.
+  - 나가기: 첫 화면에서는 게임을 닫음(게임을 연 이전 페이지로). 게임·결과 화면에서는 한 번 누르면 바로 첫 화면으로.
   - 버튼 그림은 사용자 그림(`jenga_btn_sound`, `jenga_btn_out` → 투명 여백을 잘라 280px `src/assets/btn_sound.webp`, `btn_out.webp`).
 - 게임 화면 왼쪽 위: 로고(첫 화면과 같은 그림, 14.67u × 10.35u — 사용자 요청으로 처음 크기의 90%), 그 옆에 플레이어 1·2 카드(동물, 모은 블럭 수, 실수 ✕, 모은 블럭 칩).
 - 결과 화면(펼친 책): 플레이어마다 모은 단어를 게임 속 젠가 블럭 그대로 보여 줌 — 탑의 블럭과 같은 모양·색·글자(넓은 면 단어, 끝면 첫 글자)·조명으로 그린 그림(`src/ui/blockshot.ts`), 한 줄에 3개(13–14개면 4개씩 작게). 블럭을 누르면 단어를 다시 들려줌.
 - 캐릭터 고르기: START → 플레이어 1이 동물 4종(토끼·고양이·강아지·판다) 중 하나 → 플레이어 2(먼저 고른 동물은 P1 표시, 못 고름) → 게임. 사용자 참고 이미지대로: 반투명 흰 판, 왼쪽 위 보라 `<`(첫 화면으로), 파란 'Player 1' 띠, 큰 동물 원 4개(이름은 동물마다 다른 색), 아래 'Player 1 VS Player 2'. 여우가 "Player one, pick your animal!" 등으로 안내하고 고른 동물 이름을 말해 줌(`src/ui/picker.ts`). 두 명이 다 고르면 바로 넘어가지 않고 'Ready?'(준비됐니?)와 **다시 고르기**·**시작** 버튼이 나옴.
   - 동물 그림은 사용자 배지 4장(`~/Downloads/jenga_bunny|kitty|puppy|panda.png`). `tools/make_animals.py`가 원 밖을 투명하게 잘라 512px webp(`src/assets/ani_*.webp`)로 만들고, `src/ui/animals.ts`가 주소를 모아 둔다. 동물별 에셋은 사용자가 따로 만들어 줄 예정.
-- EN|한 토글(`src/core/lang.ts`): 여우 대사·말풍선·화면 글이 한국어로(단어 소리는 영어 그대로). 한글 글꼴은 Jua 서브셋(`tools/make_ko_font.py` → `public/fonts/Jua-ko.woff2`, 한국어 글을 바꾸면 다시 돌림).
+- EN|한 토글(`src/core/lang.ts`, 2026-11-22 공통 규칙): 첫 화면에만 있음. 처음 들어오면 한국어, 고른 언어는 기기에 저장(`pj.lang.v1`). 바뀌는 것은 여우 목소리와 말풍선뿐 — 버튼·이름·결과 같은 화면 글은 두 언어 모두 영어, 단어·첫소리도 영어. 말풍선 한글 글꼴은 Jua 서브셋(`tools/make_ko_font.py` → `public/fonts/Jua-ko.woff2`, 한국어 대사를 바꾸면 다시 돌림).
 - 인트로 영상: 아직 없음. `public/intro.mp4`를 넣으면 첫 화면 앞에서 자동 재생(건너뛰기 버튼 포함), 없으면 바로 첫 화면.
 - 블럭: 테이블처럼 부드러운 무광 파스텔(나뭇결·젤리 광택은 사용자가 뺌). 옆면은 위쪽이 살짝 밝고 아래쪽이 살짝 진하고, 윗면·아랫면은 만나는 옆면 가장자리 색 그대로 평평하게(윗면 어두운 띠·아랫면 흰 막이 생기지 않게). 넓은 면에는 단어 전체, 좁은 끝면에는 첫 글자만 크게. 실제 젠가(0.6)보다 두꺼운 0.75에 10층 — 블럭과 글자가 크게 보이도록(사용자 선택). `?bh=`(두께), `?layers=`(층수)로 바꿔 볼 수 있음.
 - 여우 말풍선: 여우가 하는 말을 머리 위 말풍선으로 보여 줌(`src/ui/foxsay.ts`; 글은 `src/data/voice.json`의 `lines`/`lines_ko` = 음성을 만든 문장 그대로).
@@ -50,29 +58,29 @@
 ## 소리
 - 배경음악: `tools/make_bgm.py`로 직접 만든 신나는 루프(C장조 128 BPM, 30초: 마림바 멜로디 · 통통 튀는 베이스 · 우쿨렐레 반주 · 킥/박수/하이햇). 첫 화면부터 게임 끝까지 이어지고, 아이가 읽는 동안은 꺼짐.
 - 브라우저는 화면을 한 번 누르기 전에는 소리를 못 냄 → 첫 화면에서 처음 누르면 음악과 여우 인사("Hi, friends! Welcome to Magic Block!" · "Press start to play!")가 시작. 처음 누른 곳이 START면 바로 게임 안내로.
-- 첫 판 시작 때 게임 안내: "Let's play Magic Block!" → "Take turns with your friend." → "Find a block that starts with m!" /m/ /m/ → "Pull it out and read the word. Then the block is yours!" → "Get the most blocks to win!" → "But pick a wrong block three times, and the tower falls!" → 탑 돌리기 안내. 다음 판부터는 짧게.
-- 마이크: 차례마다 한 번 열고, 듣기 시작할 때 부드러운 '딩' 한 번(처음 0.3초는 판정 안 함). 반향 제거(echoCancellation)는 끔 — 여우가 말하는 동안은 듣지 않고, 켜 두면 마이크가 열리는 순간 크롬이 소리 출력을 반향 제거 쪽으로 돌려 여우 목소리에 딸꾹질 같은 소리가 낄 수 있음. 잡음 제거·자동 음량은 켬.
+- 첫 판 시작 때 게임 안내: "Let's play Magic Block!" → "Take turns with your friend." → "Find a block that starts with m!" /m/ /m/ → "Pull it out and read the word. Then the block is yours!" → "Get the most blocks to win!" → "But pick a wrong block three times, and the tower falls!" → 탑 돌리기 안내. 다음 판부터는 짧게("Let's play Magic Block!" → m 찾기 안내). 안내 중에는 SKIP으로 바로 첫 차례로.
+- 마이크: 차례마다 한 번 열고, 듣기 시작할 때 부드러운 '딩' 한 번(처음 0.3초는 판정 안 함). 듣기는 시계 기준 상한도 있어서, 마이크 소리가 중간에 끊겨도 기다림 + 3초(말이 시작됐으면 최대 길이 + 3초) 뒤 끝나고 블럭 없이 넘어감(`src/core/mic.ts`). 반향 제거(echoCancellation)는 끔 — 여우가 말하는 동안은 듣지 않고, 켜 두면 마이크가 열리는 순간 크롬이 소리 출력을 반향 제거 쪽으로 돌려 여우 목소리에 딸꾹질 같은 소리가 낄 수 있음. 잡음 제거·자동 음량은 켬.
 - 말이 중간에 끊길 때는 40ms 동안 줄여 끔(딸깍 소리 없음). 블럭을 뺄 때의 "Perfect! Pull it out!"은 끝까지 말한 뒤 읽기 안내로.
 
 ## 만든 방법
 - three.js(WebGL) 탑, 마지막 붕괴는 cannon-es 물리.
-- 읽기 판정(파닉스 공통 규칙, 2026-11-19 — `../phonics-kit`): 첫 화면 오른쪽 위 열쇠 버튼에 phonics-api 키를 넣은 기기에서는
+- 읽기 판정(파닉스 공통 규칙, 2026-11-19 — `../phonics-kit`): 판정 순서는 phonics-api → 기기 안 whisper. 첫 화면 왼쪽 위 열쇠 버튼에 phonics-api 키를 넣은 기기에서는
   회사 서버(`/v1/speech/analyze`, 사내 Wav2Vec2 — 녹음은 저장하지 않음)가 들은 소리열을 단어와 그 라임 단어(첫소리만 다른 단어,
   b로 시작하는 것은 빼고)와 비교해 판정합니다(`src/core/apiCheck.ts`). 점: 초록 = 서버, 회색 = 기기 안.
   키가 없거나 오프라인·혼잡·6초 초과면 기기 안 whisper-tiny.en(transformers.js)이 판정 — 이때 목소리는 기기 밖으로 나가지 않습니다.
-  키는 코드·저장소에 넣지 않습니다(공개 repo). 마이크가 없으면 👍 버튼으로 확인.
-- 목소리: 튜터 대사(영어·한국어 각 39줄) = 사내 TTS(Qwen3-TTS `aiden`, 7살 남자아이 말투 — Phonics Island와 같은 목소리).
-  단어와 /m/ = lesson pack FP.K.U1L1의 음성(`tools/pack_voice.py`; m-단어 18개 + ten), pack에 없는 단어(다른 레슨)만 aiden,
-  다른 첫소리 = FPR K 공식 녹음. TTS는 만들 때 whisper로 다시 들어 보고, 단어로 안 들리면 말투 지시를 바꿔 다시 만듭니다(`tools/build_voice.py`).
+  둘 다 판정할 수 없으면 블럭 없이 넘어갑니다. 키는 코드·저장소에 넣지 않습니다(공개 repo).
+- 목소리: 튜터 대사(영어·한국어 각 40줄) = phonics-api TTS의 `en-US-AvaMultilingualNeural`을 예전 `aiden`의 높이·빠르기로 맞춘 목소리(파닉스 게임 공통 튜터 목소리, `src/data/voice.json`의 `engine`·`voice`·`shape`).
+  단어와 /m/ = lesson pack FP.K.U1L1의 음성(`tools/pack_voice.py`; m단어 18개 + m 없는 단어 9개), pack에 없는 단어만 튜터 목소리,
+  다른 첫소리 = FPR K 공식 녹음. 튜터 목소리는 만들 때 whisper로 다시 들어 보고, 다르게 들리면 표현을 바꿔 다시 만듭니다(`tools/build_voice.py` → phonics-kit `tutor_takes.py`). `--engine qwen`은 예전 사내 TTS `aiden`.
 - 그림 카드: lesson pack FP.K.U1L1 그림(= 대표이미지, m단어 18개 전부 — moon은 원본의 남색 사각 하늘 그대로) → `public/cards/`. `tools/fit_cards.py`가 그림마다 테두리 여백을 걷어 카드의 그림 칸 모양(512×539)에 맞춰 넣음 — 칸이 허락하는 만큼 크게, 단 둥글고 꽉 찬 그림이 가는 그림보다 너무 커 보이지 않게 같은 '보이는 크기'(√(가로×세로) ≤ 카드 폭의 0.76)로 맞춤(납작한 map·mat, 가는 man·mop은 칸 끝까지). 카드 안쪽 여백은 카드 자기 폭의 7%(예전 % 여백은 화면 폭 기준이라 넓은 화면에서 그림 칸이 카드 폭의 56%로 줄었음). m단어 18개 모두 그림이 있습니다.
 - 여우: `tools/build_tutor.py`(포즈 자르기 · 배경 지우기 · 4배 확대) → `tools/build_tutor_assemble.py`(포즈 프레임, 입을 지운 muzzle, 뼈대 점) → `tools/build_tutor_rig.py`(부위 가중치, 눈꺼풀) → `public/fox/`.
 
 ## 도구
 | 파일 | 하는 일 |
 |---|---|
-| `tools/build_words.py` | 단어 목록 만들기 (Unit 1) |
-| `tools/build_voice.py` | 단어·튜터 음성(사내 TTS, 사내망에서), 공식 첫소리 복사 → `public/voice/`, `src/data/voice.json`; 끝에 `pack_voice.py` |
-| `tools/pack_voice.py` | lesson pack의 단어 음성·/m/로 덮어쓰기(사내 TTS 없이 단독 실행 가능) → 이어서 `build_mouth_cues.py` |
+| `tools/build_words.py` | 단어 목록 만들기 (lesson pack m단어 18 + m 없는 단어 26) |
+| `tools/build_voice.py` | 단어·튜터 음성(phonics-api TTS, Ava Multilingual), 공식 첫소리 복사 → `public/voice/`, `src/data/voice.json`; 끝에 `pack_voice.py` |
+| `tools/pack_voice.py` | lesson pack의 단어 음성·/m/로 덮어쓰기(TTS 없이 단독 실행 가능) → 이어서 `build_mouth_cues.py` |
 | `tools/build_phonemes.py` | phonics-api 판정용 기대 소리열(단어 + 라임 단어, 서버 G2P) → `src/data/phonemes.json` |
 | `tools/make_key_btn.py` | 열쇠 버튼 그림(나가기 버튼 바탕을 분홍으로 + 흰 열쇠) → `src/assets/btn_key.webp` |
 | `tools/build_mouth_cues.py` | 음성 클립마다 입 모양 시간표(Rhubarb) → `src/data/mouth.json` |

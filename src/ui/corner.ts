@@ -63,7 +63,7 @@ export function cornerControls(o: { leave: () => void }) {
   key.addEventListener('click', async (e) => { e.stopPropagation(); unlock(); sfx('tap'); await PA.keyDialog(); showApi(); });
   void PA.init().then(showApi);
 
-  // the game's HUD keeps clear of the bar (it gets wider when EN | 한 shows in the game): CSS --sys-w
+  // the game's HUD keeps clear of the bar (its width, in case its buttons change; EN | 한 shows on the title only): CSS --sys-w
   const bar = $('.sysbar');
   const fit = () => app.style.setProperty('--sys-w', `${bar.offsetWidth}px`);
   new ResizeObserver(fit).observe(bar);

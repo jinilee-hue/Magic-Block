@@ -40,7 +40,7 @@ const MAX_MISSES = 2;
 const WAIT_MS = [7000, 8000];
 /** wrong blocks (not m) a player may pick in one game: the last one brings the tower down */
 const MAX_STRIKES = 3;
-/** the m-words still to come on this device: each game takes the next M_PER_GAME of the 20 Unit 1 m-words */
+/** the m-words still to come on this device: each game takes the next M_PER_GAME of the lesson pack's 18 m-words */
 const DECK_KEY = 'pj.mdeck.v1';
 /** m-words that have a picture card (public/cards/<word>.webp, from tools/import_cards.py) */
 const CARDS = new Set(cardList as string[]);
@@ -72,7 +72,8 @@ function devlog(o: Record<string, unknown>) {
 }
 
 export class Game {
-  players: { got: Got[]; strikes: number }[] = [{ got: [], strikes: 0 }, { got: [], strikes: 0 }];
+  /** lost = collected blocks given up for a wrong block (one each, while there are any) */
+  players: { got: Got[]; strikes: number; lost: number }[] = [{ got: [], strikes: 0, lost: 0 }, { got: [], strikes: 0, lost: 0 }];
   turn = 0;
   state: 'off' | 'intro' | 'choose' | 'busy' | 'end' = 'off';
   firstGame = true;
@@ -201,7 +202,7 @@ export class Game {
   async start() {
     this.abort();
     const s = this.session;
-    this.players = [{ got: [], strikes: 0 }, { got: [], strikes: 0 }]; this.turn = 0; this.greatIdx = 0;
+    this.players = [{ got: [], strikes: 0, lost: 0 }, { got: [], strikes: 0, lost: 0 }]; this.turn = 0; this.greatIdx = 0;
     this.jumpTold = false; this.unread = 0; this.startedAt = performance.now();
     this.hud.reset(); this.hud.setAnimals(this.animals); this.hud.setTurn(0, false); this.hud.screen('game');
     this.buildTower(true);
@@ -554,8 +555,12 @@ export class Game {
     // one more ✕ on this player's card
     const p = this.turn, me = this.players[p];
     me.strikes++;
-    this.log(`strike ${me.strikes} P${p + 1}`);
-    setTimeout(() => { if (this.alive(s)) { sfx('wrong'); this.hud.setStrikes(p, me.strikes, true); } }, 350);
+    // and the newest collected block goes, if there is one (user 2026-11-22: "게임을 하기위해서 점수나 횟수 차감은
+    // 있어야하는데"): it leaves the player's pile with a "−1" and the count drops. The ✕ rules stay as they are
+    const lost = me.got.pop();
+    if (lost) me.lost++;
+    this.log(`strike ${me.strikes} P${p + 1}${lost ? ` · lost ${lost.word.w} → ${me.got.length}` : ''}`);
+    setTimeout(() => { if (this.alive(s)) { sfx('wrong'); this.hud.setStrikes(p, me.strikes, true); if (lost) this.hud.lose(p, me.got); } }, 350);
     await wait(200);
     await say(['t:uhoh', 0.2, `w:${b.word.w}`, 0.35, 't:startswith', 0.12, `s:${b.word.first}`, 0.3, `s:${b.word.first}`]);
     await anim;
@@ -634,14 +639,15 @@ export class Game {
     const [p1, p2] = this.players;
     try {
       window.PhonicsProgress?.played('magic-block', {
-        words: p1.got.length + p2.got.length,        // m-words read right = blocks won
+        words: p1.got.length + p2.got.length + p1.lost + p2.lost,   // m-words read right = blocks won (lost ones too)
+        lost: p1.lost + p2.lost,                     // collected blocks given up for a wrong block
         unread: this.unread,                         // m-words pulled but not read (jump, 2 wrong tries, silence, no judge)
         misses: p1.strikes + p2.strikes,             // wrong blocks picked (not m)
         p1: p1.got.length, p2: p2.got.length,
         winner: winner + 1,                          // 1 | 2, 0 = a tie
         toppled,
         time: Math.round((performance.now() - this.startedAt) / 100) / 10,
-      }, { lower: ['unread'] });
+      }, { lower: ['unread', 'lost'] });
     } catch (e) { console.warn('progress', e); }
   }
 
