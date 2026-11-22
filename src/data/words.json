@@ -2,8 +2,39 @@
  "book": "FPR K (From Phonics to Reading K) · Unit 1 (Lessons 1-5)",
  "source": "SAD·FPR 단어 연구 자료집 v1.0 (2026-10-05) · b2_book_FPRK.json",
  "target": "m",
- "excluded": {},
+ "excluded": {
+  "mitten": "not in the lesson pack",
+  "my": "not in the lesson pack",
+  "mailbox": "not in the lesson pack"
+ },
  "words": [
+  {
+   "w": "mail",
+   "lemma": "mail",
+   "m": true,
+   "first": "m",
+   "ko": "우편",
+   "pos": "noun",
+   "pages": [
+    387
+   ],
+   "lessons": [],
+   "cat": "그림",
+   "alts": [
+    "male"
+   ],
+   "rivals": [
+    "bail",
+    "fail",
+    "jail",
+    "nail",
+    "pail",
+    "rail",
+    "sail",
+    "tail",
+    "hail"
+   ]
+  },
   {
    "w": "man",
    "lemma": "man",
@@ -94,6 +125,28 @@
     "rap",
     "tap",
     "zap"
+   ]
+  },
+  {
+   "w": "mask",
+   "lemma": "mask",
+   "m": true,
+   "first": "m",
+   "ko": "가면",
+   "pos": "noun",
+   "pages": [
+    223,
+    387
+   ],
+   "lessons": [
+    17
+   ],
+   "cat": "그림",
+   "alts": [],
+   "rivals": [
+    "task",
+    "bask",
+    "cask"
    ]
   },
   {
@@ -191,6 +244,24 @@
    ]
   },
   {
+   "w": "mice",
+   "lemma": "mice",
+   "m": true,
+   "first": "m",
+   "ko": "쥐(여러 마리)",
+   "pos": "noun",
+   "pages": [],
+   "lessons": [],
+   "cat": "lesson pack FP.K.U1L1",
+   "alts": [],
+   "rivals": [
+    "dice",
+    "rice",
+    "nice",
+    "lice"
+   ]
+  },
+  {
    "w": "milk",
    "lemma": "milk",
    "m": true,
@@ -253,28 +324,6 @@
     "lit",
     "pit",
     "sit"
-   ]
-  },
-  {
-   "w": "mitten",
-   "lemma": "mitten",
-   "m": true,
-   "first": "m",
-   "ko": "벙어리장갑",
-   "pos": "noun",
-   "pages": [
-    45,
-    197
-   ],
-   "lessons": [
-    3,
-    15
-   ],
-   "cat": "그림",
-   "alts": [],
-   "rivals": [
-    "kitten",
-    "bitten"
    ]
   },
   {
@@ -454,121 +503,6 @@
    "cat": "그림",
    "alts": [],
    "rivals": []
-  },
-  {
-   "w": "my",
-   "lemma": "my",
-   "m": true,
-   "first": "m",
-   "ko": "나의",
-   "pos": "pronoun",
-   "pages": [
-    11,
-    104,
-    105,
-    106,
-    109,
-    112,
-    124,
-    136
-   ],
-   "lessons": [
-    1,
-    8,
-    9,
-    10,
-    12,
-    13,
-    14,
-    16,
-    17,
-    19,
-    21,
-    22,
-    23,
-    24,
-    28,
-    29,
-    30
-   ],
-   "cat": "인쇄",
-   "alts": [],
-   "rivals": [
-    "by",
-    "pie",
-    "tie",
-    "die",
-    "lie",
-    "hi",
-    "why",
-    "guy"
-   ]
-  },
-  {
-   "w": "mail",
-   "lemma": "mail",
-   "m": true,
-   "first": "m",
-   "ko": "우편",
-   "pos": "noun",
-   "pages": [
-    387
-   ],
-   "lessons": [],
-   "cat": "그림",
-   "alts": [
-    "male"
-   ],
-   "rivals": [
-    "bail",
-    "fail",
-    "jail",
-    "nail",
-    "pail",
-    "rail",
-    "sail",
-    "tail",
-    "hail"
-   ]
-  },
-  {
-   "w": "mailbox",
-   "lemma": "mailbox",
-   "m": true,
-   "first": "m",
-   "ko": "우편함",
-   "pos": "noun",
-   "pages": [
-    387
-   ],
-   "lessons": [],
-   "cat": "그림",
-   "alts": [
-    "mail box"
-   ],
-   "rivals": []
-  },
-  {
-   "w": "mask",
-   "lemma": "mask",
-   "m": true,
-   "first": "m",
-   "ko": "가면",
-   "pos": "noun",
-   "pages": [
-    223,
-    387
-   ],
-   "lessons": [
-    17
-   ],
-   "cat": "그림",
-   "alts": [],
-   "rivals": [
-    "task",
-    "bask",
-    "cask"
-   ]
   },
   {
    "w": "pan",
@@ -1222,46 +1156,78 @@
    "cat": "인쇄+그림"
   },
   {
-   "w": "jam",
-   "lemma": "jam",
+   "w": "duck",
+   "lemma": "duck",
    "m": false,
-   "first": "j",
-   "ko": "잼",
+   "first": "d",
+   "ko": "오리",
    "pos": "noun",
    "pages": [
-    289,
-    293,
-    295,
-    297,
-    300,
-    312,
-    324,
-    327
+    15,
+    30,
+    44,
+    58,
+    72,
+    86,
+    98,
+    110
    ],
    "lessons": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
     23,
     24,
     25,
     26,
-    27,
-    28
+    27
    ],
    "cat": "인쇄+그림"
   },
   {
-   "w": "lemon",
-   "lemma": "lemon",
+   "w": "fish",
+   "lemma": "fish",
    "m": false,
-   "first": "l",
-   "ko": "레몬",
+   "first": "f",
+   "ko": "물고기",
    "pos": "noun",
    "pages": [
     11,
-    189
+    18,
+    41,
+    95,
+    99,
+    118,
+    119,
+    132
    ],
    "lessons": [
     1,
-    15
+    3,
+    7,
+    9,
+    10,
+    21,
+    27
    ],
    "cat": "인쇄+그림"
   }

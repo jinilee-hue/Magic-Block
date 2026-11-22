@@ -6,9 +6,9 @@
 - 로컬 실행: `npm install` 후 `npm run dev` → http://localhost:5195/
 
 ## 게임 규칙
-- 단어는 FPR K **Unit 1**(L1–5, p.9–76): m단어 20개, 다른 단어 26개(`tools/build_words.py` → `src/data/words.json`, 쪽 번호 포함).
-- 한 판 30블럭(10층×3) = m단어 14개 + 다른 단어 16개(m이 안에 든 함정 단어 jam·lemon 항상 포함). m단어는 기기마다 섞어 둔 순서에서 판마다 다음 14개를 씁니다 → 연달아 두 판이면 20개가 다 나옵니다.
-- m블럭을 고르면: 블럭이 빠지며 끝에서 금빛 별이 반짝임(첫 화면 반짝임과 같은 것) → 크게 떠오름 → 블럭이 돌면서 그림 카드로 바뀌고, 그 뒤로 Word Mashup 정답 카드처럼 사탕색 줄기·도는 별·반짝이가 터짐(`src/game/cheer.ts`) → 여우가 "Now say the word." 하고 단어를 읽어 줌 → 아이가 따라 읽음(마이크) → 맞으면 카드가 다시 블럭으로 돌아 내 플레이어 카드로 날아가 쌓임 → 친구 차례. 그림 카드를 누르면 다시 들려줍니다. 그림이 없는 단어(mailbox)는 블럭 그대로.
+- 단어(2026-11-22 사용자: 레슨팩으로 구성, 다른 단어엔 m을 섞지 않음): m단어 = lesson pack FP.K.U1L1의 18개(mail man map mask mat match meat mice milk mirror mitt monkey moon mop mouse mouth mug mushroom), 다른 단어 = **m이 어디에도 없는** 다른 알파벳 단어 26개(FPR K Unit 1·다른 레슨, `tools/build_words.py` → `src/data/words.json`).
+- 한 판 30블럭(10층×3) = m단어 14개 + 다른 단어 16개. m단어는 기기마다 섞어 둔 순서에서 판마다 다음 14개를 씁니다 → 연달아 두 판이면 18개가 다 나옵니다.
+- m블럭을 고르면: 블럭이 빠지며 끝에서 금빛 별이 반짝임(첫 화면 반짝임과 같은 것) → 크게 떠오름 → 블럭이 돌면서 그림 카드로 바뀌고, 그 뒤로 Word Mashup 정답 카드처럼 사탕색 줄기·도는 별·반짝이가 터짐(`src/game/cheer.ts`) → 여우가 "Now say the word." 하고 단어를 읽어 줌 → 아이가 따라 읽음(마이크) → 맞으면 카드가 다시 블럭으로 돌아 내 플레이어 카드로 날아가 쌓임 → 친구 차례. 그림 카드를 누르면 다시 들려줍니다.
 - 못 읽으면 여우가 다시 들려주고 다시 듣습니다. 진짜로 읽은 시도가 3번 안 통하면 "Good try!"로 블럭을 줍니다(무음은 통과 안 됨).
 - m이 아닌 블럭을 고르면: 안 빠지고 흔들림 → 여우가 그 단어의 첫소리를 알려 줌(FPR K 공식 낱소리 녹음) → 실수 1번(플레이어 카드에 ✕) → 친구 차례. **한 사람이 3번 틀리면 탑이 무너지고, 무너뜨린 사람이 집니다.**
 - m블럭을 다 빼면 탑이 와르르 무너지고, 더 많이 모은 사람이 이깁니다.
@@ -37,7 +37,7 @@
 - 여우 말풍선: 여우가 하는 말을 머리 위 말풍선으로 보여 줌(`src/ui/foxsay.ts`; 글은 `src/data/voice.json`의 `lines`/`lines_ko` = 음성을 만든 문장 그대로).
   - 차례가 오면 그 플레이어의 동물·색으로 "Player 1, your turn!"이 블럭을 고를 때까지 떠 있음. 다른 말은 말하는 동안과 1.4초 뒤까지 보이고, 그다음 차례 말풍선이 다시 나옴.
   - 게임 화면에서만 보임. 세로 화면에서는 탑을 가리지 않게 폭을 줄여 여우 오른쪽 끝에 붙이고 긴 말은 여러 줄로.
-  - 한 번에 한 문장씩: 여러 줄을 이어 말할 때(게임 안내의 규칙 세 줄 등) 여우가 그 줄을 말하기 시작할 때 말풍선이 바뀜(`speech.ts` `onLineTimes`). "Uh-oh! jam — It starts with /j/"처럼 한 문장으로 이어지는 말은 한 말풍선.
+  - 한 번에 한 문장씩: 여러 줄을 이어 말할 때(게임 안내의 규칙 세 줄 등) 여우가 그 줄을 말하기 시작할 때 말풍선이 바뀜(`speech.ts` `onLineTimes`). "Uh-oh! dog — It starts with /d/"처럼 한 문장으로 이어지는 말은 한 말풍선.
   - 말풍선 폭은 가장 긴 줄에 맞춤(두 줄로 접혀도 오른쪽이 비지 않음).
 
 ## 여우 튜터
@@ -62,9 +62,9 @@
   키가 없거나 오프라인·혼잡·6초 초과면 기기 안 whisper-tiny.en(transformers.js)이 판정 — 이때 목소리는 기기 밖으로 나가지 않습니다.
   키는 코드·저장소에 넣지 않습니다(공개 repo). 마이크가 없으면 👍 버튼으로 확인.
 - 목소리: 튜터 대사(영어·한국어 각 39줄) = 사내 TTS(Qwen3-TTS `aiden`, 7살 남자아이 말투 — Phonics Island와 같은 목소리).
-  단어와 /m/ = lesson pack FP.K.U1L1의 음성(`tools/pack_voice.py`; m-단어 18개 + ten), pack에 없는 단어(mitten, mailbox, 다른 레슨)만 aiden,
+  단어와 /m/ = lesson pack FP.K.U1L1의 음성(`tools/pack_voice.py`; m-단어 18개 + ten), pack에 없는 단어(다른 레슨)만 aiden,
   다른 첫소리 = FPR K 공식 녹음. TTS는 만들 때 whisper로 다시 들어 보고, 단어로 안 들리면 말투 지시를 바꿔 다시 만듭니다(`tools/build_voice.py`).
-- 그림 카드: lesson pack FP.K.U1L1 그림(= 대표이미지, 18개 — moon은 원본의 남색 사각 하늘 그대로), pack에 없는 mitten은 FPR K 공식 그림(Phonics Island 512px webp) → `public/cards/`. `tools/fit_cards.py`가 그림마다 테두리 여백을 걷어 카드의 그림 칸 모양(512×539)에 맞춰 넣음 — 칸이 허락하는 만큼 크게, 단 둥글고 꽉 찬 그림이 가는 그림보다 너무 커 보이지 않게 같은 '보이는 크기'(√(가로×세로) ≤ 카드 폭의 0.76)로 맞춤(납작한 map·mat, 가는 man·mop은 칸 끝까지). 카드 안쪽 여백은 카드 자기 폭의 7%(예전 % 여백은 화면 폭 기준이라 넓은 화면에서 그림 칸이 카드 폭의 56%로 줄었음). Unit 1 m단어 20개 중 19개(mailbox 없음 — `public/cards/mailbox.webp`로 넣고 `tools/import_cards.py`를 다시 돌리면 나옵니다).
+- 그림 카드: lesson pack FP.K.U1L1 그림(= 대표이미지, m단어 18개 전부 — moon은 원본의 남색 사각 하늘 그대로) → `public/cards/`. `tools/fit_cards.py`가 그림마다 테두리 여백을 걷어 카드의 그림 칸 모양(512×539)에 맞춰 넣음 — 칸이 허락하는 만큼 크게, 단 둥글고 꽉 찬 그림이 가는 그림보다 너무 커 보이지 않게 같은 '보이는 크기'(√(가로×세로) ≤ 카드 폭의 0.76)로 맞춤(납작한 map·mat, 가는 man·mop은 칸 끝까지). 카드 안쪽 여백은 카드 자기 폭의 7%(예전 % 여백은 화면 폭 기준이라 넓은 화면에서 그림 칸이 카드 폭의 56%로 줄었음). m단어 18개 모두 그림이 있습니다.
 - 여우: `tools/build_tutor.py`(포즈 자르기 · 배경 지우기 · 4배 확대) → `tools/build_tutor_assemble.py`(포즈 프레임, 입을 지운 muzzle, 뼈대 점) → `tools/build_tutor_rig.py`(부위 가중치, 눈꺼풀) → `public/fox/`.
 
 ## 도구

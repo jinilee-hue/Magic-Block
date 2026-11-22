@@ -147,7 +147,7 @@ export class Game {
 
   /** The words for one tower: M_PER_GAME m-words, the next ones from the deck (take = the game starts and uses them
    *  up; otherwise a preview, e.g. the title tower), and the rest of the LAYERS × 3 blocks from the other words —
-   *  always with the trap words that have an m inside (jam, lemon). */
+   *  (the other words have no m anywhere since 2026-11-22, so `trap` below is empty; kept for a word list that has one). */
   pickWords(r: () => number, take: boolean): WordInfo[] {
     const ms = this.words.filter((w) => w.m), byW = new Map(ms.map((w) => [w.w, w]));
     let deck: string[] = [];
