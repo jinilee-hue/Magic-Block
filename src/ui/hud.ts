@@ -5,6 +5,7 @@ import { onTalk } from '../core/speech';
 import type { Pastel, WordInfo } from '../game/tower';
 import crownUrl from '../assets/crown.webp';
 import handUrl from '../assets/hand.webp';
+import { starsFor } from './album';
 import { ANI_ART } from './animals';
 import { blockImg } from './blockshot';
 import { FoxSay } from './foxsay';
@@ -261,12 +262,13 @@ export class Hud {
     const res = $('#result');
     res.hidden = false;
     res.querySelectorAll<HTMLElement>('.page').forEach((page, p) => {
-      const got = players[p].got, n = Math.min(3, players[p].strikes ?? 0);
+      const got = players[p].got, n = Math.min(3, players[p].strikes ?? 0), st = starsFor(got.length);
       page.classList.toggle('winner', winner === p);
       page.innerHTML = `
         <div class="ava"><img class="ani" src="${ANI_ART[this.animals[p]]}" alt="" draggable="false" />${winner === p ? CROWN : ''}</div>
         <h2>${t('player', { n: p + 1 })}</h2>
         <div class="big"><i class="mini-block" style="--pc: var(--p${p + 1})"></i>${got.length}</div>
+        <div class="stars" aria-label="${st} of 3 stars">${[0, 1, 2].map((i) => `<i class="${i < st ? 'on' : ''}" style="--i: ${i}">${STAR}</i>`).join('')}</div>
         ${n ? `<span class="strikes" aria-label="wrong blocks">${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(3 - n)}</span>` : ''}
         <div class="words"></div>`;
       const words = page.querySelector('.words')!;
@@ -291,3 +293,5 @@ function chip(g: Got, fresh: boolean) {
 }
 
 const CROWN = `<img class="crown" src="${crownUrl}" alt="" draggable="false" />`;
+/** a puffy five-point star (round joins) with a shine — the result book's stars (style.css .page .stars) */
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.8 14.7 9.08 20.56 10.02 16.38 14.22 17.29 20.08 12 17.4 6.71 20.08 7.62 14.22 3.44 10.02 9.3 9.08Z" /><ellipse cx="9.6" cy="11" rx="1.7" ry="1.05" transform="rotate(-35 9.6 11)" /></svg>';

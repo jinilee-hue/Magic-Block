@@ -13,6 +13,7 @@ import { isTalking, say, stopSpeech, wait, type Part } from '../core/speech';
 import { check, sttState, sttWhenReady } from '../core/stt';
 import { apiCheck } from '../core/apiCheck';
 import '../vendor/phonics-progress.js';
+import { albumAdd, starsFor } from '../ui/album';
 import type { Confetti } from '../ui/confetti';
 import type { Fox } from '../ui/fox';
 import type { Got, Hud } from '../ui/hud';
@@ -335,6 +336,7 @@ export class Game {
     }
     const me = this.players[this.turn];
     me.got.push({ word: b.word, color: b.color });
+    albumAdd(b.word.w);                    // its picture card goes into MY CARDS (kept if the block is lost later)
     const tgt = this.hud.chipSlot(this.turn, me.got);
     sfx('whoosh');
     this.stage.focus(false);
@@ -644,10 +646,11 @@ export class Game {
         unread: this.unread,                         // m-words pulled but not read (jump, 2 wrong tries, silence, no judge)
         misses: p1.strikes + p2.strikes,             // wrong blocks picked (not m)
         p1: p1.got.length, p2: p2.got.length,
+        stars1: starsFor(p1.got.length), stars2: starsFor(p2.got.length),   // the result book's stars (0-3)
         winner: winner + 1,                          // 1 | 2, 0 = a tie
         toppled,
         time: Math.round((performance.now() - this.startedAt) / 100) / 10,
-      }, { lower: ['unread', 'lost'] });
+      }, { lower: ['unread', 'lost'], higher: ['stars1', 'stars2'] });
     } catch (e) { console.warn('progress', e); }
   }
 

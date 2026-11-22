@@ -46,6 +46,8 @@
          다른 파닉스 게임과 통일해서") — title only, as before -->
     <div class="sysbar sysbar-left">
       <button id="btnKey" class="img-btn key-btn" aria-label="발음 인식 서버 키" data-api="unknown"><img src="./src/assets/btn_key.webp" alt="" draggable="false" /><i class="dot"></i></button>
+      <!-- MY CARDS (ui/album.ts), title only: the picture cards of the m-words read right in every game on this device -->
+      <button id="btnAlbum" class="img-btn" aria-label="My cards"><img src="./src/assets/btn_album.webp" alt="" draggable="false" /></button>
     </div>
     <div class="sysbar">
       <button id="btnLang" class="lang-tog" data-l="en" aria-label="Language: English or Korean" data-i18n-aria="a_lang" aria-pressed="false">
@@ -128,6 +130,15 @@
       <div class="result-actions">
         <button id="btnAgain" class="box-btn" data-i18n-aria="again"><svg viewBox="0 0 24 24"><path d="M19.4 7.3A8.6 8.6 0 1 0 20.4 13" /><path d="M15.5 7.5h4.3V3.2" /></svg><span data-i18n="again">Play Again</span></button>
         <button id="btnResultHome" class="box-btn home" data-i18n-aria="home"><svg class="solid" viewBox="0 0 24 24"><path d="M12 3.6 3.8 10.8V20h6.2v-5.4h4V20h6.2V10.8z" /></svg><span data-i18n="home">Home</span></button>
+      </div>
+    </div>
+
+    <!-- MY CARDS (ui/album.ts): the 18 m-word picture cards, "×N" on the ones collected, '?' for the rest; tap one to hear it -->
+    <div id="album" class="album" hidden>
+      <div class="album-card" role="dialog" aria-modal="true" aria-labelledby="albumTitle">
+        <h2 id="albumTitle" class="album-title">MY CARDS</h2>
+        <div id="albumGrid" class="album-grid"></div>
+        <button id="albumClose" class="box-btn close album-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg></button>
       </div>
     </div>
 
