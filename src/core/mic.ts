@@ -141,10 +141,11 @@ function run(ac: AudioContext, stream: MediaStream, o: ListenOpts): Promise<List
 
   return new Promise<ListenResult>((resolve) => {
     const frames: Float32Array[] = [];
-    let floor = 0.004, run = 0, start = -1, lastVoice = -1, voiced = 0, done = false, peak = 0, thr = 0.012;
+    let floor = 0.004, run = 0, start = -1, lastVoice = -1, voiced = 0, done = false, peak = 0, thr = 0.012, watch = 0, end = 0;
     const lv = () => ({ peak: +peak.toFixed(4), floor: +floor.toFixed(4), thr: +thr.toFixed(4) });
     const finish = (r: ListenResult) => {
       if (done) return; done = true;
+      clearInterval(watch);
       node.port.onmessage = null;
       try { src.disconnect(); node.disconnect(); sink.disconnect(); } catch { /* already gone */ }
       resolve(r);
@@ -171,7 +172,7 @@ function run(ac: AudioContext, stream: MediaStream, o: ListenOpts): Promise<List
       if (o.aborted?.()) return finish({ kind: 'aborted' });
       if (start < 0) {
         run = on ? run + 1 : 0;
-        if (run >= 4) { start = i - 3; lastVoice = i; voiced = run; o.onState?.('voice'); }
+        if (run >= 4) { start = i - 3; lastVoice = i; voiced = run; o.onState?.('voice'); end = performance.now() + o.maxMs + 3000; }
         else if (i * 20 >= o.startTimeoutMs) return finish({ kind: 'silence', lv: lv() });
         return;
       }
@@ -184,6 +185,14 @@ function run(ac: AudioContext, stream: MediaStream, o: ListenOpts): Promise<List
     };
     // safety net: the worklet never delivered (suspended context etc.)
     setTimeout(() => { if (!done && frames.length === 0) finish({ kind: 'error', error: 'no audio frames' }); }, 4000);
+    // …or it stops delivering mid-listen (the context suspended, the mic unplugged): the frame clock above stops with it.
+    // A wall clock ends the listen 3 s past its guard + wait (past the longest utterance once a voice has started), and
+    // `aborted` is polled here too, so a closed activity ends a listen that gets no frames
+    end = performance.now() + (o.guardMs ?? 0) + o.startTimeoutMs + 3000;
+    watch = window.setInterval(() => {
+      if (o.aborted?.()) finish({ kind: 'aborted' });
+      else if (performance.now() > end) finish({ kind: 'error', error: 'audio frames stopped' });
+    }, 200);
   });
 }
 

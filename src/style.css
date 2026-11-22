@@ -375,11 +375,10 @@ svg { display: block; }
   .pick-ani .pa-art { width: calc(22 * var(--u)); }
 }
 /* corner bar (ui/corner.ts), the same on the title and in the game (user: "나가기 버튼과 사운드제어 버튼은 인트로와 공통으로"):
-   sound (speaker + vertical volume slider, top = loud) and exit, in the game also EN | 한. Above the title layer and the
+   sound (speaker + vertical volume slider, top = loud) and exit, on the title also EN | 한. Above the title layer and the
    result book; the game's HUD keeps clear of it (--sys-w = its width, set by corner.ts) */
 .sysbar { position: absolute; z-index: 55; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); right: calc(2.4 * var(--u)); display: flex; gap: calc(1.6 * var(--u)); align-items: center; transition: opacity .4s; }
 .app[data-screen="intro"] .sysbar { opacity: 0; pointer-events: none; }
-.app:not([data-screen="game"]) .sysbar .lang-tog { display: none; }
 /* phonics-api key (title only, tools/make_key_btn.py art): a teacher enters it once per device; the dot = green when the
    company server judges the readings, grey when the on-device whisper does (no key / offline) */
 .app:not([data-screen="title"]) .sysbar #btnKey { display: none; }

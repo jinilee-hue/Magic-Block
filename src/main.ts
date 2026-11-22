@@ -26,7 +26,7 @@ async function loadFonts() {
   const faces = [
     new FontFace('Baloo', `url(${base}Baloo2.woff2) format('woff2')`, { weight: '400 800' }),
     new FontFace('ECP', `url(${base}NotoSans_ECP-Bold.ttf) format('truetype')`, { weight: '700' }),
-    // Korean screen words + the fox's Korean bubble (core/lang.ts): Jua, cut to the syllables the game uses
+    // the fox's Korean bubble (core/lang.ts): Jua, cut to the syllables the game uses
     // (tools/make_ko_font.py); Baloo has no Hangul, so the browser takes these glyphs from here
     new FontFace('Jua', `url(${base}Jua-ko.woff2) format('woff2')`, { weight: '400 900', unicodeRange: 'U+1100-11FF, U+3130-318F, U+AC00-D7A3' }),
   ];

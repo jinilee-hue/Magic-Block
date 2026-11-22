@@ -45,7 +45,7 @@ export class Hud {
     this.jumpBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onJump(); });
     this.howBtn.addEventListener('click', (e) => { e.stopPropagation(); this.onHowSkip(); });
     $('#btnReset').addEventListener('click', () => { sfx('tick'); this.onResetView(); });
-    // EN | 한: the fox's voice, its bubble and the screen words (core/lang.ts) — in the corner bar
+    // EN | 한: the fox's voice and its bubble (core/lang.ts) — in the corner bar, on the title only
     const langBtn = $('#btnLang');
     const syncLang = () => {
       const ko = lang() === 'ko';
