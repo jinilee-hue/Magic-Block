@@ -6,7 +6,7 @@
 - 로컬 실행: `npm install` 후 `npm run dev` → http://localhost:5195/
 
 ## 게임 규칙
-- 단어(2026-11-22 사용자: 레슨팩으로 구성, 다른 단어엔 m을 섞지 않음): m단어 = lesson pack FP.K.U1L1의 18개(mail man map mask mat match meat mice milk mirror mitt monkey moon mop mouse mouth mug mushroom), 다른 단어 = **m이 어디에도 없는** 다른 알파벳 단어 26개(FPR K Unit 1·다른 레슨, `tools/build_words.py` → `src/data/words.json`).
+- 단어(2026-11-22 사용자: 레슨팩으로 구성, 다른 단어엔 m을 섞지 않음): m단어 = lesson pack FP.K.U1L1의 18개(mail man map mask mat match meat mice milk mirror mitt monkey moon mop mouse mouth mug mushroom), 다른 단어 = **m이 어디에도 없는** 단어 26개 — 레슨팩의 m 없는 단어 9개(lid egg doll heart gate fox gift kite ten, 음성도 레슨팩) + m단어와 운이 같은 Unit 1 단어 15개(pan/man, cap/map, cat/mat …) + sun, dog(`tools/build_words.py` → `src/data/words.json`).
 - 한 판 30블럭(10층×3) = m단어 14개 + 다른 단어 16개. m단어는 기기마다 섞어 둔 순서에서 판마다 다음 14개를 씁니다 → 연달아 두 판이면 18개가 다 나옵니다.
 - m블럭을 고르면: 블럭이 빠지며 끝에서 금빛 별이 반짝임(첫 화면 반짝임과 같은 것) → 크게 떠오름 → 블럭이 돌면서 그림 카드로 바뀌고, 그 뒤로 Word Mashup 정답 카드처럼 사탕색 줄기·도는 별·반짝이가 터짐(`src/game/cheer.ts`) → 여우가 "Now say the word." 하고 단어를 읽어 줌 → 아이가 따라 읽음(마이크) → 맞으면 카드가 다시 블럭으로 돌아 내 플레이어 카드로 날아가 쌓임 → 친구 차례. 그림 카드를 누르면 다시 들려줍니다.
 - 못 읽으면 여우가 다시 들려주고 다시 듣습니다. 진짜로 읽은 시도가 3번 안 통하면 "Good try!"로 블럭을 줍니다(무음은 통과 안 됨).

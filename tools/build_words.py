@@ -1,4 +1,4 @@
-"""Build src/data/words.json — the 44 Jenga block words: the lesson pack FP.K.U1L1 m-words (18) + 26 FPR K Unit 1 words with no m.
+"""Build src/data/words.json — the 44 Jenga block words: the lesson pack FP.K.U1L1 m-words (18) + 26 words with no m.
 
 Source: SAD·FPR 단어 연구 자료집 v1.0 → ~/dev/sadfpr-studio/data/b2_book_FPRK.json (words: lemma → printed/picture pages;
 rows: lemma → page + lesson; lu: lesson → unit; cards: picture-card pages).
@@ -6,8 +6,9 @@ rows: lemma → page + lesson; lu: lesson → unit; cards: picture-card pages).
   단어가 FPR K Unit1에 나오는 단어로 구성된건지 확인해줘\" → only Unit 1.
 - M: the lesson pack FP.K.U1L1's m-words, all 18 (2026-11-22, user: "레슨팩 써서 단어구성하고 나머지 단어들은 m 단어 섞지마").
   mice is a pack word the FPR K ledger lacks; mitten, my, mailbox (Unit 1, not in the pack) are no longer blocks.
-- OTHER: 26 Unit 1 words with NO m anywhere (jam and lemon went out, duck and fish came in). Most rhyme with an
-  m-word (pan/man, cap/map, cat/mat …) so a child has to look at the FIRST letter, not the word shape.
+- OTHER: 26 words with NO m anywhere: the lesson pack's own 9 non-m words (lid egg doll heart gate fox gift kite ten,
+  user 2026-11-22) + 17 Unit 1 words — 15 rhyme with an m-word (pan/man, cap/map, cat/mat …) so a child has to look at
+  the FIRST letter, not the word shape — and sun, dog.
 
 Run: python3 tools/build_words.py   (prints the table; writes src/data/words.json)
 Only words, Korean glosses and page numbers are written — no textbook sentences (internal material).
@@ -37,6 +38,9 @@ M_WORDS = ['mail', 'man', 'map', 'mask', 'mat', 'match', 'meat', 'mice', 'milk',
 PACK_ONLY = {'mice': ['쥐(여러 마리)', 'noun']}   # pack words missing from the FPR K ledger: gloss + part of speech
 LEMMA = {}                                       # block text → lemma in the ledger (none differ in Unit 1)
 EXCLUDED = {'mitten': 'not in the lesson pack', 'my': 'not in the lesson pack', 'mailbox': 'not in the lesson pack'}
+# the lesson pack's own words that have no m (user 2026-11-22: "응 바꿔줘" — the pack's 9 first, the rest from other letters);
+# pictures + audio in the pack. gift and kite are on later book pages, not Unit 1 — fine: they are FP.K.U1L1 pack words.
+PACK_OTHER = ['lid', 'egg', 'doll', 'heart', 'gate', 'fox', 'gift', 'kite', 'ten']
 OTHER = [  # rhyme partner in the comment
     'pan', 'van', 'fan',   # man
     'cap', 'tap',          # map
@@ -47,10 +51,8 @@ OTHER = [  # rhyme partner in the comment
     'turkey',              # monkey
     'spoon',               # moon
     'sit',                 # mitt
-    'pie', 'tie',          # my
-    'box',                 # (an everyday picture word)
-    'sun', 'dog', 'sock', 'six', 'ten', 'bag',   # everyday picture words
-    'duck', 'fish',        # (in place of jam and lemon: the other words have NO m anywhere — user 2026-11-22)
+    *PACK_OTHER,           # the lesson pack's non-m words
+    'sun', 'dog',          # everyday picture words
 ]
 # read-aloud check (src/core/sttCheck.ts): other spellings the recogniser may write for the same word, and the same
 # word with another first sound — common words only (the check asks: does it start with m, or with one of these?)
@@ -99,7 +101,7 @@ all_m = sorted(k for k in W if k.lower().startswith('m') and in_unit1(k) and k.l
 for k in all_m:
     t = next((t for t, l in LEMMA.items() if l == k), k)
     assert t in M_WORDS or k.lower() in EXCLUDED, f'Unit 1 m-word not handled: {k}'
-for t in OTHER + [w for w in M_WORDS if w not in PACK_ONLY]:
+for t in [w for w in OTHER if w not in PACK_OTHER] + [w for w in M_WORDS if w not in PACK_ONLY]:
     assert in_unit1(LEMMA.get(t, t)), f'not in FPR K Unit 1: {t}'
 assert len(M_WORDS) == 18 and len(set(M_WORDS)) == 18
 assert len(OTHER) == 26 and len(set(OTHER)) == 26 and not any('m' in w for w in OTHER)   # no m anywhere in the other words
