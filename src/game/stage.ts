@@ -15,7 +15,6 @@ const DEG = Math.PI / 180;
  *  Measured on the pink table of the re-uploaded jenga_bg (top surface x 750–2003, y 1146–1337). */
 export const BG = { w: 2752, h: 1536, cx: 1377, cy: 1241, rx: 626 };
 const EL0 = 9;            // degrees: matches the painted table's ellipse (ry / rx ≈ 0.155)
-const TOWER_H = LAYERS * H + 0.8;   // world units to fit between the HUD and the table: the layers + a margin
 const TABLE_MIN = 4;      // the painted table-top is at least this wide (radius, world units): bigger blocks than that won't fit
 
 export class Stage {
@@ -63,6 +62,9 @@ export class Stage {
   /** the hint's ring round what is visible of a block, drawn over the finished frame (hintring.ts) */
   readonly ring = new HintRing();
   private v0 = new THREE.Vector3();
+  /** layers of the game's tower (its level): a tower taller than 10 layers is fitted to the screen (smaller blocks), a
+   *  shorter one keeps the 10-layer size (setLayers) */
+  private layers = LAYERS;
 
   constructor(private host: HTMLElement) {
     const r = this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
@@ -151,7 +153,8 @@ export class Stage {
     const t = this.tableAt = { x: (w - BG.w * s) / 2 + BG.cx * s, y: (h - BG.h * s) / 2 + BG.cy * s, rx: BG.rx * s };
     // scale: the whole tower between the top bar (≈13.5 u) and the table, as big as the painted table allows
     const u = Math.min(h / 100, w * 0.005625);
-    const k = Math.min((t.y - 13.5 * u) / TOWER_H, t.rx / TABLE_MIN);   // CSS px per world unit at the tower's foot
+    const towerH = Math.max(LAYERS, this.layers) * H + 0.8;   // world units to fit between the HUD and the table: the layers + a margin
+    const k = Math.min((t.y - 13.5 * u) / towerH, t.rx / TABLE_MIN);   // CSS px per world unit at the tower's foot
     this.pxPerUnit = k;
     this.tableR = t.rx / k;
     this.catcher.scale.setScalar(this.tableR);
@@ -169,6 +172,14 @@ export class Stage {
   }
 
   get size() { return { w: this.w, h: this.h }; }
+  /** the next tower's layer count (a game's level; the title: LAYERS): the view fits it */
+  setLayers(n: number) {
+    if (n === this.layers) return;
+    this.layers = n;
+    this.spot.target.position.set(0, n * H * 0.55, 0);
+    this.focusKey = '';
+    this.resize();
+  }
   get dist() { return this.fitDist * this.rig.zoom; }
 
   /** animate the view to a pose (degrees) */
@@ -227,7 +238,7 @@ export class Stage {
     if (this.spotOn === 0) return;
     const R = this.rig, z = R.zoom, k = this.pxPerUnit / z;
     const foot = this.project(this.v0.set(R.target.x, 0, R.target.z));
-    const top = this.project(this.v0.set(R.target.x, LAYERS * H, R.target.z));
+    const top = this.project(this.v0.set(R.target.x, this.layers * H, R.target.z));
     const key = `${foot.x.toFixed(0)}|${foot.y.toFixed(0)}|${top.y.toFixed(0)}|${k.toFixed(1)}|${this.w}x${this.h}`;
     if (key === this.focusKey) return;
     this.focusKey = key;

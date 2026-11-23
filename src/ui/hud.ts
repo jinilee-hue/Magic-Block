@@ -73,6 +73,14 @@ export class Hud {
     this.foxSay.clear();
   }
 
+  /** the game's level under the logo (display only — levels.ts), and the ✕ marks a player has at it (2 at level 6) */
+  setLevel(n: number, strikes: number) {
+    const el = $('#level');
+    el.querySelector('b')!.textContent = String(n);
+    el.setAttribute('aria-label', `Level ${n}`);
+    this.cards.forEach((c) => c.querySelectorAll<HTMLElement>('.strikes i').forEach((m, i) => { m.hidden = i >= strikes; }));
+  }
+
   /** wrong blocks so far (✕ marks on the player's card; the newest pops in) */
   setStrikes(p: number, n: number, animate = false) {
     this.cards[p].querySelectorAll<HTMLElement>('.strikes i').forEach((m, i) => {
@@ -258,18 +266,22 @@ export class Hud {
   }
 
   // ── result book ────────────────────────────────────────────────────────────────────────────────────────
-  showResult(players: { got: Got[]; strikes?: number }[], winner: number) {
+  /** max = the ✕ marks at this level; up = the new level when it went up (LEVEL UP! over the book), else 0 */
+  showResult(players: { got: Got[]; strikes?: number }[], winner: number, max = 3, up = 0) {
     const res = $('#result');
     res.hidden = false;
+    const lu = $('#levelUp');
+    lu.hidden = !up;
+    lu.querySelector('span b')!.textContent = String(up);
     res.querySelectorAll<HTMLElement>('.page').forEach((page, p) => {
-      const got = players[p].got, n = Math.min(3, players[p].strikes ?? 0), st = starsFor(got.length);
+      const got = players[p].got, n = Math.min(max, players[p].strikes ?? 0), st = starsFor(got.length);
       page.classList.toggle('winner', winner === p);
       page.innerHTML = `
         <div class="ava"><img class="ani" src="${ANI_ART[this.animals[p]]}" alt="" draggable="false" />${winner === p ? CROWN : ''}</div>
         <h2>${t('player', { n: p + 1 })}</h2>
         <div class="big"><i class="mini-block" style="--pc: var(--p${p + 1})"></i>${got.length}</div>
         <div class="stars" aria-label="${st} of 3 stars">${[0, 1, 2].map((i) => `<i class="${i < st ? 'on' : ''}" style="--i: ${i}">${STAR}</i>`).join('')}</div>
-        ${n ? `<span class="strikes" aria-label="wrong blocks">${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(3 - n)}</span>` : ''}
+        ${n ? `<span class="strikes" aria-label="wrong blocks">${'<i class="on"></i>'.repeat(n)}${'<i></i>'.repeat(max - n)}</span>` : ''}
         <div class="words"></div>`;
       const words = page.querySelector('.words')!;
       // the words as the game's own blocks (ui/blockshot.ts; user: "결과 화면에 나오는 단어블럭들도 정말 젠가 블럭형태로

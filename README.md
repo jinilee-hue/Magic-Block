@@ -16,7 +16,20 @@
   - 버튼은 아래 가운데 **원위치** 하나뿐(좌우 돌리기 버튼 없음).
   - 한동안 아무도 탑을 안 만지면: 테이블 위 탑 둘레에 흰 화살표 고리가 돌고, 할리갈리 손가락이 고리 앞을 따라 끌어 보여 줌(`src/game/spinhint.ts`). 첫 판 안내 때도 나옴.
   - 한동안 아무도 블럭을 안 고르면: 여우가 가리키며 화면 가운데에 가까운 m블럭 하나에 노란 고리가 깜박임. 고리는 블럭에서 **보이는 부분** 둘레를 다른 블럭들 위에 그려서, 블럭 사이에 낀 블럭도 잘 보임(`src/game/hintring.ts`).
-- 판이 끝나면(결과 화면) 파닉스 공통 진도 `phonics.progress`에 기록만 남김(`src/vendor/phonics-progress.js` = phonics-kit 사본, 레벨 없음): `PhonicsProgress.played('magic-block', { words, unread, misses, p1, p2, winner, toppled, time })`. 중간에 나간 판은 기록하지 않음.
+- 레벨(2026-11-22, phonics-kit '공통 규칙: 레벨', `src/game/levels.ts`): 고르지 않음. START는 이 기기에 저장된 레벨(`pj.level.v1` {level, poor}, 두 사람 공용)부터.
+  탑이 안 무너지고 뽑은 m블럭의 70% 이상을 맞게 읽으면 다음 판 +1(결과에 LEVEL UP!), 무너지거나 40% 미만인 판이 두 번 이어지면 −1, 그 밖에는 같은 레벨.
+
+  | 레벨 | 층(×3) | m / 다른 단어 | 블럭 끝면 | 운 맞는 함정 | 실수 |
+  |---|---|---|---|---|---|
+  | 1 | 8 | 11 / 13 | 큰 첫 글자 | 없음 | 3 |
+  | 2 | 10 | 14 / 16 | 큰 첫 글자 | 없음 | 3 |
+  | 3 | 10 | 14 / 16 | 단어 전체, 첫 글자만 진하게 | 없음 | 3 |
+  | 4 | 11 | 15 / 18 | 3과 같음 | m블럭 옆에(man/pan…) | 3 |
+  | 5 | 12 | 17 / 19 | 단어 전체, 표시 없음 | 있음 | 3 |
+  | 6 | 12 | 17 / 19 | 5와 같음 | 있음 | 2 |
+
+  로고 아래 LEVEL n(보기만). `?level=N`은 테스트용.
+- 판이 끝나면(결과 화면) 파닉스 공통 진도 `phonics.progress`에 기록(`src/vendor/phonics-progress.js` = phonics-kit 사본, 레벨이 바뀌면 `setLevel`): `PhonicsProgress.played('magic-block', { words, unread, misses, p1, p2, winner, toppled, time })`. 중간에 나간 판은 기록하지 않음.
 
 ## 설명 SKIP · 말하기 차례 (phonics-kit 공통 규칙, 2026-11-22)
 - 설명 SKIP: 판 시작 때 여우가 게임을 설명하는 동안 아래 가운데에 SKIP. 누르면 여우 말이 바로 끊기고 첫 차례가 시작됨.

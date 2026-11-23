@@ -33,6 +33,9 @@ export function collapse(stage: Stage, tower: Tower, seconds = 4.2, how: 'push' 
   tower.root.rotation.set(0, 0, 0); tower.root.scale.set(1, 1, 1); tower.root.updateMatrixWorld(true);
   const cam = stage.camera.position.clone().setY(0).normalize();
   const right = new THREE.Vector3(cam.z, 0, -cam.x);            // fall sideways across the view: easy to watch
+  // the push's start height and growth scale down with a tower under 10 layers (level 1: 8): the 10-layer shove left a
+  // short tower full of holes standing
+  const sc = Math.min(1, tower.topH() / (10 * H));
   const pairs: [THREE.Mesh, CANNON.Body][] = [];
   for (const b of tower.inTower()) {
     const p = b.mesh.getWorldPosition(new THREE.Vector3()), q = b.mesh.getWorldQuaternion(new THREE.Quaternion());
@@ -63,8 +66,8 @@ export function collapse(stage: Stage, tower: Tower, seconds = 4.2, how: 'push' 
     // the push: the upper part leans over, everything above ~1/3 gets a shove that grows with height
     for (const [, body] of pairs) {
       const y = body.position.y;
-      if (y > 3) {
-        const k = (y - 3) / 8;
+      if (y > 3 * sc) {
+        const k = (y - 3 * sc) / (8 * sc);
         body.velocity.set(right.x * side * k * 5.5 + (Math.random() - 0.5) * 0.6, 0.4 * k, right.z * side * k * 5.5 + (Math.random() - 0.5) * 0.6);
         body.angularVelocity.set((Math.random() - 0.5) * 2.5 * k, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 2.5 * k);
       }

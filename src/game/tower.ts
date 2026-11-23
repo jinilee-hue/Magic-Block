@@ -1,5 +1,5 @@
-// The Jenga tower: 12 layers × 3 pastel blocks (Jenga proportions 7.5 : 1.5 : 2.5), each painted with its word on
-// all four sides. 14 blocks carry an m-word (half of the 28 FPR K m-words: the next game brings the other half). The
+// The Jenga tower: 8-12 layers (the game's level, levels.ts) × 3 pastel blocks (Jenga proportions 7.5 : 1.5 : 2.5), each
+// painted with its word on all four sides. 11-17 blocks carry an m-word (of the lesson pack's 18: the next game brings the rest). The
 // m-blocks are placed so the tower can always stand once every one of them is pulled out (per layer: none, one side,
 // the middle, or both sides — never "middle + a side"), so a correct pull never knocks it over; the big fall is saved
 // for the end.
@@ -8,19 +8,26 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { animate, ease, shuffle } from './anim';
 import type { Stage } from './stage';
 import { BLOCK_LAYER } from './hintring';
+import type { Ends } from './levels';
 
 export const L = 3, D = 1;
 /** block thickness (user picked "thicker blocks with 10 layers": 0.75, real Jenga is 0.6). ?bh= overrides it. */
 export const H = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('bh')) || 0.75;
-export const LAYERS = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layers')) || 10;
+/** ?layers= (tests): every game tower has this many layers, whatever its level says (levels.ts) */
+export const LAYERS_Q = Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layers')) || 0;
+/** the 10-layer tower (level 2): the screen fits at least this height, the title's words come from it */
+export const LAYERS = LAYERS_Q || 10;
 /** the title shows a taller tower than the game (user: "첫화면에는 갯수 더 많아도 괜찮은거 같은데", then "한단 빼자":
  *  11 layers): same blocks, logo and START centred over it, m-words on its front face */
 export const TITLE_LAYERS = 11;
-/** m-words in one game */
+/** m-words in a 10-layer game (levels.ts mFor scales it with the layers) */
 export const M_PER_GAME = 14;
 const DG = 0.035, HG = 0.012;                // gaps between blocks / layers
 
 export interface WordInfo { w: string; m: boolean; first: string; ko: string; alts?: string[]; rivals?: string[] }
+/** an other word that rhymes with an m-word (pan/man, cap/map, spoon/moon …): one of its read-check rivals, or the same
+ *  last three letters */
+export const rhymes = (o: WordInfo, m: WordInfo) => !!m.rivals?.includes(o.w) || (o.w.length > 3 && m.w.length > 3 && o.w.slice(-3) === m.w.slice(-3));
 export interface Pastel { name: string; base: string; ink: string; light: string; edge: string }
 export interface Block {
   id: number; word: WordInfo; layer: number; slot: number; color: Pastel; axis: 'x' | 'z';
@@ -90,8 +97,9 @@ export function blockGeometry() {
   return g;
 }
 
-/** paint a block's atlas; k = resolution multiplier (2 for the big presented block) */
-export function paintBlock(word: string, p: Pastel, k = 1): HTMLCanvasElement {
+/** paint a block's atlas; k = resolution multiplier (2 for the big presented block); ends = what the end faces show
+ *  (levels.ts) */
+export function paintBlock(word: string, p: Pastel, k = 1, ends: Ends = 'big'): HTMLCanvasElement {
   const cv = document.createElement('canvas'); cv.width = AW * k; cv.height = AH * k;
   const g = cv.getContext('2d')!;
   g.scale(k, k);
@@ -109,8 +117,9 @@ export function paintBlock(word: string, p: Pastel, k = 1): HTMLCanvasElement {
   g.fillStyle = top; g.fillRect(TOP.x - 4, 0, BOTTOM.x - TOP.x, AH);
   g.fillStyle = bottom; g.fillRect(BOTTOM.x - 4, 0, AW - BOTTOM.x + 4, AH);
   // the word on the long faces; on the narrow ends only its first letter, big (user: "젠가 블럭에서 넓은 면에만 전체 단어
-  // 스펠링 다 들어가고 좁은 끝 부분에는 단어의 첫번째 스펠링만")
-  const text = (str: string, x: number, w: number, pad: number, max: number) => {
+  // 스펠링 다 들어가고 좁은 끝 부분에는 단어의 첫번째 스펠링만") — from level 3 the whole word there, letters all one size
+  // (rest = a paler ink for all but the first letter)
+  const text = (str: string, x: number, w: number, pad: number, max: number, rest?: string) => {
     let size = max;
     g.font = `700 ${size}px ECP, Baloo, sans-serif`;
     const mw = g.measureText(str).width;
@@ -126,10 +135,15 @@ export function paintBlock(word: string, p: Pastel, k = 1): HTMLCanvasElement {
     g.textAlign = 'center'; g.textBaseline = 'alphabetic';
     const cx = x + w / 2;
     g.fillStyle = p.light; g.globalAlpha = 0.9; g.fillText(str, cx, by + size * 0.035);
-    g.globalAlpha = 1; g.fillStyle = p.ink; g.fillText(str, cx, by);
+    g.globalAlpha = 1; g.fillStyle = p.ink;
+    if (!rest) { g.fillText(str, cx, by); return; }
+    const x0 = cx - m.width / 2;
+    g.textAlign = 'left'; g.fillText(str[0], x0, by);
+    g.fillStyle = rest; g.fillText(str.slice(1), x0 + g.measureText(str[0]).width, by);
   };
   text(word, LONG.x, LONG.w, 36, AH * 0.61);
-  text(word[0], END.x, END.w, 10, AH * 0.66);
+  if (ends === 'big') text(word[0], END.x, END.w, 10, AH * 0.66);
+  else text(word, END.x, END.w, 14, AH * 0.61, ends === 'small' ? mixHex(p.ink, p.base, 0.45) : undefined);
   return cv;
 }
 
@@ -187,6 +201,8 @@ export class Tower {
   private loose: THREE.Object3D[] = [];
   /** a stack-up or a title tease is playing */
   get busy() { return this.busyAnim; }
+  /** what the block ends show (the game's level, levels.ts; the title keeps the big first letter) */
+  ends: Ends = 'big';
 
   constructor(private stage: Stage) {
     stage.world.add(this.root);
@@ -194,20 +210,34 @@ export class Tower {
     stage.tick((dt, t) => this.update(dt, t));
   }
 
-  /** layers: 12 for a game; the title tower is shorter. plan: which slots hold m-words (default: planLayers) */
-  build(words: WordInfo[], r: () => number, layers = LAYERS, plan?: number[][]) {
+  /** layers: the game's level says how many (levels.ts); the title tower is 11. plan: which slots hold m-words (default:
+   *  planLayers). traps: each other word that rhymes with an m-word of the tower (pan/man …) goes in a free slot beside
+   *  it — its layer, else the one above or below (two away when those are full) */
+  build(words: WordInfo[], r: () => number, layers = LAYERS, plan?: number[][], traps = false) {
     this.clear();
     const ms = shuffle(words.filter((w) => w.m), r), others = shuffle(words.filter((w) => !w.m), r);
     plan ??= planLayers(ms.length, r, layers);
+    const grid = plan.map((p) => [0, 1, 2].map((s) => (p.includes(s) ? ms.pop() : undefined)));
+    if (traps) for (const o of others.slice()) {
+      const at = grid.flatMap((row, l) => (row.some((w) => w?.m && rhymes(o, w)) ? [l] : []));
+      for (const d of [0, 1, 2]) {
+        const free = [...new Set(at.flatMap((l) => [l - d, l + d]))].filter((l) => l >= 0 && l < layers)
+          .flatMap((l) => [0, 1, 2].filter((s) => !grid[l][s]).map((s) => [l, s]));
+        if (!free.length) continue;
+        const [l, s] = free[Math.floor(r() * free.length)];
+        grid[l][s] = o; others.splice(others.indexOf(o), 1);
+        break;
+      }
+    }
     const geo = blockGeometry();
     let id = 0;
     for (let layer = 0; layer < layers; layer++) {
       const used = new Set<string>();
       for (let slot = 0; slot < 3; slot++) {
-        const word = plan[layer].includes(slot) ? ms.pop()! : others.pop()!;
+        const word = grid[layer][slot] ?? others.pop()!;
         const choices = PASTELS.filter((p) => !used.has(p.name));
         const color = choices[Math.floor(r() * choices.length)]; used.add(color.name);
-        const mat = blockMaterial(makeTexture(paintBlock(word.w, color), this.aniso));
+        const mat = blockMaterial(makeTexture(paintBlock(word.w, color, 1, this.ends), this.aniso));
         const mesh = new THREE.Mesh(geo, mat);
         mesh.castShadow = true; mesh.receiveShadow = true;
         const axis: 'x' | 'z' = layer % 2 === 0 ? 'x' : 'z';
@@ -373,7 +403,7 @@ export class Tower {
     const scene = this.stage.scene;
     scene.attach(b.mesh);
     // crisper texture for the close-up
-    const hi = makeTexture(paintBlock(b.word.w, b.color, 2), this.aniso);
+    const hi = makeTexture(paintBlock(b.word.w, b.color, 2, this.ends), this.aniso);
     const lo = b.mat.map; b.mat.map = hi; b.mat.emissiveMap = hi; b.mat.needsUpdate = true; lo?.dispose();
     b.mesh.castShadow = false;
     const p0 = b.mesh.position.clone(), q0 = b.mesh.quaternion.clone(), s0 = b.mesh.scale.x;

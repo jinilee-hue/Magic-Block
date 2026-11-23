@@ -77,6 +77,12 @@ svg { display: block; }
 .hud::before { content: ''; position: absolute; top: calc(2.4 * var(--u) + env(safe-area-inset-top)); left: calc(2.4 * var(--u));
   width: calc(14.67 * var(--u)); height: calc(10.35 * var(--u));   /* 90 % of 16.3 × 11.5 (user: "게임화면에 있는 로고는 지금보다 90% 크기로") */
   background: url('./assets/logo.webp') center / contain no-repeat; filter: drop-shadow(0 calc(.6 * var(--u)) calc(.9 * var(--u)) rgba(120, 70, 40, .25)); pointer-events: none; }
+/* the game's level under the logo (display only: it moves by itself — game/levels.ts) */
+.hud > .level-tag { position: absolute; top: calc(13.1 * var(--u) + env(safe-area-inset-top)); left: calc(9.73 * var(--u)); translate: -50% 0;
+  display: flex; align-items: baseline; gap: calc(.7 * var(--u)); padding: calc(.55 * var(--u)) calc(1.9 * var(--u)) calc(.35 * var(--u)); border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.72)); box-shadow: 0 calc(.6 * var(--u)) calc(1.2 * var(--u)) rgba(70, 50, 120, .16);
+  color: var(--purple); font-weight: 800; font-size: calc(2.1 * var(--u)); line-height: 1; letter-spacing: .06em; white-space: nowrap; pointer-events: none; }
+.level-tag b { font-size: calc(3.2 * var(--u)); letter-spacing: 0; }
 .app:not([data-screen="game"]) .hud, .app:not([data-screen="game"]) .dock { opacity: 0; translate: 0 calc(-3 * var(--u)); pointer-events: none; }
 .app:not([data-screen="game"]) .hud > * { pointer-events: none; }
 
@@ -499,18 +505,44 @@ svg { display: block; }
 .page .stars i.on ellipse { opacity: .75; }
 @keyframes starIn { from { transform: scale(.2) rotate(-40deg); opacity: 0; } }
 .page.winner { background: linear-gradient(180deg, #fffbe9, #fff3cf); }
+/* LEVEL UP! (game/levels.ts): a gold plate over the spine — the stars' gold — popping in after the stars */
+.book { position: relative; }
+.level-up { position: absolute; z-index: 2; left: 50%; top: 0; translate: -50% -50%; display: flex; flex-direction: column; align-items: center; gap: calc(.4 * var(--u));
+  padding: calc(1.2 * var(--u)) calc(3.4 * var(--u)) calc(1 * var(--u)); border-radius: calc(3 * var(--u));
+  background: linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 46%), linear-gradient(180deg, #ffd23f 0%, #f4a21c 100%);
+  box-shadow: 0 0 0 calc(.62 * var(--u)) #e0901a, 0 calc(.9 * var(--u)) calc(1.6 * var(--u)) rgba(176, 110, 20, .35), inset 0 calc(.32 * var(--u)) 0 rgba(255,255,255,.45);
+  color: #fff; font-weight: 800; line-height: 1; white-space: nowrap; text-shadow: 0 calc(.22 * var(--u)) 0 rgba(160, 90, 10, .5);
+  animation: levelUp .7s cubic-bezier(.3,1.8,.5,1) 1.3s both; }
+.level-up > b { font-size: calc(5 * var(--u)); letter-spacing: .02em; }
+.level-up span { font-size: calc(2.4 * var(--u)); letter-spacing: .08em; }
+.level-up span b { font-size: calc(3.1 * var(--u)); letter-spacing: 0; }
+@keyframes levelUp { from { transform: scale(.2) rotate(-14deg); opacity: 0; } }
 .result-actions { display: flex; align-items: center; justify-content: center; gap: calc(4.2 * var(--u)); animation: rise .5s .5s both; }
-.box-btn { --face: #46d27a; --face-deep: #1f9a52; display: inline-flex; align-items: center; gap: calc(1.2 * var(--u));
-  height: calc(7.6 * var(--u)); padding: 0 calc(3.2 * var(--u)) 0 calc(2.4 * var(--u)); border-radius: 999px;
+/* Box buttons (Pick Again · Start Game · Play Again · Home · the shop's close) = the corner buttons' candy boxes
+   (btn_key / btn_animals / btn_out art; user 2026-11-23 "상단에 박스들 스타일과 통일", "결과화면도 버튼스타일 통일해"):
+   a rounded box, not a pill — a rim one step darker round a raised face, a thin groove between them, the deep edge
+   under it, white letters and icon with a soft shade. Colours = the art's pastel faces (green · sky = btn_out · lavender =
+   btn_animals). */
+.box-btn { --face: #82d99d; --face-deep: #2f9658; --b-hi: color-mix(in srgb, var(--face) 62%, #fff); --b-rim: color-mix(in srgb, var(--face) 78%, var(--face-deep));
+  position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: calc(1.2 * var(--u));
+  height: calc(7.6 * var(--u)); padding: 0 calc(3.4 * var(--u)) 0 calc(2.8 * var(--u)); border-radius: calc(1.9 * var(--u));
   color: #fff; font-weight: 800; font-size: calc(3.8 * var(--u)); line-height: 1; letter-spacing: .01em; white-space: nowrap;
-  background: linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 46%), linear-gradient(180deg, var(--face) 0%, var(--face-deep) 100%);
-  box-shadow: 0 0 0 calc(.62 * var(--u)) var(--face-deep), 0 calc(.7 * var(--u)) calc(1.4 * var(--u)) rgba(60, 30, 90, .22), inset 0 calc(.32 * var(--u)) 0 rgba(255,255,255,.4);
-  text-shadow: 0 calc(.16 * var(--u)) 0 rgba(0,0,0,.16); transition: transform .12s; }
-.box-btn.home { --face: #8d5cf6; --face-deep: #6234d0; }
-.box-btn.replay { --face: #5eb6f2; --face-deep: #2f86c8; }
-.box-btn svg { width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u)); fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 calc(.12 * var(--u)) 0 rgba(0,0,0,.16)); }
+  background: linear-gradient(180deg, var(--b-rim), var(--face) 22%, var(--face) 72%, var(--b-rim));
+  box-shadow: 0 calc(.6 * var(--u)) 0 var(--face-deep), 0 calc(1.1 * var(--u)) calc(1.8 * var(--u)) rgba(60, 30, 90, .22),
+    inset 0 calc(.28 * var(--u)) 0 rgba(255, 255, 255, .55), inset 0 calc(-.28 * var(--u)) 0 rgba(0, 0, 0, .07);
+  text-shadow: 0 calc(.16 * var(--u)) calc(.45 * var(--u)) color-mix(in srgb, var(--face-deep) 60%, transparent); transition: transform .12s, box-shadow .12s; }
+.box-btn::before { content: ''; position: absolute; z-index: -1; inset: calc(.72 * var(--u)); border-radius: calc(1.25 * var(--u));
+  background: linear-gradient(180deg, var(--b-hi), var(--face) 58%);
+  box-shadow: inset 0 0 0 calc(.2 * var(--u)) color-mix(in srgb, var(--b-rim) 75%, var(--face-deep)), inset 0 calc(.42 * var(--u)) 0 rgba(255, 255, 255, .45),
+    0 calc(.18 * var(--u)) 0 rgba(255, 255, 255, .4); }
+.box-btn.home { --face: #a78ef1; --face-deep: #6c44c2; }
+.box-btn.replay { --face: #88ccf5; --face-deep: #3b76be; }
+.box-btn svg { width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u)); fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 calc(.16 * var(--u)) calc(.4 * var(--u)) color-mix(in srgb, var(--face-deep) 60%, transparent)); }
 .box-btn svg.solid { fill: #fff; stroke: #fff; stroke-width: 1.7; }
-.box-btn:active { transform: translateY(calc(.28 * var(--u))) scale(.97); }
+.box-btn:active { transform: translateY(calc(.4 * var(--u))) scale(.98);
+  box-shadow: 0 calc(.2 * var(--u)) 0 var(--face-deep), 0 calc(.6 * var(--u)) calc(1 * var(--u)) rgba(60, 30, 90, .2),
+    inset 0 calc(.28 * var(--u)) 0 rgba(255, 255, 255, .55), inset 0 calc(-.28 * var(--u)) 0 rgba(0, 0, 0, .07); }
 
 /* ── the animal shop (ui/shop.ts), from the title's paw button: the pick panel's frosted glass, a candy title, the wallet
    (block + number) top right, the eight animals 4 a row like the picker, the round close button in the box buttons' candy.
@@ -535,7 +567,7 @@ svg { display: block; }
 .wallet.bump { animation: pop .5s cubic-bezier(.3,1.8,.5,1); }
 .shop-grid { display: grid; grid-template-columns: repeat(4, calc(22 * var(--u))); gap: calc(2.2 * var(--u)) calc(2 * var(--u)); }
 .shop-ani.bought .pa-art, .shop-ani.bump .pa-art { animation: chosen .55s cubic-bezier(.3,1.8,.5,1); }
-.box-btn.close { --face: #8d5cf6; --face-deep: #6234d0; width: calc(7.6 * var(--u)); padding: 0; justify-content: center; }
+.box-btn.close { --face: #a78ef1; --face-deep: #6c44c2; width: calc(7.6 * var(--u)); padding: 0; justify-content: center; }
 .box-btn.close svg { width: calc(3.8 * var(--u)); height: calc(3.8 * var(--u)); stroke-width: 3; }
 .shop-close { position: absolute; top: calc(-2 * var(--u)); right: calc(-2 * var(--u)); }
 

@@ -28,6 +28,8 @@
 
     <!-- HUD: logo top-left, player cards down the left and right sides -->
     <header class="hud">
+      <!-- the game's level under the logo (display only: it goes up and down by itself — levels.ts) -->
+      <div id="level" class="level-tag" aria-label="Level 1">LEVEL <b>1</b></div>
       <div id="p1" class="pcard p1" data-p="0">
         <div class="avatar"><img class="ani" src="./src/assets/ani_bunny.webp" alt="" draggable="false" /></div>
         <div class="pinfo"><b class="pname" data-i18n="p1">Player 1</b><span class="pscore"><i class="mini-block"></i><b class="num">0</b><span class="strikes" aria-label="wrong blocks" data-i18n-aria="a_strikes"><i></i><i></i><i></i></span></span></div>
@@ -119,6 +121,8 @@
     <!-- result book -->
     <div id="result" class="result" hidden>
       <div class="book">
+        <!-- the level went up (levels.ts): over the spine, after the stars -->
+        <div id="levelUp" class="level-up" hidden><b>LEVEL UP!</b><span>LEVEL <b>2</b></span></div>
         <div class="page left" data-p="0"></div>
         <div class="spine"></div>
         <div class="page right" data-p="1"></div>

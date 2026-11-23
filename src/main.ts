@@ -6,6 +6,7 @@ import { micTest } from './core/mic';
 import { isTalking, onTalk, said, say } from './core/speech';
 import { sttPreload, sttState } from './core/stt';
 import { Game } from './game/game';
+import { LEVELS } from './game/levels';
 import { SpinHint } from './game/spinhint';
 import { Stage } from './game/stage';
 import { Tower, type WordInfo } from './game/tower';
@@ -86,6 +87,8 @@ async function boot() {
   onLang(() => { if (game.state === 'choose' && !isTalking()) void say([game.turn ? 't:turn2' : 't:turn1']); });
   game.test.fake = params.has('fake');
   game.forceM = (params.get('m') ?? '').split(',').filter(Boolean);
+  // ?level=N (tests, a demo): the next START plays that level; the game's end moves and saves it as usual
+  if (params.has('level')) game.lv = { level: Math.min(LEVELS.length, Math.max(1, Number(params.get('level')) || 1)), poor: 0 };
   game.buildTower(false);
   // the title screen (the game's tower with the logo and START over it, blocks lying on the table, the fox waving)
   const title = new Title(hud.app, stage, tower, fox, confetti);

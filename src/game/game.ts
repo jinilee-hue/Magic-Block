@@ -2,8 +2,9 @@
 // says it, and the player must read it aloud (on-device speech recognition) before the turn passes. A block that
 // doesn't start with m won't come out: it sticks, the fox says its first sound, and the turn goes to the friend.
 // When every m-block is out the tower falls ("와르르") and the player with more blocks wins.
-// Three wrong blocks in a game (✕ marks on the player's card) and the tower falls on that player: the friend wins
-// (user: "플레이어가 3번 잘못 눌렀을경우는 탑이 무너지게 해줘" — counted per player over the whole game, Jenga rule).
+// Three wrong blocks in a game (✕ marks on the player's card; two at level 6) and the tower falls on that player: the
+// friend wins (user: "플레이어가 3번 잘못 눌렀을경우는 탑이 무너지게 해줘" — counted per player over the whole game, Jenga rule).
+// The level (levels.ts) sets the tower: its height, what the block ends show, rhyme traps, the ✕ allowed.
 // The read turn follows the phonics-kit rules of 2026-11-22 (README "설명 SKIP · 말하기 차례"): SKIP on the how-to, a jump
 // button in every say turn, and the block only for a reading that was judged right — nobody gets it otherwise.
 import { holdMusic, preload, sfx } from '../core/audio';
@@ -22,7 +23,8 @@ import { rng, shuffle } from './anim';
 import { Cheer } from './cheer';
 import { collapse } from './collapse';
 import type { Stage } from './stage';
-import { LAYERS, M_PER_GAME, TITLE_LAYERS, type Block, type Tower, type WordInfo } from './tower';
+import { LEVELS, loadLevel, mFor, nextLevel, verdict, type Level } from './levels';
+import { LAYERS, LAYERS_Q, M_PER_GAME, TITLE_LAYERS, rhymes, type Block, type Tower, type WordInfo } from './tower';
 
 type Heard = string | null | 'nomic' | 'cant';
 /** 'cant' = nothing could judge the reading; 'off' = the turn is over (jump, Home) and the result is dropped */
@@ -39,9 +41,7 @@ const MAX_MISSES = 2;
 /** how long the mic waits for a voice: the first try, and after the fox read the word again (silence: ~20 s in all
  *  with the lines, then the turn goes on without the block) */
 const WAIT_MS = [7000, 8000];
-/** wrong blocks (not m) a player may pick in one game: the last one brings the tower down */
-const MAX_STRIKES = 3;
-/** the m-words still to come on this device: each game takes the next M_PER_GAME of the lesson pack's 18 m-words */
+/** the m-words still to come on this device: each game takes the next 11-17 (levels.ts mFor) of the lesson pack's 18 m-words */
 const DECK_KEY = 'pj.mdeck.v1';
 /** m-words that have a picture card (public/cards/<word>.webp, from tools/import_cards.py) */
 const CARDS = new Set(cardList as string[]);
@@ -84,6 +84,12 @@ export class Game {
   test = { fake: false, heard: [] as Heard[], log: [] as string[] };
   /** test hook (?m=map,mug): these m-words are in the next tower whatever the deck says */
   forceM: string[] = [];
+  /** the level the next START plays (one for the device, levels.ts; ?level=N sets it for a test) and the poor games in a
+   *  row before it */
+  lv = loadLevel();
+  /** the level of the game being played */
+  private playing: Level = LEVELS[0];
+  private playingN = 1;
   lastHeard: string | null = null;
   private session = 0;
   private idleAt = 0;
@@ -147,16 +153,18 @@ export class Game {
 
   private closeMic() { this.mic?.close(); this.mic = null; }
 
-  /** The words for one tower: M_PER_GAME m-words, the next ones from the deck (take = the game starts and uses them
-   *  up; otherwise a preview, e.g. the title tower), and the rest of the LAYERS × 3 blocks from the other words —
-   *  (the other words have no m anywhere since 2026-11-22, so `trap` below is empty; kept for a word list that has one). */
-  pickWords(r: () => number, take: boolean): WordInfo[] {
+  /** The words for one tower: nM m-words, the next ones from the deck (take = the game starts and uses them up;
+   *  otherwise a preview, e.g. the title tower), and the rest of the layers × 3 blocks from the other words —
+   *  (the other words have no m anywhere since 2026-11-22, so `trap` below is empty; kept for a word list that has one).
+   *  rhyme: the other words that rhyme with these m-words first (pan/man, cap/map … — levels 4-6) */
+  pickWords(r: () => number, take: boolean, nM = M_PER_GAME, layers = LAYERS, rhyme = false): WordInfo[] {
     const ms = this.words.filter((w) => w.m), byW = new Map(ms.map((w) => [w.w, w]));
+    const n = Math.min(nM, ms.length);
     let deck: string[] = [];
     try { deck = (JSON.parse(localStorage.getItem(DECK_KEY) ?? '[]') as string[]).filter((w) => byW.has(w)); } catch { deck = []; }
-    const pick = this.forceM.filter((w, i, a) => byW.has(w) && a.indexOf(w) === i).slice(0, M_PER_GAME);
+    const pick = this.forceM.filter((w, i, a) => byW.has(w) && a.indexOf(w) === i).slice(0, n);
     const rest = deck.filter((w) => !pick.includes(w));
-    while (pick.length < M_PER_GAME) {
+    while (pick.length < n) {
       if (!rest.length) {
         // a fresh round of all the m-words (keep it for the next game too)
         const fresh = shuffle(ms.map((w) => w.w), r).filter((w) => !pick.includes(w));
@@ -168,13 +176,22 @@ export class Game {
     try { localStorage.setItem(DECK_KEY, JSON.stringify(take ? left : [...pick.filter((w) => !this.forceM.includes(w)), ...left])); } catch { /* private mode */ }
     const others = this.words.filter((w) => !w.m);
     const trap = others.filter((w) => w.w.includes('m'));
-    const fill = shuffle(others.filter((w) => !trap.includes(w)), r).slice(0, LAYERS * 3 - M_PER_GAME - trap.length);
+    let pool = shuffle(others.filter((w) => !trap.includes(w)), r);
+    if (rhyme) {
+      const mine = pick.map((w) => byW.get(w)!), rh = (o: WordInfo) => mine.some((m) => rhymes(o, m));
+      pool = [...pool.filter(rh), ...pool.filter((o) => !rh(o))];
+    }
+    const fill = pool.slice(0, layers * 3 - n - trap.length);
     return [...pick.map((w) => byW.get(w)!), ...trap, ...fill];
   }
 
   buildTower(take = false) {
     const r = rng(this.seed ?? ((Math.random() * 1e9) | 0));
-    const words = this.pickWords(r, take);
+    // a game: its level's tower (?layers= overrides the height); the title: the 10-layer words, the big first letters
+    const lv = this.playing, layers = LAYERS_Q || lv.layers;
+    this.tower.ends = take ? lv.ends : 'big';
+    this.stage.setLayers(take ? layers : LAYERS);
+    const words = take ? this.pickWords(r, true, mFor(layers), layers, lv.traps) : this.pickWords(r, false);
     if (!take) {
       // the title tower = the next game's words (plus a few more: the title tower is taller), set out for show: an
       // m-word on the front face of every long layer (slot 2 faces the title camera), the other m-words in the cross
@@ -195,7 +212,7 @@ export class Game {
       this.tower.scatter([ms[0], os[0], ms[1], os[1]].filter(Boolean), r);
       return;
     }
-    this.tower.build(words, r);
+    this.tower.build(words, r, layers, undefined, lv.traps);
     // the picture cards of this tower's m-words, ready before anyone pulls a block
     for (const w of words) { const u = w.m && cardUrl(w.w); if (u) new Image().src = u; }
   }
@@ -205,7 +222,9 @@ export class Game {
     const s = this.session;
     this.players = [{ got: [], strikes: 0, lost: 0 }, { got: [], strikes: 0, lost: 0 }]; this.turn = 0; this.greatIdx = 0;
     this.jumpTold = false; this.unread = 0; this.startedAt = performance.now();
-    this.hud.reset(); this.hud.setAnimals(this.animals); this.hud.setTurn(0, false); this.hud.screen('game');
+    this.playingN = this.lv.level; this.playing = LEVELS[this.playingN - 1];
+    this.hud.reset(); this.hud.setLevel(this.playingN, this.playing.strikes);
+    this.hud.setAnimals(this.animals); this.hud.setTurn(0, false); this.hud.screen('game');
     this.buildTower(true);
     void this.tower.dropIn(() => sfx('tick'));
     this.stage.home();
@@ -228,7 +247,8 @@ export class Game {
     }
     if (more() && first) {
       this.fox.speakAs('talk');
-      await line(['t:howto2', 0.35, 't:howto3', 0.35, 't:howto4']);
+      // "… pick a wrong block three times, and the tower falls!" — not at a level with two ✕ (strike2 warns after the first)
+      await line(['t:howto2', 0.35, 't:howto3', ...(this.playing.strikes === 3 ? [0.35, 't:howto4'] : [])]);
     }
     if (more() && first) {
       this.stage.turnBy(-40); turned = true;
@@ -567,8 +587,8 @@ export class Game {
     await say(['t:uhoh', 0.2, `w:${b.word.w}`, 0.35, 't:startswith', 0.12, `s:${b.word.first}`, 0.3, `s:${b.word.first}`]);
     await anim;
     if (!this.alive(s)) return;
-    if (me.strikes >= MAX_STRIKES) { await this.topple(s); return; }
-    if (me.strikes === MAX_STRIKES - 1) {
+    if (me.strikes >= this.playing.strikes) { await this.topple(s); return; }
+    if (me.strikes === this.playing.strikes - 1) {
       // one more and the tower falls: say so, while the two ✕ marks are up
       this.fox.speakAs('point');
       await say(['t:strike2']);
@@ -584,9 +604,10 @@ export class Game {
     this.hud.busy(true);
     this.stage.controls = false;
     const loser = this.turn;
-    this.log(`3 strikes → P${loser + 1} topples the tower`);
+    this.log(`${this.playing.strikes} strikes → P${loser + 1} topples the tower`);
     this.fox.speakAs('talk');
-    await say(['t:strike3']);
+    // "Three wrong blocks. The tower is falling!" — at two ✕ (level 6) "Now watch the tower!" (no new lines)
+    await say([this.playing.strikes === 3 ? 't:strike3' : 't:watch']);
     if (!this.alive(s)) return;
     sfx('collapse');
     // the whole tower tips over: the ending's shove (push) left a nearly full tower standing
@@ -615,11 +636,14 @@ export class Game {
 
   /** the result book after the tower is down (winner -1 = a tie; toppled = three wrong blocks brought it down) */
   private async result(s: number, winner: number, toppled = false) {
+    const up = this.levelUp(toppled);
     this.record(winner, toppled);
     this.confetti.cannons(170);
     this.log(`result ${this.players[0].got.length}:${this.players[1].got.length} winner ${winner < 0 ? 'tie' : `P${winner + 1}`}`);
-    this.hud.showResult(this.players, winner);
+    this.hud.showResult(this.players, winner, this.playing.strikes, up);
     this.hud.screen('result');
+    // LEVEL UP! pops in over the book with the success jingle (style.css .level-up waits 1.3 s)
+    if (up) window.setTimeout(() => { if (this.alive(s)) sfx('success'); }, 1300);
     if (winner >= 0) {
       const ava = document.querySelector('.page.winner .ava');
       window.setTimeout(() => {
@@ -635,8 +659,19 @@ export class Game {
     await say([winner === 0 ? 't:win1' : winner === 1 ? 't:win2' : 't:tie']);
   }
 
+  /** the next game's level (levels.ts): up after a game played well (the tower stood, ≥ 70 % of the pulled m-blocks read
+   *  right), down after two poor ones in a row (it fell, or < 40 %). Returns the new level when it went up, else 0 */
+  private levelUp(toppled: boolean) {
+    const [p1, p2] = this.players;
+    const read = p1.got.length + p2.got.length + p1.lost + p2.lost;
+    const v = verdict(toppled, read, read + this.unread), was = this.lv.level;
+    this.lv = nextLevel(this.lv, v);
+    this.log(`level ${this.playingN} ${v} (${read}/${read + this.unread} read) → ${this.lv.level}`);
+    return this.lv.level > was ? this.lv.level : 0;
+  }
+
   /** the game's line in the shared progress record of the phonics games (phonics-kit phonics-progress.js, key
-   *  'phonics.progress'; no levels here — the record only, user: "기록 저장만") */
+   *  'phonics.progress'; setLevel when the level changes — levels.ts) */
   private record(winner: number, toppled: boolean) {
     const [p1, p2] = this.players;
     try {
@@ -649,6 +684,7 @@ export class Game {
         stars1: starsFor(p1.got.length), stars2: starsFor(p2.got.length),   // the result book's stars (0-3)
         winner: winner + 1,                          // 1 | 2, 0 = a tie
         toppled,
+        level: this.playingN,                        // the level this game was played at
         time: Math.round((performance.now() - this.startedAt) / 100) / 10,
       }, { lower: ['unread', 'lost'], higher: ['stars1', 'stars2'] });
     } catch (e) { console.warn('progress', e); }
