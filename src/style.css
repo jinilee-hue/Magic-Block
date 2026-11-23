@@ -241,12 +241,27 @@ svg { display: block; }
    block for it. It keeps its place in the row while hidden (the mic stays centred), jumps in when the say turn starts and
    hops when the guide's hand taps it (.poke, game.ts jumpGuide). opacity / scale / translate for in, out and the hops,
    so :active's transform press still works */
-.jump-btn { flex: none; position: relative; width: calc(10.4 * var(--u)); height: calc(10.4 * var(--u)); padding: 0; border-radius: 50%; display: grid; place-items: center;
-  background: linear-gradient(180deg, #a6ea6f, #4fbf43);
-  box-shadow: inset 0 calc(-.9 * var(--u)) 0 #339132, inset 0 calc(.7 * var(--u)) calc(.7 * var(--u)) rgba(255, 255, 255, .45), 0 calc(1 * var(--u)) calc(1.6 * var(--u)) rgba(60, 40, 50, .25);
+/* Look = the speaker · mic art beside it (btn_speaker / btn_mic; user 2026-11-23 "점프 버튼 스타일도 비슷하게 맞춰줘. 컬러는
+   유지하고"): a coral outer ring, a cream ring, then the raised green dome (the colour as before) with a soft top gloss and
+   a deeper lower rim, the white jumping child embossed on it. Same size as the speaker (11 u). Ring widths are the art's
+   (coral 3.7 %, cream 4.5 % of the width). */
+.jump-btn { flex: none; position: relative; isolation: isolate; width: calc(11 * var(--u)); height: calc(11 * var(--u)); padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(180deg, #fdb4ba 0%, #f8aa98 30%, #e48a80 70%, #c8695c 100%);
+  box-shadow: inset 0 calc(.12 * var(--u)) 0 rgba(255, 255, 255, .5);
+  filter: drop-shadow(0 calc(.45 * var(--u)) calc(.7 * var(--u)) rgba(90, 40, 120, .22));
   opacity: 0; scale: .4; pointer-events: none; transition: opacity .2s, scale .3s cubic-bezier(.2, 1.6, .4, 1), transform .12s ease; }
-.jump-btn:active { transform: scale(.92); }
-.jump-btn svg { width: 62%; height: 62%; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 calc(.28 * var(--u)) 0 rgba(0, 0, 0, .15)); }
+.jump-btn::before { content: ''; position: absolute; z-index: -2; inset: 3.7%; border-radius: 50%;
+  background: linear-gradient(180deg, #fff0b6 0%, #f6e7a6 35%, #dccb8a 75%, #bba66a 100%);
+  box-shadow: inset 0 calc(.1 * var(--u)) 0 rgba(255, 255, 255, .7); }
+.jump-btn::after { content: ''; position: absolute; z-index: -1; inset: 8.2%; border-radius: 50%;
+  background: radial-gradient(ellipse 46% 30% at 40% 22%, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg, #a6ea6f 0%, #7ad65a 45%, #4fbf43 100%);
+  box-shadow: inset 0 calc(-.75 * var(--u)) calc(.5 * var(--u)) rgba(40, 120, 40, .55), inset 0 calc(.5 * var(--u)) calc(.5 * var(--u)) rgba(255, 255, 255, .4),
+    0 calc(.12 * var(--u)) calc(.2 * var(--u)) rgba(120, 90, 40, .35); }
+.jump-btn:active { transform: translateY(calc(.25 * var(--u))) scale(.96); }
+.jump-btn svg { width: 56%; height: 56%; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 calc(.22 * var(--u)) calc(.25 * var(--u)) rgba(30, 110, 40, .45)); }
 .jump-btn svg circle { fill: #fff; stroke: none; }
 .read.can-skip .jump-btn { opacity: 1; scale: 1; pointer-events: auto; animation: jump-in .62s cubic-bezier(.3, .7, .4, 1) both; }
 .read.can-skip .jump-btn.poke { animation: jump-in .62s cubic-bezier(.3, .7, .4, 1) both, jump-hop .52s ease-out; }

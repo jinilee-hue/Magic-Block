@@ -17,17 +17,22 @@ export interface Level {
   traps: boolean;
   /** wrong blocks a player may pick: the last one brings the tower down */
   strikes: number;
+  /** m-words in the tower; the rest of the layers × 3 blocks are the other words (Unit 1's other lessons — a, s, t, p … —
+   *  and the lesson pack's non-m words: a preview of the lessons to come) */
+  m: number;
 }
 export const LEVELS: Level[] = [
-  { layers: 8, ends: 'big', traps: false, strikes: 3 },
-  { layers: 10, ends: 'big', traps: false, strikes: 3 },
-  { layers: 10, ends: 'small', traps: false, strikes: 3 },
-  { layers: 11, ends: 'small', traps: true, strikes: 3 },
-  { layers: 12, ends: 'word', traps: true, strikes: 3 },
-  { layers: 12, ends: 'word', traps: true, strikes: 2 },
+  // never under the original 10 layers (user 2026-11-23: "블럭 갯수가 적어져서 그런지 좀 허전해 … 원래 갯수는 유지"):
+  // level 1 has fewer m-words in the same 30 blocks, the other words fill the rest
+  { layers: 10, m: 11, ends: 'big', traps: false, strikes: 3 },
+  { layers: 10, m: 14, ends: 'big', traps: false, strikes: 3 },
+  { layers: 10, m: 14, ends: 'small', traps: false, strikes: 3 },
+  { layers: 11, m: 15, ends: 'small', traps: true, strikes: 3 },
+  { layers: 12, m: 17, ends: 'word', traps: true, strikes: 3 },
+  { layers: 12, m: 17, ends: 'word', traps: true, strikes: 2 },
 ];
-/** m-words in a tower of this many layers: the same share of the blocks as the 10-layer tower's 14 of 30
- *  (8 → 11, 10 → 14, 11 → 15, 12 → 17) */
+/** m-words in a tower of this many layers (only for ?layers= tests; a level says its own `m`): the same share of the
+ *  blocks as the 10-layer tower's 14 of 30 (10 → 14, 11 → 15, 12 → 17) */
 export const mFor = (layers: number) => Math.round(layers * M_PER_GAME / 10);
 
 /** a game played well (the tower didn't fall, ≥ 70 % of the pulled m-blocks read right), poorly (it fell, or < 40 %) */

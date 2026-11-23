@@ -191,7 +191,7 @@ export class Game {
     const lv = this.playing, layers = LAYERS_Q || lv.layers;
     this.tower.ends = take ? lv.ends : 'big';
     this.stage.setLayers(take ? layers : LAYERS);
-    const words = take ? this.pickWords(r, true, mFor(layers), layers, lv.traps) : this.pickWords(r, false);
+    const words = take ? this.pickWords(r, true, LAYERS_Q ? mFor(layers) : lv.m, layers, lv.traps) : this.pickWords(r, false);
     if (!take) {
       // the title tower = the next game's words (plus a few more: the title tower is taller), set out for show: an
       // m-word on the front face of every long layer (slot 2 faces the title camera), the other m-words in the cross

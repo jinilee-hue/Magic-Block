@@ -1,4 +1,4 @@
-// The Jenga tower: 8-12 layers (the game's level, levels.ts) × 3 pastel blocks (Jenga proportions 7.5 : 1.5 : 2.5), each
+// The Jenga tower: 10-12 layers (the game's level, levels.ts) × 3 pastel blocks (Jenga proportions 7.5 : 1.5 : 2.5), each
 // painted with its word on all four sides. 11-17 blocks carry an m-word (of the lesson pack's 18: the next game brings the rest). The
 // m-blocks are placed so the tower can always stand once every one of them is pulled out (per layer: none, one side,
 // the middle, or both sides — never "middle + a side"), so a correct pull never knocks it over; the big fall is saved

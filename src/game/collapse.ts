@@ -33,8 +33,8 @@ export function collapse(stage: Stage, tower: Tower, seconds = 4.2, how: 'push' 
   tower.root.rotation.set(0, 0, 0); tower.root.scale.set(1, 1, 1); tower.root.updateMatrixWorld(true);
   const cam = stage.camera.position.clone().setY(0).normalize();
   const right = new THREE.Vector3(cam.z, 0, -cam.x);            // fall sideways across the view: easy to watch
-  // the push's start height and growth scale down with a tower under 10 layers (level 1: 8): the 10-layer shove left a
-  // short tower full of holes standing
+  // the push's start height and growth scale down with a tower under 10 layers (a ?layers= test; every level has 10+):
+  // the 10-layer shove left a short tower full of holes standing
   const sc = Math.min(1, tower.topH() / (10 * H));
   const pairs: [THREE.Mesh, CANNON.Body][] = [];
   for (const b of tower.inTower()) {
