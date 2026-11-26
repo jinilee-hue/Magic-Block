@@ -654,3 +654,73 @@ svg { display: block; }
 /* the key button on the top left like the other phonics games (user 2026-11-20: "매직블럭의 키 넣는 버튼은 왼쪽에 넣어줘") */
 .sysbar.sysbar-left { right: auto; left: calc(2.4 * var(--u)); }
 @media (min-aspect-ratio: 4/3) { .sysbar.sysbar-left { right: auto; left: calc(3 * var(--tu) + env(safe-area-inset-left)); } }
+
+/* ── phones held sideways (2026-11-26, user: "모바일 용을 고친다고 태블릿이나 pc버전이 깨지면 안돼"): only a touch screen
+   500 px or less tall matches, so tablets (iPad landscape ≥ 768 tall) and PCs (fine pointer) keep every size above.
+   On a 342–430 px tall phone 1 u is ~3.4 px: the corner buttons came out 26 px and the labels 7–10 px. Here every
+   button is at least 40 px on its short side (corner buttons 44, START · speaker · jump · mic 52+), text a child reads
+   at least 12 px, same art and colours, and edge-anchored parts stay clear of the notch (viewport-fit=cover). ── */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  /* corner bars: 44 px buttons (the bar's own --u scales the art buttons, the EN | 한 toggle and the volume panel) */
+  .sysbar { --u: calc(44px / 7.8); top: calc(8px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); gap: 6px; }
+  .sysbar.sysbar-left { right: auto; left: calc(10px + env(safe-area-inset-left)); }
+  /* the game's logo and level pill top-left: the pill's letters at 12 px need a slightly wider logo to sit under */
+  .hud::before { top: calc(8px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); width: 64px; height: 45px; }
+  .hud > .level-tag { top: calc(55px + env(safe-area-inset-top)); left: calc(42px + env(safe-area-inset-left)); gap: 3px; padding: 3px 8px 2px; font-size: 12px; }
+  .level-tag b { font-size: 15px; }
+  /* player cards: the whole card a third bigger (name 12 px), clear of the notch */
+  .pcard { --u: 4.5px; }
+  #p1 { left: calc(10px + env(safe-area-inset-left)); }
+  #p2 { right: calc(10px + env(safe-area-inset-right)); }
+  .fox { right: calc(3 * var(--u) + env(safe-area-inset-right)); }
+  .fs-bubble { max-width: 190px; padding: 6px 11px; font-size: 12px; }
+  /* title: START 63 px tall */
+  .start-btn { --sb-w: 130px; }
+  /* character pick + shop: P1 / P2 tags and prices 12 px; box buttons (Pick Again · Start Game · Play Again · Home ·
+     the shop's close) 43 px tall with their proportions */
+  .pick { top: auto; bottom: calc(8px + env(safe-area-inset-bottom)); translate: -50% 0; }   /* the taller panel clears the top bars */
+  .pick-card { padding-top: 10px; padding-bottom: 10px; }
+  .pick-ani .pa-tag { padding: 2px 7px; font-size: 12px; }
+  .price b { font-size: 12px; }
+  .price .blk { height: 11px; }
+  .pick-go .box-btn, .result-actions .box-btn, .shop-close { --u: 5.6px; }
+  /* how-to SKIP and the intro's SKIP: 44 px tall, 14 px letters */
+  .intro-skip { height: 44px; padding: 0 26px; border-width: 1.5px; font-size: 14px; line-height: 1; }
+  #introSkip { right: calc(12px + env(safe-area-inset-right)); bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .how-skip { bottom: calc(10px + env(safe-area-inset-bottom)); }
+  /* back-to-the-start view: 46 px */
+  .dock { bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .art-btn { width: 46px; height: 46px; }
+  /* say-it row: speaker and jump 52 px, the mic 60 px — kept under the picture card (hud.cardSize ends at 78 % of the height) */
+  .read { bottom: calc(6px + env(safe-area-inset-bottom)); gap: 10px; }
+  .read-speaker, .jump-btn { width: 52px; height: 52px; }
+  .mic { width: 60px; height: 60px; }
+  /* result book: LEVEL n under LEVEL UP! at 12 px; wider pages so the word blocks are big enough to read (the word on a
+     78 px block ≈ 12 px letters, three a row up to 9 words; 10 or more words go four a row to stay on the screen) */
+  .level-up span { font-size: 12px; }
+  .level-up span b { font-size: 15px; }
+  .result { gap: 8px; padding-top: 16px; }   /* room for LEVEL UP! over the book */
+  .book .page { width: 256px; padding: 6px 8px; gap: 3px; }
+  .page .ava { width: 38px; height: 38px; }
+  .page .stars i { width: 19px; }
+  .page .words.blocks { gap: 2px 4px; }
+  .page .words .jb { width: 76px; }
+  .page .words.many .jb, .page .words:has(> :nth-child(10)) .jb { width: 57px; }
+  .page .words.many, .page .words:has(> :nth-child(10)) { gap: 2px 3px; }
+  .page .words .chip { font-size: 12px; }
+}
+
+/* ── phones held upright: a full-screen 'turn it sideways' hint (the same hint in every phonics game) ── */
+.rotate-hint { display: none; }
+@media (orientation: portrait) and (max-width: 500px) and (pointer: coarse) {
+  .rotate-hint { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; padding: 24px; background: rgba(46, 33, 110, .9); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    color: #fff; text-align: center; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .rotate-hint svg { width: 104px; height: 104px; overflow: visible; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .rotate-hint .rh-dev { transform-box: view-box; transform-origin: 32px 32px; animation: rh-turn 2s ease-in-out infinite; }
+  .rotate-hint .rh-arrow { animation: rh-arrow 2s ease-in-out infinite; }
+  .rotate-hint p { margin: 0; font: 800 21px/1.3 var(--font-ui); letter-spacing: .01em; }
+}
+@keyframes rh-turn { 0%, 12% { transform: rotate(0deg); } 48%, 78% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+@keyframes rh-arrow { 0%, 12% { opacity: 1; } 40%, 85% { opacity: .25; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rotate-hint .rh-dev, .rotate-hint .rh-arrow { animation: none; } }
