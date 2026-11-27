@@ -10,6 +10,9 @@ import { ANI_ART } from './animals';
 import { blockImg } from './blockshot';
 import { FoxSay } from './foxsay';
 
+/** a phone held sideways — the same query as style.css's phone block */
+const PHONE_LANDSCAPE = '(orientation: landscape) and (max-height: 500px) and (pointer: coarse)';
+
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 export interface Got { word: WordInfo; color: Pastel }
 const CHIP_MAX = 8;
@@ -216,7 +219,9 @@ export class Hud {
   /** the picture card's size (CSS px) on this screen */
   cardSize() {
     const W = this.app.clientWidth, H = this.app.clientHeight;
-    const top = H * 0.04, bottom = H * 0.78;                 // the mic's row starts at ~81 % of the height
+    // the mic's row starts at ~81 % of the height; on a phone held sideways (style.css, the same query) the row is 72 px
+    // tall, 14 px over the bottom edge: the card ends 8 px above it
+    const top = H * 0.04, bottom = matchMedia(PHONE_LANDSCAPE).matches ? H - 94 : H * 0.78;
     const h = Math.max(120, Math.min(bottom - top, H * 0.54, W * 0.72 * 1.24));
     return { w: h / 1.24, h, top, bottom };
   }

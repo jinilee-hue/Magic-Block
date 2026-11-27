@@ -662,45 +662,69 @@ svg { display: block; }
    at least 12 px, same art and colours, and edge-anchored parts stay clear of the notch (viewport-fit=cover). ── */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   /* corner bars: 44 px buttons (the bar's own --u scales the art buttons, the EN | 한 toggle and the volume panel) */
-  .sysbar { --u: calc(44px / 7.8); top: calc(8px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); gap: 6px; }
-  .sysbar.sysbar-left { right: auto; left: calc(10px + env(safe-area-inset-left)); }
+  /* every control keeps 12 px from the top, left and right edges and 14 px from the bottom (+ the notch / home bar), and
+     neighbours 8 px apart (user 2026-11-26: "너무 좌우 상하 여백없이 붙어있는건 아닌지") */
+  .sysbar { --u: calc(44px / 7.8); top: calc(12px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right)); gap: 8px; }
+  .sysbar.sysbar-left { right: auto; left: calc(12px + env(safe-area-inset-left)); }
+  .sysbar .lang-tog { translate: 0 0; }          /* not raised by half its edge: 12 px from the top like the buttons */
+  .vol-panel { top: calc(100% + 8px); }
   /* the game's logo and level pill top-left: the pill's letters at 12 px need a slightly wider logo to sit under */
-  .hud::before { top: calc(8px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); width: 64px; height: 45px; }
-  .hud > .level-tag { top: calc(55px + env(safe-area-inset-top)); left: calc(42px + env(safe-area-inset-left)); gap: 3px; padding: 3px 8px 2px; font-size: 12px; }
+  .hud::before { top: calc(12px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left)); width: 64px; height: 45px; }
+  .hud > .level-tag { top: calc(59px + env(safe-area-inset-top)); left: calc(44px + env(safe-area-inset-left)); gap: 3px; padding: 3px 8px 2px; font-size: 12px; }
   .level-tag b { font-size: 15px; }
   /* player cards: the whole card a third bigger (name 12 px), clear of the notch */
   .pcard { --u: 4.5px; }
-  #p1 { left: calc(10px + env(safe-area-inset-left)); }
-  #p2 { right: calc(10px + env(safe-area-inset-right)); }
+  #p1 { left: calc(17px + env(safe-area-inset-left)); }    /* 12 px even while the turn's card is scaled up 6 % */
+  #p2 { right: calc(17px + env(safe-area-inset-right)); }
   .fox { right: calc(3 * var(--u) + env(safe-area-inset-right)); }
   .fs-bubble { max-width: 190px; padding: 6px 11px; font-size: 12px; }
-  /* title: START 63 px tall */
-  .start-btn { --sb-w: 130px; }
+  /* title: START 190 px wide — its pill 64 px tall under the art's stars (2026-11-26 round 2: the user OK'd bigger play
+     controls for 5-year-olds, about 1.5 cm, in the same places — only bigger where they fit; the corner buttons, SKIP and
+     ✕ keep the sizes above) */
+  .start-btn { --sb-w: 190px; }
   /* character pick + shop: P1 / P2 tags and prices 12 px; box buttons (Pick Again · Start Game · Play Again · Home ·
      the shop's close) 43 px tall with their proportions */
-  .pick { top: auto; bottom: calc(8px + env(safe-area-inset-bottom)); translate: -50% 0; }   /* the taller panel clears the top bars */
-  .pick-card { padding-top: 10px; padding-bottom: 10px; }
+  .pick { top: auto; bottom: calc(14px + env(safe-area-inset-bottom)); translate: -50% 0; }   /* the taller panel clears the top bars */
+  .pick-card { padding-top: 6px; padding-bottom: 6px; }
+  .pick-head { margin-bottom: 2px; }
+  .pick-row { row-gap: 9px; }
+  .pick-ani { gap: 6px; }
+  .pick-go { gap: 14px; margin-top: 8px; }
+  .shop { padding: 64px 12px 14px; }             /* the shop's ✕ clears the top bar */
+  .shop-grid { gap: 8px; }
   .pick-ani .pa-tag { padding: 2px 7px; font-size: 12px; }
   .price b { font-size: 12px; }
   .price .blk { height: 11px; }
-  .pick-go .box-btn, .result-actions .box-btn, .shop-close { --u: 5.6px; }
+  .shop-close { --u: 5.6px; }
+  /* Pick Again · Start Game · Play Again · Home: as tall as their panel's room allows, 64 px at most (--bh), 160 px wide —
+     the box's own --u keeps its rim, groove and edge in proportion; 20 px words so two pills fit side by side */
+  .pick-go .box-btn, .result-actions .box-btn { --u: calc(var(--bh, 64px) / 7.6); min-width: 160px; padding: 0 16px 0 14px; gap: 8px; font-size: 20px; justify-content: center; }
+  .pick-go .box-btn svg, .result-actions .box-btn svg { width: 24px; height: 24px; }
+  /* the picker's pair: 59 px on a 342 px tall phone (the panel keeps 8 px under the top bars), 64 from 347 px up */
+  .pick-go .box-btn { --bh: min(64px, calc(59px + 100vh - 342px)); }
+  /* the result's pair: 64 px; a page with 7-9 word blocks (three rows of the big blocks) or 13-14 leaves less room under
+     the book (the crown / LEVEL UP! keep 12 px from the top): 44 / 58 px on a 342 px tall phone, more on taller ones */
+  .result:has(.page .words.many) .result-actions .box-btn { --bh: min(64px, calc(58px + (100vh - 342px) * .78)); }
+  .result:has(.page .words > :nth-child(7):nth-last-child(-n+3)) .result-actions .box-btn { --bh: min(64px, calc(44px + (100vh - 342px) * .7)); }
   /* how-to SKIP and the intro's SKIP: 44 px tall, 14 px letters */
   .intro-skip { height: 44px; padding: 0 26px; border-width: 1.5px; font-size: 14px; line-height: 1; }
-  #introSkip { right: calc(12px + env(safe-area-inset-right)); bottom: calc(12px + env(safe-area-inset-bottom)); }
-  .how-skip { bottom: calc(10px + env(safe-area-inset-bottom)); }
-  /* back-to-the-start view: 46 px */
-  .dock { bottom: calc(8px + env(safe-area-inset-bottom)); }
+  #introSkip { right: calc(12px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .how-skip { bottom: calc(14px + env(safe-area-inset-bottom)); }
+  /* back-to-the-start view: 46 px in its place at the bottom centre — any bigger covers the tower's lowest blocks */
+  .dock { bottom: calc(14px + env(safe-area-inset-bottom)); }
   .art-btn { width: 46px; height: 46px; }
-  /* say-it row: speaker and jump 52 px, the mic 60 px — kept under the picture card (hud.cardSize ends at 78 % of the height) */
-  .read { bottom: calc(6px + env(safe-area-inset-bottom)); gap: 10px; }
-  .read-speaker, .jump-btn { width: 52px; height: 52px; }
-  .mic { width: 60px; height: 60px; }
+  /* say-it row in its place under the picture card: listen and jump 62 px, the mic 72 px, with its sound waves — as big as
+     the row gets while it keeps 8 px from the collected-word piles beside the player cards (the picture card ends 8 px
+     above it: hud.cardSize, the same phone query) */
+  .read { bottom: calc(14px + env(safe-area-inset-bottom)); gap: 8px; }
+  .read-speaker, .jump-btn { width: 62px; height: 62px; }
+  .mic { width: 72px; height: 72px; }
   /* result book: LEVEL n under LEVEL UP! at 12 px; wider pages so the word blocks are big enough to read (the word on a
      78 px block ≈ 12 px letters, three a row up to 9 words; 10 or more words go four a row to stay on the screen) */
   .level-up span { font-size: 12px; }
   .level-up span b { font-size: 15px; }
-  .result { gap: 8px; padding-top: 16px; }   /* room for LEVEL UP! over the book */
-  .book .page { width: 256px; padding: 6px 8px; gap: 3px; }
+  .result { gap: 6px; padding: 20px 0 14px; }   /* room for LEVEL UP! over the book; 14 px under the buttons */
+  .book .page { width: 256px; padding: 4px 8px; gap: 2px; }
   .page .ava { width: 38px; height: 38px; }
   .page .stars i { width: 19px; }
   .page .words.blocks { gap: 2px 4px; }

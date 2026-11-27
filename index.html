@@ -6,6 +6,10 @@
   <meta name="theme-color" content="#f6d9d0" />
   <title>Magic Block</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='40' width='48' height='14' rx='4' fill='%23f7afc3'/%3E%3Crect x='8' y='24' width='48' height='14' rx='4' fill='%23a8e2c4'/%3E%3Crect x='8' y='8' width='48' height='14' rx='4' fill='%23f8dc80'/%3E%3Ctext x='32' y='51' font-family='Arial' font-weight='700' font-size='12' text-anchor='middle' fill='%23a8365f'%3Em%3C/text%3E%3C/svg%3E" />
+<!-- the "turn your phone sideways" hint is for phones only: an iPad's narrow Split View / Slide Over pane looks like an
+     upright phone to the CSS query, so a screen whose short side is over 500 px (every tablet) never shows it -->
+<style>.not-phone .rotate-hint { display: none !important; }</style>
+<script>try { if (Math.min(screen.width, screen.height) > 500) document.documentElement.classList.add('not-phone'); } catch (e) { /* no screen info */ }</script>
 </head>
 <body>
   <div id="app" class="app" data-screen="intro">
